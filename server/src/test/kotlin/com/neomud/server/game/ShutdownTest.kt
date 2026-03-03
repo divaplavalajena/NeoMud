@@ -5,6 +5,7 @@ import com.neomud.server.game.inventory.EquipmentService
 import com.neomud.server.game.inventory.LootService
 import com.neomud.server.game.inventory.RoomItemManager
 import com.neomud.server.game.npc.NpcManager
+import com.neomud.server.persistence.repository.CoinRepository
 import com.neomud.server.persistence.repository.InventoryRepository
 import com.neomud.server.persistence.repository.PlayerRepository
 import com.neomud.server.session.PlayerSession
@@ -196,7 +197,10 @@ class ShutdownTest {
             roomItemManager = RoomItemManager(),
             playerRepository = PlayerRepository(),
             skillCatalog = skillCatalog,
-            classCatalog = ClassCatalog(emptyList())
+            classCatalog = ClassCatalog(emptyList()),
+            itemCatalog = itemCatalog,
+            inventoryRepository = InventoryRepository(itemCatalog),
+            coinRepository = CoinRepository()
         )
     }
 

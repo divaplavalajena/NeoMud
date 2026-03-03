@@ -2,6 +2,8 @@ package com.neomud.client.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -11,9 +13,13 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -192,10 +198,28 @@ private fun BagItemCell(
     val borderColor = if (isConsumable) ConsumableBorder else DefaultBorder
     val context = LocalContext.current
 
+    // Debounce: ignore rapid taps within 500ms
+    var lastTapTime by remember { mutableStateOf(0L) }
+    // Flash animation on tap
+    var tapped by remember { mutableStateOf(false) }
+    val flashAlpha by animateFloatAsState(
+        targetValue = if (tapped) 0.4f else 0f,
+        animationSpec = tween(durationMillis = 100),
+        finishedListener = { tapped = false },
+        label = "consumableFlash"
+    )
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.then(
-            if (isConsumable) Modifier.clickable { onUseItem(invItem.itemId) }
+            if (isConsumable) Modifier.clickable {
+                val now = System.currentTimeMillis()
+                if (now - lastTapTime >= 500) {
+                    lastTapTime = now
+                    tapped = true
+                    onUseItem(invItem.itemId)
+                }
+            }
             else Modifier
         )
     ) {
@@ -229,6 +253,15 @@ private fun BagItemCell(
                         .align(Alignment.BottomEnd)
                         .background(Color(0xCC000000), RoundedCornerShape(3.dp))
                         .padding(horizontal = 3.dp, vertical = 1.dp)
+                )
+            }
+            // Flash overlay on tap
+            if (isConsumable && flashAlpha > 0f) {
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .alpha(flashAlpha)
+                        .background(Color.White, RoundedCornerShape(6.dp))
                 )
             }
             // "Use" badge on consumables

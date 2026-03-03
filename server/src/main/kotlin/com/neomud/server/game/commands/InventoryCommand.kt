@@ -3,9 +3,9 @@ package com.neomud.server.game.commands
 import com.neomud.server.game.MeditationUtils
 import com.neomud.server.game.RestUtils
 import com.neomud.server.game.StealthUtils
-import com.neomud.server.game.UseEffectProcessor
 import com.neomud.server.persistence.repository.CoinRepository
 import com.neomud.server.persistence.repository.InventoryRepository
+import com.neomud.server.session.PendingSkill
 import com.neomud.server.session.PlayerSession
 import com.neomud.server.session.SessionManager
 import com.neomud.server.world.ItemCatalog
@@ -116,34 +116,15 @@ class InventoryCommand(
             }
         }
 
-        val result = UseEffectProcessor.process(item.useEffect, player, item.name)
-        if (result == null) {
-            session.send(ServerMessage.Error("${item.name} has no usable effect."))
-            return
-        }
-
-        val removed = inventoryRepository.removeItem(playerName, itemId, 1)
-        if (!removed) {
+        // Verify player has the item in inventory (unequipped)
+        val inventory = inventoryRepository.getInventory(playerName)
+        if (inventory.none { it.itemId == itemId && !it.equipped }) {
             session.send(ServerMessage.Error("You don't have that item."))
             return
         }
 
-        session.player = result.updatedPlayer
-        for (effect in result.newEffects) {
-            session.activeEffects.add(effect)
-        }
-
-        val message = result.messages.joinToString(" ")
-        session.send(ServerMessage.ItemUsed(
-            itemName = item.name,
-            message = message,
-            newHp = result.updatedPlayer.currentHp,
-            newMp = result.updatedPlayer.currentMp
-        ))
-        if (result.newEffects.isNotEmpty()) {
-            session.send(ServerMessage.ActiveEffectsUpdate(session.activeEffects.toList()))
-        }
-        sendInventoryUpdate(session)
+        // Queue for resolution on next game tick (overwrites any pending combat skill)
+        session.pendingSkill = PendingSkill.UseItem(itemId)
     }
 
     suspend fun sendInventoryUpdate(session: PlayerSession) {

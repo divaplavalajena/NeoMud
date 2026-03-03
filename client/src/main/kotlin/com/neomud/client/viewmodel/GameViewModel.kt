@@ -618,6 +618,9 @@ class GameViewModel(
                 // Refresh trainer info after training
                 interactTrainer()
             }
+            is ServerMessage.ServerShutdown -> {
+                addLog(message.message, MudColors.error)
+            }
         }
     }
 

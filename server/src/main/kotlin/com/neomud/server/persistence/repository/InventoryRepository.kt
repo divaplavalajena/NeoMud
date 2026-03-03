@@ -10,9 +10,9 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 
-class InventoryRepository(private val itemCatalog: ItemCatalog) {
+open class InventoryRepository(private val itemCatalog: ItemCatalog) {
 
-    fun getInventory(playerName: String): List<InventoryItem> = transaction {
+    open fun getInventory(playerName: String): List<InventoryItem> = transaction {
         InventoryTable.selectAll().where {
             InventoryTable.playerName eq playerName
         }.map { row ->

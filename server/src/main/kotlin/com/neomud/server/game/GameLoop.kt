@@ -12,7 +12,10 @@ import com.neomud.server.persistence.repository.PlayerRepository
 import com.neomud.server.session.PendingSkill
 import com.neomud.server.session.PlayerSession
 import com.neomud.server.session.SessionManager
+import com.neomud.server.persistence.repository.CoinRepository
+import com.neomud.server.persistence.repository.InventoryRepository
 import com.neomud.server.world.ClassCatalog
+import com.neomud.server.world.ItemCatalog
 import com.neomud.server.world.LootTableCatalog
 import com.neomud.server.world.SkillCatalog
 import com.neomud.server.world.WorldGraph
@@ -35,6 +38,9 @@ class GameLoop(
     private val playerRepository: PlayerRepository,
     private val skillCatalog: SkillCatalog,
     private val classCatalog: ClassCatalog,
+    private val itemCatalog: ItemCatalog,
+    private val inventoryRepository: InventoryRepository,
+    private val coinRepository: CoinRepository,
     private val movementTrailManager: MovementTrailManager? = null
 ) {
     private val logger = LoggerFactory.getLogger(GameLoop::class.java)
@@ -237,6 +243,10 @@ class GameLoop(
                 is PendingSkill.Track -> {
                     session.pendingSkill = null
                     resolveTrack(session, skill.targetId)
+                }
+                is PendingSkill.UseItem -> {
+                    session.pendingSkill = null
+                    resolveUseItem(session, skill.itemId)
                 }
                 else -> {} // Bash/Kick handled by CombatManager
             }
@@ -894,6 +904,55 @@ class GameLoop(
         }
 
         checkHiddenExits(session, roomId, check)
+    }
+
+    private suspend fun resolveUseItem(session: PlayerSession, itemId: String) {
+        val playerName = session.playerName ?: return
+        val player = session.player ?: return
+
+        val item = itemCatalog.getItem(itemId)
+        if (item == null || item.type != "consumable") {
+            try { session.send(ServerMessage.Error("That item cannot be used.")) } catch (_: Exception) {}
+            return
+        }
+
+        val result = UseEffectProcessor.process(item.useEffect, player, item.name)
+        if (result == null) {
+            try { session.send(ServerMessage.Error("${item.name} has no usable effect.")) } catch (_: Exception) {}
+            return
+        }
+
+        // Re-validate ownership at resolution time (item may have been dropped between queue and tick)
+        val removed = inventoryRepository.removeItem(playerName, itemId, 1)
+        if (!removed) {
+            try { session.send(ServerMessage.Error("You no longer have that item.")) } catch (_: Exception) {}
+            return
+        }
+
+        session.player = result.updatedPlayer
+        session.activeEffects.addAll(result.newEffects)
+
+        val message = result.messages.joinToString(" ")
+        try {
+            session.send(ServerMessage.ItemUsed(
+                itemName = item.name,
+                message = message,
+                newHp = result.updatedPlayer.currentHp,
+                newMp = result.updatedPlayer.currentMp
+            ))
+            if (result.newEffects.isNotEmpty()) {
+                session.send(ServerMessage.ActiveEffectsUpdate(session.activeEffects.toList()))
+            }
+            sendInventoryUpdateForSession(session)
+        } catch (_: Exception) {}
+    }
+
+    private suspend fun sendInventoryUpdateForSession(session: PlayerSession) {
+        val playerName = session.playerName ?: return
+        val inventory = inventoryRepository.getInventory(playerName)
+        val equipment = inventoryRepository.getEquippedItems(playerName)
+        val coins = coinRepository.getCoins(playerName)
+        session.send(ServerMessage.InventoryUpdate(inventory, equipment, coins))
     }
 
     private suspend fun checkHiddenExits(session: PlayerSession, roomId: String, check: Int) {

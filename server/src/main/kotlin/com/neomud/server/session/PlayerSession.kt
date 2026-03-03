@@ -13,6 +13,7 @@ sealed class PendingSkill {
     object Meditate : PendingSkill()
     object Rest : PendingSkill()
     data class Track(val targetId: String?) : PendingSkill()
+    data class UseItem(val itemId: String) : PendingSkill()
 }
 
 class PlayerSession(
