@@ -188,6 +188,7 @@ model Spell {
   levelRequired  Int    @default(1)
   primaryStat    String @default("intellect")
   basePower      Int    @default(0)
+  tickPower      Int    @default(0)
   targetType     String @default("ENEMY")
   effectType     String @default("")
   effectDuration Int    @default(0)

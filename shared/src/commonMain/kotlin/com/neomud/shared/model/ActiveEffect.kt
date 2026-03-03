@@ -22,5 +22,6 @@ data class ActiveEffect(
     val name: String,
     val type: EffectType,
     val remainingTicks: Int,
-    val magnitude: Int
+    val magnitude: Int,
+    val casterId: String = ""
 )

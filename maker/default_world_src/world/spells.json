@@ -223,6 +223,7 @@
       "targetType": "ENEMY",
       "effectType": "POISON",
       "effectDuration": 4,
+      "tickPower": 4,
       "castMessage": "conjures a poison cloud around",
       "castSound": "poison_cloud_cast",
       "impactSound": "poison_cloud_hit",
@@ -369,6 +370,7 @@
       "targetType": "SELF",
       "effectType": "HEAL_OVER_TIME",
       "effectDuration": 6,
+      "tickPower": 4,
       "castMessage": "sings a soothing song",
       "castSound": "soothing_song_cast"
     },

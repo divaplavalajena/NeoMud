@@ -16,5 +16,6 @@ data class Npc(
     val missSound: String = "",
     val deathSound: String = "",
     val interactSound: String = "",
-    val exitSound: String = ""
+    val exitSound: String = "",
+    val activeEffects: List<ActiveEffect> = emptyList()
 )

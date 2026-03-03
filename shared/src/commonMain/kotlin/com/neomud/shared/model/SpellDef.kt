@@ -28,6 +28,7 @@ data class SpellDef(
     val targetType: TargetType = TargetType.ENEMY,
     val effectType: String = "",
     val effectDuration: Int = 0,
+    val tickPower: Int = 0,
     val castMessage: String = "",
     val castSound: String = "",
     val impactSound: String = "",

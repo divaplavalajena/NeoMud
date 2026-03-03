@@ -11,6 +11,7 @@ import com.neomud.server.session.SessionManager
 import com.neomud.server.world.NpcData
 import com.neomud.server.world.SpawnConfig
 import com.neomud.server.world.WorldGraph
+import com.neomud.shared.model.ActiveEffect
 import com.neomud.shared.model.Direction
 import com.neomud.shared.model.Npc
 import com.neomud.shared.model.RoomId
@@ -43,6 +44,8 @@ data class NpcState(
     val interactSound: String = "",
     val exitSound: String = ""
 ) {
+    /** Active spell effects on this NPC (DoT, HoT, etc.). */
+    val activeEffects: MutableList<ActiveEffect> = mutableListOf()
     /** Set by [NpcManager.markDead] to prevent double-processing kills. */
     var deathProcessed: Boolean = false
     /** When > 0, NPC skips attack ticks (decremented each combat tick). */
@@ -274,7 +277,8 @@ class NpcManager(
                 missSound = npcState.missSound,
                 deathSound = npcState.deathSound,
                 interactSound = npcState.interactSound,
-                exitSound = npcState.exitSound
+                exitSound = npcState.exitSound,
+                activeEffects = npcState.activeEffects.toList()
             )
         }
     }
@@ -294,8 +298,12 @@ class NpcManager(
         if (npc.deathProcessed) return false
         npc.deathProcessed = true
         npc.currentHp = 0
+        npc.activeEffects.clear()
         return true
     }
+
+    fun getLivingNpcsWithEffects(): List<NpcState> =
+        npcs.filter { it.isAlive && it.activeEffects.isNotEmpty() }
 
     fun getTrainerInRoom(roomId: RoomId): NpcState? =
         npcs.find { it.currentRoomId == roomId && it.behaviorType == "trainer" && it.isAlive }

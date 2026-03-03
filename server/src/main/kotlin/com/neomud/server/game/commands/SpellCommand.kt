@@ -214,7 +214,26 @@ class SpellCommand(
         // Apply initial damage
         val initialDmg = power / GameConfig.Skills.DOT_INITIAL_DAMAGE_DIVISOR
         target.currentHp -= initialDmg
-        val castMsg = "$playerName ${spell.castMessage} ${target.name}! ($initialDmg initial damage)"
+
+        // Apply ongoing DoT effect to the NPC
+        val effectType = try {
+            EffectType.valueOf(spell.effectType)
+        } catch (_: IllegalArgumentException) {
+            EffectType.POISON
+        }
+        val effect = ActiveEffect(
+            name = spell.name,
+            type = effectType,
+            remainingTicks = spell.effectDuration,
+            magnitude = spell.tickPower,
+            casterId = playerName
+        )
+        target.activeEffects.removeAll { it.name == spell.name }
+        target.activeEffects.add(effect)
+
+        val tickInfo = if (spell.tickPower > 0 && spell.effectDuration > 0)
+            ", ${spell.tickPower} dmg/tick for ${spell.effectDuration} ticks" else ""
+        val castMsg = "$playerName ${spell.castMessage} ${target.name}! ($initialDmg initial damage$tickInfo)"
 
         session.send(ServerMessage.SpellCastResult(true, spell.name, castMsg, session.player!!.currentMp))
 
@@ -284,17 +303,18 @@ class SpellCommand(
     }
 
     private suspend fun handleHot(session: PlayerSession, spell: SpellDef, power: Int, playerName: String) {
+        val hotMagnitude = if (spell.tickPower > 0) spell.tickPower else power
         val effect = ActiveEffect(
             name = spell.name,
             type = EffectType.HEAL_OVER_TIME,
             remainingTicks = spell.effectDuration,
-            magnitude = power
+            magnitude = hotMagnitude
         )
 
         session.activeEffects.removeAll { it.name == spell.name }
         session.activeEffects.add(effect)
 
-        val castMsg = "$playerName ${spell.castMessage}! (heals $power/tick for ${spell.effectDuration} ticks)"
+        val castMsg = "$playerName ${spell.castMessage}! (heals $hotMagnitude/tick for ${spell.effectDuration} ticks)"
         session.send(ServerMessage.SpellCastResult(true, spell.name, castMsg, session.player!!.currentMp))
         session.send(ServerMessage.ActiveEffectsUpdate(session.activeEffects.toList()))
     }

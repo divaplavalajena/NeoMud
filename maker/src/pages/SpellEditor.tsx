@@ -20,6 +20,7 @@ const fields: FieldConfig[] = [
     ],
   },
   { key: 'basePower', label: 'Base Power', type: 'number' },
+  { key: 'tickPower', label: 'Tick Power (DoT/HoT per tick)', type: 'number' },
   {
     key: 'targetType', label: 'Target Type', type: 'select',
     options: [

@@ -17,6 +17,7 @@ import com.neomud.server.world.LootTableCatalog
 import com.neomud.server.world.SkillCatalog
 import com.neomud.server.world.WorldGraph
 import com.neomud.shared.model.ActiveEffect
+import com.neomud.shared.model.EffectType
 import com.neomud.shared.model.GroundItem
 import com.neomud.shared.model.RoomId
 import com.neomud.shared.protocol.ServerMessage
@@ -561,6 +562,135 @@ class GameLoop(
             try {
                 session.send(ServerMessage.ActiveEffectsUpdate(session.activeEffects.toList()))
             } catch (_: Exception) { /* session closing */ }
+        }
+
+        // 5b. Process active effects on NPCs (DoT, HoT, etc.)
+        val npcEffectKills = mutableListOf<CombatEvent.NpcKilled>()
+        for (npc in npcManager.getLivingNpcsWithEffects()) {
+            val effects = npc.activeEffects.toList()
+            val expired = mutableListOf<ActiveEffect>()
+
+            for (effect in effects) {
+                when (effect.type) {
+                    EffectType.POISON, EffectType.DAMAGE, EffectType.MANA_DRAIN -> {
+                        npc.currentHp = (npc.currentHp - effect.magnitude).coerceAtLeast(0)
+                        sessionManager.broadcastToRoom(
+                            npc.currentRoomId,
+                            ServerMessage.SpellEffect(
+                                casterName = effect.casterId,
+                                targetName = npc.name,
+                                spellName = effect.name,
+                                effectAmount = effect.magnitude,
+                                targetNewHp = npc.currentHp,
+                                targetMaxHp = npc.maxHp,
+                                targetId = npc.id
+                            )
+                        )
+                    }
+                    EffectType.HEAL_OVER_TIME -> {
+                        npc.currentHp = (npc.currentHp + effect.magnitude).coerceAtMost(npc.maxHp)
+                    }
+                    else -> { /* Buff types: no per-tick action needed */ }
+                }
+
+                val updated = effect.copy(remainingTicks = effect.remainingTicks - 1)
+                if (updated.remainingTicks <= 0) {
+                    expired.add(effect)
+                } else {
+                    val idx = npc.activeEffects.indexOf(effect)
+                    if (idx >= 0) npc.activeEffects[idx] = updated
+                }
+            }
+
+            npc.activeEffects.removeAll(expired)
+
+            // Check if NPC died from effect damage
+            if (npc.currentHp <= 0 && npc.isAlive) {
+                val killerName = effects
+                    .filter { it.type in setOf(EffectType.POISON, EffectType.DAMAGE, EffectType.MANA_DRAIN) }
+                    .firstOrNull()?.casterId ?: "unknown"
+                npcEffectKills.add(
+                    CombatEvent.NpcKilled(
+                        npcId = npc.id,
+                        npcName = npc.name,
+                        killerName = killerName,
+                        roomId = npc.currentRoomId,
+                        npcLevel = npc.level,
+                        xpReward = npc.xpReward,
+                        templateId = npc.templateId
+                    )
+                )
+            }
+        }
+
+        // Process NPC effect kills through existing kill handling
+        for (event in npcEffectKills) {
+            if (!npcManager.markDead(event.npcId)) continue
+            sessionManager.broadcastToRoom(
+                event.roomId,
+                ServerMessage.NpcDied(event.npcId, event.npcName, event.killerName, event.roomId)
+            )
+
+            val lootKey = event.templateId.ifEmpty { event.npcId }
+            val lootTable = lootTableCatalog.getLootTable(lootKey)
+            val coinDrop = lootTableCatalog.getCoinDrop(lootKey)
+            val lootedItems = lootService.rollLoot(lootTable)
+            val coins = lootService.rollCoins(coinDrop)
+
+            if (lootedItems.isNotEmpty() || !coins.isEmpty()) {
+                if (lootedItems.isNotEmpty()) {
+                    roomItemManager.addItems(
+                        event.roomId,
+                        lootedItems.map { GroundItem(it.itemId, it.quantity) }
+                    )
+                }
+                roomItemManager.addCoins(event.roomId, coins)
+
+                sessionManager.broadcastToRoom(
+                    event.roomId,
+                    ServerMessage.LootDropped(event.npcName, lootedItems, coins)
+                )
+
+                val groundItems = roomItemManager.getGroundItems(event.roomId)
+                val groundCoins = roomItemManager.getGroundCoins(event.roomId)
+                sessionManager.broadcastToRoom(
+                    event.roomId,
+                    ServerMessage.RoomItemsUpdate(groundItems, groundCoins)
+                )
+            }
+
+            if (event.xpReward > 0) {
+                val killerSession = sessionManager.getSession(event.killerName)
+                val killerPlayer = killerSession?.player
+                if (killerSession != null && killerPlayer != null) {
+                    val xpGained = XpCalculator.xpForKill(event.npcLevel, killerPlayer.level, event.xpReward)
+                    val newXp = killerPlayer.currentXp + xpGained
+                    killerSession.player = killerPlayer.copy(currentXp = newXp)
+                    try {
+                        killerSession.send(ServerMessage.XpGained(xpGained, newXp, killerPlayer.xpToNextLevel))
+                        if (XpCalculator.isReadyToLevel(newXp, killerPlayer.xpToNextLevel, killerPlayer.level)) {
+                            killerSession.send(ServerMessage.SystemMessage("You have enough experience to level up! Visit a trainer."))
+                        }
+                        playerRepository.savePlayerState(killerSession.player!!)
+                    } catch (_: Exception) { }
+                }
+            }
+
+            for (session in sessionManager.getSessionsInRoom(event.roomId)) {
+                if (session.attackMode) {
+                    val remaining = npcManager.getLivingHostileNpcsInRoom(event.roomId)
+                    if (remaining.isEmpty()) {
+                        session.attackMode = false
+                        session.selectedTargetId = null
+                        session.readiedSpellId = null
+                        try {
+                            session.send(ServerMessage.AttackModeUpdate(false))
+                        } catch (_: Exception) { }
+                    } else if (session.selectedTargetId == event.npcId) {
+                        session.selectedTargetId = null
+                    }
+                }
+            }
         }
 
         // 6. Room effects
