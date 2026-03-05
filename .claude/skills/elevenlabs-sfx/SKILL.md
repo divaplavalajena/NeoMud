@@ -31,7 +31,7 @@ The maker's Express backend has a `/generate/sound` endpoint that calls ElevenLa
 ```bash
 curl -X POST http://localhost:5173/api/generate/sound \
   -H "Content-Type: application/json" \
-  -d '{"prompt": "metallic sword clash", "duration": 2, "assetPath": "audio/sfx/sword_swing.mp3"}'
+  -d '{"prompt": "metallic sword clash", "duration": 2, "assetPath": "audio/items/sword_swing.mp3"}'
 ```
 
 This requires the maker dev server to be running (`cd maker && npm run dev`).

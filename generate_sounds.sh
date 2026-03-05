@@ -7,10 +7,15 @@ set -euo pipefail
 API_KEY="${ELEVENLABS_API_KEY:?Set ELEVENLABS_API_KEY environment variable}"
 API_URL="https://api.elevenlabs.io/v1/sound-generation"
 
-SFX_DIR="server/src/main/resources/assets/audio/sfx"
-BGM_DIR="server/src/main/resources/assets/audio/bgm"
+BASE_DIR="maker/default_world_src/assets/audio"
+ITEMS_DIR="$BASE_DIR/items"
+NPCS_DIR="$BASE_DIR/npcs"
+SPELLS_DIR="$BASE_DIR/spells"
+ROOMS_DIR="$BASE_DIR/rooms"
+GENERAL_DIR="$BASE_DIR/general"
+BGM_DIR="$BASE_DIR/bgm"
 
-mkdir -p "$SFX_DIR" "$BGM_DIR"
+mkdir -p "$ITEMS_DIR" "$NPCS_DIR" "$SPELLS_DIR" "$ROOMS_DIR" "$GENERAL_DIR" "$BGM_DIR"
 
 FAIL_COUNT=0
 SUCCESS_COUNT=0
@@ -51,71 +56,72 @@ generate() {
 
 echo "=== Generating SFX ==="
 
-# Weapons (0.5s)
-generate "$SFX_DIR/sword_swing.ogg"   "Sharp sword slash, metallic whoosh, short"                    0.5
-generate "$SFX_DIR/sword_miss.ogg"    "Sword whooshing through empty air, quick miss"                0.5
+# Weapons — items/ (0.5s)
+generate "$ITEMS_DIR/sword_swing.ogg"   "Sharp sword slash, metallic whoosh, short"                    0.5
+generate "$ITEMS_DIR/sword_miss.ogg"    "Sword whooshing through empty air, quick miss"                0.5
 
-# Combat (0.5-1.5s)
-generate "$SFX_DIR/backstab.ogg"      "Dagger stab into flesh, sneaky strike"                       0.5
-generate "$SFX_DIR/dodge.ogg"         "Quick dodge, leather rustle, near miss whoosh"                0.5
-generate "$SFX_DIR/miss.ogg"          "Faint whoosh, attack missing"                                 0.5
-generate "$SFX_DIR/enemy_death.ogg"   "Monster dying, pained groan and thud"                        1.5
+# Combat — general/ (0.5-1.5s)
+generate "$GENERAL_DIR/backstab.ogg"      "Dagger stab into flesh, sneaky strike"                       0.5
+generate "$GENERAL_DIR/dodge.ogg"         "Quick dodge, leather rustle, near miss whoosh"                0.5
+generate "$GENERAL_DIR/miss.ogg"          "Faint whoosh, attack missing"                                 0.5
+generate "$GENERAL_DIR/parry.ogg"         "Weapon parry, metallic clang"                                 0.5
+generate "$GENERAL_DIR/enemy_death.ogg"   "Monster dying, pained groan and thud"                        1.5
 
-# Items (0.5-1s)
-generate "$SFX_DIR/potion_drink.ogg"  "Drinking potion, liquid gulp, glass bottle"                  1.0
-generate "$SFX_DIR/loot_drop.ogg"     "Items dropping on stone, clinking metal"                     1.0
-generate "$SFX_DIR/item_pickup.ogg"   "Picking up item, leather bag rustle"                         0.5
-generate "$SFX_DIR/coin_pickup.ogg"   "Coins jingling, metal coins picked up"                       0.5
+# Items — general/ (0.5-1s)
+generate "$ITEMS_DIR/potion_drink.ogg"  "Drinking potion, liquid gulp, glass bottle"                  1.0
+generate "$GENERAL_DIR/loot_drop.ogg"     "Items dropping on stone, clinking metal"                     1.0
+generate "$GENERAL_DIR/item_pickup.ogg"   "Picking up item, leather bag rustle"                         0.5
+generate "$GENERAL_DIR/coin_pickup.ogg"   "Coins jingling, metal coins picked up"                       0.5
 
-# NPC Combat (0.5-1.5s)
-generate "$SFX_DIR/wolf_bite.ogg"     "Wolf bite and snarl, aggressive"                             1.0
-generate "$SFX_DIR/wolf_miss.ogg"     "Wolf snapping jaws, missing, snarl"                          0.5
-generate "$SFX_DIR/wolf_death.ogg"    "Wolf dying, pained whimper, collapse"                        1.5
-generate "$SFX_DIR/spider_bite.ogg"   "Giant spider fangs striking, chitinous snap"                 1.0
-generate "$SFX_DIR/spider_miss.ogg"   "Giant spider lunge miss, hissing"                            0.5
-generate "$SFX_DIR/spider_death.ogg"  "Giant spider dying, screech and crunch"                      1.5
+# NPC Combat — npcs/ (0.5-1.5s)
+generate "$NPCS_DIR/wolf_bite.ogg"     "Wolf bite and snarl, aggressive"                             1.0
+generate "$NPCS_DIR/wolf_miss.ogg"     "Wolf snapping jaws, missing, snarl"                          0.5
+generate "$NPCS_DIR/wolf_death.ogg"    "Wolf dying, pained whimper, collapse"                        1.5
+generate "$NPCS_DIR/spider_bite.ogg"   "Giant spider fangs striking, chitinous snap"                 1.0
+generate "$NPCS_DIR/spider_miss.ogg"   "Giant spider lunge miss, hissing"                            0.5
+generate "$NPCS_DIR/spider_death.ogg"  "Giant spider dying, screech and crunch"                      1.5
 
-# Footsteps (0.5s)
-generate "$SFX_DIR/footstep_cobblestone.ogg" "Single boot footstep on cobblestone"                  0.5
-generate "$SFX_DIR/footstep_dirt.ogg"        "Single footstep on dirt, crunching earth"             0.5
-generate "$SFX_DIR/footstep_grass.ogg"       "Single footstep on grass, soft rustle"                0.5
-generate "$SFX_DIR/footstep_wood.ogg"        "Single footstep on wooden floor, creak"               0.5
-generate "$SFX_DIR/footstep_marble.ogg"      "Single footstep on marble, echoing click"             0.5
-generate "$SFX_DIR/footstep_splash.ogg"      "Single footstep splashing shallow water"              0.5
+# Footsteps — rooms/ (0.5s)
+generate "$ROOMS_DIR/footstep_cobblestone.ogg" "Single boot footstep on cobblestone"                  0.5
+generate "$ROOMS_DIR/footstep_dirt.ogg"        "Single footstep on dirt, crunching earth"             0.5
+generate "$ROOMS_DIR/footstep_grass.ogg"       "Single footstep on grass, soft rustle"                0.5
+generate "$ROOMS_DIR/footstep_wood.ogg"        "Single footstep on wooden floor, creak"               0.5
+generate "$ROOMS_DIR/footstep_marble.ogg"      "Single footstep on marble, echoing click"             0.5
+generate "$ROOMS_DIR/footstep_splash.ogg"      "Single footstep splashing shallow water"              0.5
 
-# Spell Casts (1s)
-generate "$SFX_DIR/magic_missile_cast.ogg"  "Arcane energy charging and firing, magical zap"        1.0
-generate "$SFX_DIR/frost_bolt_cast.ogg"     "Ice forming and launching, crystalline crack"          1.0
-generate "$SFX_DIR/fireball_cast.ogg"       "Fire igniting, whooshing fireball launch"              1.0
-generate "$SFX_DIR/arcane_shield_cast.ogg"  "Magical barrier forming, shimmering energy hum"        1.0
-generate "$SFX_DIR/heal_cast.ogg"           "Warm healing light, gentle chime"                      1.0
-generate "$SFX_DIR/blessing_cast.ogg"       "Divine blessing, holy choir note"                      1.0
-generate "$SFX_DIR/divine_light_cast.ogg"   "Holy light burst, angelic tone"                        1.0
-generate "$SFX_DIR/thorn_strike_cast.ogg"   "Thorny vines whipping and lashing"                     1.0
-generate "$SFX_DIR/poison_cloud_cast.ogg"   "Toxic gas hissing, bubbling spread"                    1.0
-generate "$SFX_DIR/natures_wrath_cast.ogg"  "Nature fury, rumbling earth and wind"                  1.0
-generate "$SFX_DIR/inner_fire_cast.ogg"     "Internal fire igniting, resonant whoosh"               1.0
-generate "$SFX_DIR/chi_strike_cast.ogg"     "Ki energy strike, sharp martial impact"                1.0
-generate "$SFX_DIR/ki_blast_cast.ogg"       "Spiritual energy wave, deep pulse"                     1.0
-generate "$SFX_DIR/diamond_body_cast.ogg"   "Body hardening to diamond, crystalline ring"           1.0
-generate "$SFX_DIR/inspire_cast.ogg"        "Inspiring bardic lute chord"                           1.0
-generate "$SFX_DIR/soothing_song_cast.ogg"  "Gentle soothing harp melody"                          1.0
-generate "$SFX_DIR/discord_cast.ogg"        "Cacophonous blast, jarring dissonance"                 1.0
-generate "$SFX_DIR/rallying_cry_cast.ogg"   "Mighty battle shout, rallying cry"                     1.0
+# Spell Casts — spells/ (1s)
+generate "$SPELLS_DIR/magic_missile_cast.ogg"  "Arcane energy charging and firing, magical zap"        1.0
+generate "$SPELLS_DIR/frost_bolt_cast.ogg"     "Ice forming and launching, crystalline crack"          1.0
+generate "$SPELLS_DIR/fireball_cast.ogg"       "Fire igniting, whooshing fireball launch"              1.0
+generate "$SPELLS_DIR/arcane_shield_cast.ogg"  "Magical barrier forming, shimmering energy hum"        1.0
+generate "$SPELLS_DIR/heal_cast.ogg"           "Warm healing light, gentle chime"                      1.0
+generate "$SPELLS_DIR/blessing_cast.ogg"       "Divine blessing, holy choir note"                      1.0
+generate "$SPELLS_DIR/divine_light_cast.ogg"   "Holy light burst, angelic tone"                        1.0
+generate "$SPELLS_DIR/thorn_strike_cast.ogg"   "Thorny vines whipping and lashing"                     1.0
+generate "$SPELLS_DIR/poison_cloud_cast.ogg"   "Toxic gas hissing, bubbling spread"                    1.0
+generate "$SPELLS_DIR/natures_wrath_cast.ogg"  "Nature fury, rumbling earth and wind"                  1.0
+generate "$SPELLS_DIR/inner_fire_cast.ogg"     "Internal fire igniting, resonant whoosh"               1.0
+generate "$SPELLS_DIR/chi_strike_cast.ogg"     "Ki energy strike, sharp martial impact"                1.0
+generate "$SPELLS_DIR/ki_blast_cast.ogg"       "Spiritual energy wave, deep pulse"                     1.0
+generate "$SPELLS_DIR/diamond_body_cast.ogg"   "Body hardening to diamond, crystalline ring"           1.0
+generate "$SPELLS_DIR/inspire_cast.ogg"        "Inspiring bardic lute chord"                           1.0
+generate "$SPELLS_DIR/soothing_song_cast.ogg"  "Gentle soothing harp melody"                          1.0
+generate "$SPELLS_DIR/discord_cast.ogg"        "Cacophonous blast, jarring dissonance"                 1.0
+generate "$SPELLS_DIR/rallying_cry_cast.ogg"   "Mighty battle shout, rallying cry"                     1.0
 
-# Spell Impacts (0.5s)
-generate "$SFX_DIR/magic_missile_hit.ogg"   "Arcane bolt impact, magical pop"                       0.5
-generate "$SFX_DIR/frost_bolt_hit.ogg"      "Ice shard shattering on impact"                        0.5
-generate "$SFX_DIR/fireball_hit.ogg"        "Fireball explosion, fiery blast"                       0.5
-generate "$SFX_DIR/thorn_strike_hit.ogg"    "Thorny vine pierce, snapping impact"                   0.5
-generate "$SFX_DIR/poison_cloud_hit.ogg"    "Poison sizzle, acid contact"                           0.5
-generate "$SFX_DIR/natures_wrath_hit.ogg"   "Nature force crash, thunderous impact"                 0.5
-generate "$SFX_DIR/chi_strike_hit.ogg"      "Ki strike body impact, thud"                           0.5
-generate "$SFX_DIR/ki_blast_hit.ogg"        "Energy wave hit, resonant impact"                      0.5
-generate "$SFX_DIR/discord_hit.ogg"         "Discordant shockwave hit"                              0.5
+# Spell Impacts — spells/ (0.5s)
+generate "$SPELLS_DIR/magic_missile_hit.ogg"   "Arcane bolt impact, magical pop"                       0.5
+generate "$SPELLS_DIR/frost_bolt_hit.ogg"      "Ice shard shattering on impact"                        0.5
+generate "$SPELLS_DIR/fireball_hit.ogg"        "Fireball explosion, fiery blast"                       0.5
+generate "$SPELLS_DIR/thorn_strike_hit.ogg"    "Thorny vine pierce, snapping impact"                   0.5
+generate "$SPELLS_DIR/poison_cloud_hit.ogg"    "Poison sizzle, acid contact"                           0.5
+generate "$SPELLS_DIR/natures_wrath_hit.ogg"   "Nature force crash, thunderous impact"                 0.5
+generate "$SPELLS_DIR/chi_strike_hit.ogg"      "Ki strike body impact, thud"                           0.5
+generate "$SPELLS_DIR/ki_blast_hit.ogg"        "Energy wave hit, resonant impact"                      0.5
+generate "$SPELLS_DIR/discord_hit.ogg"         "Discordant shockwave hit"                              0.5
 
-# Spell Miss (1s)
-generate "$SFX_DIR/spell_fizzle.ogg"        "Spell fizzling out, magic dissipating, faint crackle"  1.0
+# Spell Miss — spells/ (1s)
+generate "$SPELLS_DIR/spell_fizzle.ogg"        "Spell fizzling out, magic dissipating, faint crackle"  1.0
 
 echo ""
 echo "=== Generating BGM ==="
