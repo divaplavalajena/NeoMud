@@ -28,8 +28,8 @@
       "value": 25,
       "weight": 2,
       "levelRequirement": 1,
-      "attackSound": "sword_swing",
-      "missSound": "sword_miss",
+      "attackSound": "dagger_slash",
+      "missSound": "dagger_miss",
       "imagePrompt": "A single rustic dagger with a short slightly nicked blade and worn leather-wrapped grip, simple crossguard, humble starter weapon. Isolated object centered, no surface, no hands.",
       "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed",
       "imageNegativePrompt": "background, surface, table, hands, person, multiple items, modern, sci-fi"

@@ -20,8 +20,8 @@ function spritePathFor(entityId: string): string {
   return `assets/images/${folder}/${entityId.replace(':', '_')}.webp`
 }
 
-function sfxPathFor(soundId: string): string {
-  return `assets/audio/sfx/${soundId}.mp3`
+function sfxPathFor(soundId: string, category: string): string {
+  return `assets/audio/${category}/${soundId}.mp3`
 }
 
 function bgmPathFor(trackId: string): string {
@@ -214,50 +214,33 @@ export async function validateProject(
   }
   // SFX files (deduped)
   const checkedSfx = new Set<string>()
+  const checkSfx = (soundId: string, category: string, owner: string) => {
+    const key = `${category}/${soundId}`
+    if (soundId && checkedSfx.add(key) && !assetExists(sfxPathFor(soundId, category))) {
+      warnings.push(`Missing SFX asset: ${sfxPathFor(soundId, category)} (referenced by ${owner})`)
+    }
+  }
   for (const item of items) {
     for (const sound of [item.attackSound, item.missSound, item.useSound]) {
-      if (sound && checkedSfx.add(sound) && !assetExists(sfxPathFor(sound))) {
-        warnings.push(`Missing SFX asset: ${sfxPathFor(sound)} (referenced by item '${item.id}')`)
-      }
+      checkSfx(sound, 'items', `item '${item.id}'`)
     }
   }
   for (const npc of npcs) {
     for (const sound of [npc.attackSound, npc.missSound, npc.deathSound, npc.interactSound, npc.exitSound]) {
-      if (sound && !checkedSfx.has(sound)) {
-        checkedSfx.add(sound)
-        if (!assetExists(sfxPathFor(sound))) {
-          warnings.push(`Missing SFX asset: ${sfxPathFor(sound)} (referenced by NPC '${npc.id}')`)
-        }
-      }
+      checkSfx(sound, 'npcs', `NPC '${npc.id}'`)
     }
   }
   for (const spell of spells) {
     for (const sound of [spell.castSound, spell.impactSound, spell.missSound]) {
-      if (sound && !checkedSfx.has(sound)) {
-        checkedSfx.add(sound)
-        if (!assetExists(sfxPathFor(sound))) {
-          warnings.push(`Missing SFX asset: ${sfxPathFor(sound)} (referenced by spell '${spell.id}')`)
-        }
-      }
+      checkSfx(sound, 'spells', `spell '${spell.id}'`)
     }
   }
   for (const zone of zones) {
     for (const room of zone.rooms) {
-      if (room.departSound && !checkedSfx.has(room.departSound)) {
-        checkedSfx.add(room.departSound)
-        if (!assetExists(sfxPathFor(room.departSound))) {
-          warnings.push(`Missing SFX asset: ${sfxPathFor(room.departSound)} (referenced by room '${room.id}')`)
-        }
-      }
-      // Effect sounds
+      checkSfx(room.departSound, 'rooms', `room '${room.id}'`)
       const effs = parseJsonField((room as any).effects, []) as { sound?: string }[]
       for (const eff of effs) {
-        if (eff.sound && !checkedSfx.has(eff.sound)) {
-          checkedSfx.add(eff.sound)
-          if (!assetExists(sfxPathFor(eff.sound))) {
-            warnings.push(`Missing SFX asset: ${sfxPathFor(eff.sound)} (referenced by room '${room.id}' effect)`)
-          }
-        }
+        if (eff.sound) checkSfx(eff.sound, 'rooms', `room '${room.id}' effect`)
       }
     }
   }
