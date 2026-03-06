@@ -645,18 +645,18 @@ private fun GameScreenLandscape(
     val hasTrackSkill = player?.characterClass?.let { classCatalog[it] }?.skills?.contains("TRACK") == true
     val hasKickSkill = player?.characterClass?.let { classCatalog[it] }?.skills?.contains("KICK") == true
 
-    Column(modifier = Modifier.fillMaxSize().background(StoneTheme.panelBg)) {
-        // Top row (~55%): Map area + Controls side-by-side
-        Row(
+    Row(modifier = Modifier.fillMaxSize().background(StoneTheme.panelBg)) {
+        // Left column (~50%): Room view (weighted) + Controls (intrinsic height)
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .weight(0.55f)
+                .weight(0.5f)
+                .fillMaxHeight()
         ) {
-            // Left side: Room background + sidebars + floating minimap
+            // Room view — fills available space above controls
             ThemedFrame(
                 modifier = Modifier
-                    .weight(0.55f)
-                    .fillMaxHeight(),
+                    .fillMaxWidth()
+                    .weight(1f),
                 cornerAccent = true
             ) {
                 // Layer 1: Full-bleed background image
@@ -664,7 +664,6 @@ private fun GameScreenLandscape(
                 RoomBackground(
                     imageUrl = currentRoom?.backgroundImage ?: "",
                     roomName = currentRoom?.name ?: "",
-
                     modifier = Modifier.fillMaxSize()
                 )
 
@@ -744,30 +743,14 @@ private fun GameScreenLandscape(
                 }
             }
 
-            Box(
-                modifier = Modifier
-                    .fillMaxHeight()
-                    .width(3.dp)
-                    .background(
-                        Brush.horizontalGradient(
-                            colors = listOf(
-                                StoneTheme.frameLight,
-                                StoneTheme.frameMid,
-                                StoneTheme.innerShadow
-                            )
-                        )
-                    )
-            )
-
-            // Right side: Status, D-pad, Action buttons
+            // Controls area — intrinsic height, no weight
             Column(
                 modifier = Modifier
-                    .weight(0.45f)
-                    .fillMaxHeight()
+                    .fillMaxWidth()
                     .background(StoneTheme.panelBg)
                     .padding(horizontal = 8.dp, vertical = 4.dp)
             ) {
-                // Player status panel (compact in landscape to save vertical space)
+                // Player status panel (compact in landscape)
                 val p = player
                 if (p != null && p.maxHp > 0) {
                     PlayerStatusPanel(
@@ -797,10 +780,10 @@ private fun GameScreenLandscape(
 
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    // Action buttons + gear in a column
+                    // Action buttons + utility icons in a column
                     Column(
                         horizontalAlignment = Alignment.End,
-                        modifier = Modifier.fillMaxHeight()
+                        modifier = Modifier.weight(1f)
                     ) {
                         ActionButtonRow(
                             gameViewModel = gameViewModel,
@@ -821,7 +804,7 @@ private fun GameScreenLandscape(
                             currentMp = player?.currentMp ?: 0,
                             skillCatalog = gameViewModel.skillCatalog.collectAsState().value
                         )
-                        Spacer(modifier = Modifier.weight(1f))
+                        Spacer(modifier = Modifier.height(4.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             SpellUtilityButton(classCatalog, player?.characterClass) {
                                 gameViewModel.openSpellPicker(0)
@@ -845,13 +828,27 @@ private fun GameScreenLandscape(
             }
         }
 
-        StoneDivider()
+        // Vertical stone divider between columns
+        Box(
+            modifier = Modifier
+                .fillMaxHeight()
+                .width(3.dp)
+                .background(
+                    Brush.horizontalGradient(
+                        colors = listOf(
+                            StoneTheme.frameLight,
+                            StoneTheme.frameMid,
+                            StoneTheme.innerShadow
+                        )
+                    )
+                )
+        )
 
-        // Bottom (~45%): Game log + say bar
+        // Right column (~50%): Game log (weighted) + Say bar (intrinsic height)
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .weight(0.45f)
+                .weight(0.5f)
+                .fillMaxHeight()
         ) {
             ThemedFrame(
                 modifier = Modifier
