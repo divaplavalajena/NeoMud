@@ -210,6 +210,9 @@
       "interactSound": "blacksmith_intro",
       "exitSound": "blacksmith_exit",
       "vendorItems": [
+        "item:rustic_dagger",
+        "item:wooden_staff",
+        "item:short_bow",
         "item:iron_sword",
         "item:wooden_shield",
         "item:leather_cap",
