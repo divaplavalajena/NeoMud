@@ -276,7 +276,7 @@ class GameViewModel(
                 addLog(text, color)
                 if (message.npcId.isNotEmpty()) {
                     val current = _roomEntities.value.toMutableList()
-                    current.add(Npc(
+                    current.add(0, Npc(
                         id = message.npcId,
                         name = message.npcName,
                         description = "",
