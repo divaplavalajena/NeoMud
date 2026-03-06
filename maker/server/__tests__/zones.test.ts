@@ -549,6 +549,28 @@ describe('Room creation rejects overlapping coordinates (#91)', () => {
     expect(res.status).toBe(200)
   })
 
+  it('rejects update that moves room to occupied coordinates', async () => {
+    const res = await request(app).put('/api/zones/overlap_test/rooms/room_3').send({
+      x: 3, y: 5,
+    })
+    expect(res.status).toBe(409)
+    expect(res.body.error).toContain('coordinates')
+  })
+
+  it('allows update to move room to unoccupied coordinates', async () => {
+    const res = await request(app).put('/api/zones/overlap_test/rooms/room_3').send({
+      x: 10, y: 10,
+    })
+    expect(res.status).toBe(200)
+  })
+
+  it('allows update to same room without coordinate conflict', async () => {
+    const res = await request(app).put('/api/zones/overlap_test/rooms/room_1').send({
+      x: 3, y: 5, name: 'Room 1 Updated',
+    })
+    expect(res.status).toBe(200)
+  })
+
   it('cleanup', async () => {
     await request(app).delete('/api/zones/overlap_test')
   })

@@ -240,6 +240,18 @@ zonesRouter.put('/zones/:zoneId/rooms/:id', rejectIfReadOnly, async (req, res) =
     const { zoneId } = req.params
     const rawId = req.params.id
     const fullId = rawId.startsWith(`${zoneId}:`) ? rawId : `${zoneId}:${rawId}`
+
+    // Validate no other room exists at the same coordinates in this zone
+    if (req.body.x !== undefined && req.body.y !== undefined) {
+      const overlapping = await db().room.findFirst({
+        where: { zoneId, x: req.body.x, y: req.body.y, id: { not: fullId } },
+      })
+      if (overlapping) {
+        res.status(409).json({ error: `A room already exists at coordinates (${req.body.x}, ${req.body.y})` })
+        return
+      }
+    }
+
     const room = await db().room.update({
       where: { id: fullId },
       data: req.body,
