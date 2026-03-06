@@ -10,18 +10,20 @@
 - Default Players has sprite gallery with filter dropdowns (race/gender/class)
 - Default SFX has category-filtered list with colored status dots
 
-### Known Issues (as of Session 4 - 2026-03-01)
+### Known Issues (as of Session 7 - 2026-03-06)
+- Canvas room hit-testing misaligned at ALL DPR values (Issue #106) -- regression from Issue #69 fix
+- NPC Behavior Type dropdown missing Wander and Trainer options (Issue #122) -- data shows correct behavior but dropdown falls back to Idle, saving would corrupt data
+- React CSS warning: borderColor/border shorthand conflict on NPC map mode changes (Issue #123)
+- NPC Name field placeholder says "Goblin Guard" instead of generic text (Issue #124)
 - Package .nmd uses native confirm() instead of proper modal (Issue #100)
 - NPC list placeholder uses lowercase 'npc' (Issue #98)
-- New Item form placeholder misleadingly shows 'Iron Sword' (Issue #97)
 - Zone deletion has no confirmation dialog (Issue #99)
 - No server-side input validation/sanitization (Issue #90)
 - Room creation allows overlapping coordinates (Issue #91)
 - API key visible in accessibility tree + API response despite visual masking (Issue #82)
-- No search/filter on entity lists (Issue #85)
-- Raw JSON error messages throughout (Issue #86)
 - Class/NPC editors use raw JSON for structured data (Issue #75)
 - NPC creature image dimension labels show humanoid maximums (Issue #74)
+- Search placeholder says "Search Classs..." on Classes page (Issue #114) -- naive pluralization
 
 ### Fixed Since Session 3
 - Room ID double zone-prefix (Issue #87) -- FIXED
@@ -29,6 +31,20 @@
 - Grammar "A entity/item" in error messages (Issue #89) -- FIXED
 - Validation results shown in browser alert() (Issue #81) -- FIXED (Validate button uses modal now)
 - Grammar "a npc" in placeholder (Issue #83) -- FIXED in error messages but NOT in list placeholder
+- Search/filter on entity lists (Issue #85) -- FIXED (all entity pages now have search box)
+- Raw JSON error messages (Issue #86) -- FIXED (friendly messages like "Item ID is required")
+- New Item form placeholder misleadingly shows 'Iron Sword' (Issue #97) -- FIXED (now "e.g. iron_sword")
+- Validator checks old audio/sfx/ path (Issue #108) -- FIXED (now checks type-based subdirectories)
+
+### Audio Subdirectory Mapping (Session 5)
+- SfxPreview component correctly resolves audio paths by entity type:
+  - NPC sounds (attackSound, missSound, deathSound, interactSound, exitSound) -> audio/npcs/
+  - Item sounds (attackSound, missSound, useSound) -> audio/items/
+  - Spell sounds (castSound, impactSound, missSound) -> audio/spells/
+  - Room departSound -> audio/rooms/
+  - Default SFX mapping: combat/loot -> audio/general/, item -> audio/items/, magic -> audio/spells/, movement -> audio/rooms/
+- Asset-mgmt history requests also use the correct subdirectory paths
+- Validator now correctly checks type-based subdirectories (Issue #108 FIXED)
 
 ### Fixed in Earlier Sessions
 - Opening existing projects (Issue #79)
@@ -44,6 +60,20 @@
 - Missing favicon (Issue #64)
 - Cross-zone exit names show raw IDs (Issue #70)
 
+### NPC Editor Features (Session 7)
+- 3-panel layout: NPC list (left), zone map (center), form (right)
+- Map Mode toolbar: View, Set Start, Edit Patrol (patrol NPCs only), Edit Spawns
+- Set Start mode: orange helper text, click room to set, Pick button highlights
+- Edit Spawns mode: toggle rooms as spawn points, "Done Editing Spawns" button in form
+- Edit Patrol mode: numbered route badges on map, dashed purple lines showing path
+- Patrol Route list in form: numbered entries with reorder arrows and delete buttons
+- Spawn Points section: shows list of spawn rooms or "defaults to start room"
+- Start room shown with gold border + gold star on map
+- Behavior-specific form sections: Patrol Route for patrol, Vendor Items for vendor
+- NPC list shows behavior type + zone subtitle (e.g., "wander - Whispering Forest")
+- NPC search filters list by name (case-insensitive)
+- Room-level Max Hostile NPCs field in Zone Editor (after Depart Sound, before Effects)
+
 ### What Works Well
 - Zone map rendering with room boxes, exit arrows, cross-zone labels
 - Layer navigation (up/down buttons for multi-level zones like Tavern Cellar)
@@ -58,6 +88,7 @@
 - Audio preview/player inline for BGM tracks
 - Depart Sound dropdown with human-readable labels
 - Export .nmd instant download
+- Dependency upgrades (Express 5, jsdom 28, Prisma 7.4.2, react-router-dom 7.13.1) verified stable -- no regressions
 - Item creation flow: create -> auto-switch to edit mode
 - Validation modal dialog (improved from alert())
 - Responsive layout degrades gracefully at narrow widths
@@ -84,7 +115,7 @@
 
 ### Interaction Tips
 - Room boxes on zone map are canvas-rendered, not DOM elements
-- DPI canvas hit-testing fixed but still needs DPR ~1.0 for reliable clicking
+- DPI canvas hit-testing BROKEN at all DPR values (Issue #106) -- cannot click rooms on canvas map
 - Right panel scrolls independently from map area
 - Export endpoint is `/api/export/nmd` (not `/api/export`)
 - Room creation now has a confirm dialog

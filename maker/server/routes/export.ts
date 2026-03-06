@@ -95,6 +95,7 @@ export async function buildNmdBundle(prisma: PrismaClient, projectName: string):
           ...(Object.keys(hiddenExits).length > 0 ? { hiddenExits } : {}),
           ...((() => { const i = parseJsonField(room.interactables, []); return i.length > 0 ? { interactables: i } : {}; })()),
           ...((() => { const u = parseJsonField(room.unpickableExits, []); return u.length > 0 ? { unpickableExits: u } : {}; })()),
+          ...(room.maxHostileNpcs != null ? { maxHostileNpcs: room.maxHostileNpcs } : {}),
         }
       }),
       npcs: zoneNpcs.map((npc) => ({
@@ -400,6 +401,7 @@ exportRouter.get('/json', async (_req, res) => {
           ...(Object.keys(hiddenExits).length > 0 ? { hiddenExits } : {}),
           ...((() => { const i = parseJsonField(room.interactables, []); return i.length > 0 ? { interactables: i } : {}; })()),
           ...((() => { const u = parseJsonField(room.unpickableExits, []); return u.length > 0 ? { unpickableExits: u } : {}; })()),
+          ...(room.maxHostileNpcs != null ? { maxHostileNpcs: room.maxHostileNpcs } : {}),
         }
       }
 

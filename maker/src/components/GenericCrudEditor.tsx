@@ -356,7 +356,7 @@ function GenericCrudEditor({ entityName, apiPath, fields, idField = 'id', imageP
           )}
           <input
             type="text"
-            placeholder={`Search ${entityName}s...`}
+            placeholder={`Search ${entityName.endsWith('s') || entityName.endsWith('x') || entityName.endsWith('sh') || entityName.endsWith('ch') ? entityName + 'es' : entityName + 's'}...`}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{ ...styles.input, marginTop: 8, fontSize: 12 }}

@@ -49,6 +49,7 @@ model Room {
   unpickableExits     String @default("[]")
   imageWidth          Int    @default(1024)
   imageHeight         Int    @default(576)
+  maxHostileNpcs      Int?
   exits               Exit[] @relation("fromRoom")
   incomingExits       Exit[] @relation("toRoom")
 }

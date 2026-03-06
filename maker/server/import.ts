@@ -308,6 +308,7 @@ export async function importNmd(nmdPath: string, projectName: string, readOnly =
           imageNegativePrompt: room.imageNegativePrompt ?? legacyRoom?.negativePrompt ?? '',
           imageWidth: room.imageWidth ?? legacyRoom?.width ?? 1024,
           imageHeight: room.imageHeight ?? legacyRoom?.height ?? 576,
+          maxHostileNpcs: room.maxHostileNpcs ?? null,
         },
       })
     }

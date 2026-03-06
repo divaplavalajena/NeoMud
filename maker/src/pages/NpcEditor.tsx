@@ -1,90 +1,854 @@
-import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
-import GenericCrudEditor from '../components/GenericCrudEditor';
-import type { FieldConfig } from '../components/GenericCrudEditor';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import api from '../api';
+import MapCanvas from '../components/MapCanvas';
+import type { MapOverlay } from '../components/MapCanvas';
+import ImagePreview from '../components/ImagePreview';
+import SfxPreview from '../components/SfxPreview';
+import type { CSSProperties } from 'react';
 
 interface Zone {
   id: string;
   name: string;
 }
 
+interface Exit {
+  fromRoomId: string;
+  toRoomId: string;
+  direction: string;
+}
+
 interface Room {
   id: string;
   name: string;
+  x: number;
+  y: number;
+  exits: Exit[];
+}
+
+interface NpcRecord {
+  id: string;
+  name: string;
+  description: string;
+  zoneId: string;
+  startRoomId: string;
+  behaviorType: string;
+  patrolRoute: string;
+  hostile: boolean;
+  maxHp: number;
+  damage: number;
+  level: number;
+  perception: number;
+  xpReward: number;
+  accuracy: number;
+  defense: number;
+  evasion: number;
+  agility: number;
+  vendorItems: string;
+  spawnPoints: string;
+  lootItems: string;
+  coinDrop: string;
+  attackSound: string;
+  missSound: string;
+  deathSound: string;
+  interactSound: string;
+  exitSound: string;
+  imagePrompt: string;
+  imageStyle: string;
+  imageNegativePrompt: string;
+  imageWidth: number;
+  imageHeight: number;
+}
+
+type MapMode = 'view' | 'start' | 'patrol' | 'spawns';
+
+const BEHAVIOR_OPTIONS = [
+  { value: 'idle', label: 'Idle' },
+  { value: 'wander', label: 'Wander' },
+  { value: 'patrol', label: 'Patrol' },
+  { value: 'vendor', label: 'Vendor' },
+  { value: 'trainer', label: 'Trainer' },
+  { value: 'quest', label: 'Quest Giver' },
+];
+
+const BEHAVIOR_DESCRIPTIONS: Record<string, string> = {
+  idle: 'Stays in start room, never moves.',
+  wander: 'Wanders randomly through all rooms in the zone.',
+  patrol: 'Walks a fixed route of rooms in sequence.',
+  vendor: 'Stays in start room. Players can buy/sell items.',
+  trainer: 'Stays in start room. Players can train skills/levels.',
+  quest: 'Stays in start room. Quest giver.',
+};
+
+const styles: Record<string, CSSProperties> = {
+  container: { display: 'flex', height: '100%', overflow: 'hidden' },
+  listPanel: {
+    width: 220, minWidth: 220, borderRight: '1px solid #ddd',
+    backgroundColor: '#fff', display: 'flex', flexDirection: 'column', overflow: 'hidden',
+  },
+  listTop: { padding: 12, borderBottom: '1px solid #eee' },
+  newBtn: {
+    width: '100%', padding: '8px', fontSize: 13, fontWeight: 600,
+    backgroundColor: '#1a1a2e', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer',
+  },
+  listItems: { flex: 1, overflowY: 'auto', padding: '4px 0' },
+  listItem: { padding: '8px 12px', cursor: 'pointer', fontSize: 13, borderBottom: '1px solid #f0f0f0' },
+  listItemSelected: { backgroundColor: '#e8eaf6', fontWeight: 600 },
+  centerPanel: { flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' },
+  mapToolbar: {
+    display: 'flex', gap: 4, padding: '6px 8px', backgroundColor: '#fff',
+    borderBottom: '1px solid #ddd', alignItems: 'center', flexWrap: 'wrap',
+  },
+  modeBtn: {
+    padding: '4px 10px', fontSize: 11, fontWeight: 600, border: '1px solid #ccc',
+    borderRadius: 4, cursor: 'pointer', backgroundColor: '#f5f5f5', color: '#333',
+  },
+  modeBtnActive: { backgroundColor: '#1a1a2e', color: '#fff', border: '1px solid #1a1a2e' },
+  mapArea: { flex: 1, position: 'relative' },
+  rightPanel: {
+    width: 340, minWidth: 340, borderLeft: '1px solid #ddd',
+    backgroundColor: '#fafafa', overflowY: 'auto', padding: 16,
+  },
+  sectionTitle: { fontSize: 14, fontWeight: 700, marginBottom: 8, marginTop: 16, color: '#1a1a2e' },
+  label: { display: 'block', fontSize: 11, fontWeight: 600, color: '#666', marginBottom: 3, marginTop: 8 },
+  input: {
+    width: '100%', padding: '6px 8px', fontSize: 13, border: '1px solid #ccc',
+    borderRadius: 4, boxSizing: 'border-box' as const,
+  },
+  textarea: {
+    width: '100%', padding: '6px 8px', fontSize: 13, border: '1px solid #ccc',
+    borderRadius: 4, minHeight: 60, resize: 'vertical' as const, boxSizing: 'border-box' as const,
+  },
+  select: {
+    width: '100%', padding: '6px 8px', fontSize: 13, border: '1px solid #ccc',
+    borderRadius: 4, boxSizing: 'border-box' as const,
+  },
+  jsonTextarea: {
+    width: '100%', padding: '6px 8px', fontSize: 12, fontFamily: 'monospace',
+    border: '1px solid #ccc', borderRadius: 4, minHeight: 80, resize: 'vertical' as const,
+    boxSizing: 'border-box' as const,
+  },
+  btnRow: { display: 'flex', gap: 8, marginTop: 16 },
+  btnSmall: {
+    padding: '8px 16px', fontSize: 13, fontWeight: 600,
+    backgroundColor: '#1a1a2e', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer',
+  },
+  btnDanger: {
+    padding: '8px 16px', fontSize: 13, fontWeight: 600,
+    backgroundColor: '#d32f2f', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer',
+  },
+  error: { color: '#d32f2f', fontSize: 12, marginTop: 4 },
+  empty: { color: '#999', fontSize: 13, textAlign: 'center', marginTop: 40 },
+  routeItem: {
+    display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px',
+    backgroundColor: '#f3e5f5', borderRadius: 4, fontSize: 12, marginBottom: 2,
+  },
+  spawnItem: {
+    display: 'flex', alignItems: 'center', gap: 4, padding: '4px 8px',
+    backgroundColor: '#e0f7fa', borderRadius: 4, fontSize: 12, marginBottom: 2,
+  },
+};
+
+function prettyJson(value: string): string {
+  if (!value || value === '') return '';
+  try { return JSON.stringify(JSON.parse(value), null, 2); } catch { return value; }
+}
+
+function parseJsonArray(val: string): string[] {
+  if (!val) return [];
+  try {
+    const parsed = JSON.parse(val);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch { return []; }
 }
 
 function NpcEditor() {
-  const [zoneOptions, setZoneOptions] = useState<{ value: string; label: string }[]>([]);
-  const [roomOptions, setRoomOptions] = useState<{ value: string; label: string }[]>([]);
-  const location = useLocation();
+  // Data state
+  const [zones, setZones] = useState<Zone[]>([]);
+  const [npcs, setNpcs] = useState<NpcRecord[]>([]);
+  const [rooms, setRooms] = useState<Room[]>([]); // rooms for the selected NPC's zone
+  const [allZoneRooms, setAllZoneRooms] = useState<Map<string, Room[]>>(new Map());
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [isNew, setIsNew] = useState(false);
+  const [form, setForm] = useState<Record<string, any>>({});
+  const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
+  const [mapMode, setMapMode] = useState<MapMode>('view');
 
+  // Load zones and NPCs
   useEffect(() => {
-    api.get<Zone[]>('/zones').then((zones) => {
-      setZoneOptions(zones.map((z) => ({ value: z.id, label: z.name })));
-      // Load all rooms across all zones
-      const promises = zones.map((z) =>
-        api.get<Room[]>(`/zones/${z.id}/rooms`).then((rooms) =>
-          rooms.map((r) => ({ value: r.id, label: `${z.name} > ${r.name}` }))
-        )
-      );
-      Promise.all(promises).then((results) => {
-        setRoomOptions(results.flat());
-      });
-    }).catch(() => {});
-  }, [location.pathname]);
+    api.get<Zone[]>('/zones').then(setZones).catch(() => {});
+    api.get<NpcRecord[]>('/npcs').then(setNpcs).catch(() => {});
+  }, []);
 
-  const fields: FieldConfig[] = [
-    { key: 'id', label: 'ID', type: 'text', placeholder: 'e.g. goblin_guard' },
-    { key: 'name', label: 'Name', type: 'text', placeholder: 'Goblin Guard' },
-    { key: 'description', label: 'Description', type: 'textarea', rows: 3 },
-    { key: 'zoneId', label: 'Zone', type: 'select', options: zoneOptions, required: true },
-    { key: 'startRoomId', label: 'Start Room', type: 'select', options: roomOptions },
-    {
-      key: 'behaviorType', label: 'Behavior Type', type: 'select',
-      options: [
-        { value: 'idle', label: 'Idle' },
-        { value: 'patrol', label: 'Patrol' },
-        { value: 'aggressive', label: 'Aggressive' },
-        { value: 'vendor', label: 'Vendor' },
-        { value: 'quest', label: 'Quest Giver' },
-      ],
-    },
-    { key: 'hostile', label: 'Hostile', type: 'checkbox' },
-    { key: 'level', label: 'Level', type: 'number' },
-    { key: 'maxHp', label: 'Max HP', type: 'number' },
-    { key: 'damage', label: 'Damage', type: 'number' },
-    { key: 'accuracy', label: 'Accuracy', type: 'number' },
-    { key: 'defense', label: 'Defense', type: 'number' },
-    { key: 'evasion', label: 'Evasion', type: 'number' },
-    { key: 'agility', label: 'Agility', type: 'number' },
-    { key: 'perception', label: 'Perception', type: 'number' },
-    { key: 'xpReward', label: 'XP Reward', type: 'number' },
-    { key: 'patrolRoute', label: 'Patrol Route (JSON)', type: 'json', rows: 3, help: 'Array of room IDs, e.g. ["zone:room1","zone:room2"]' },
-    { key: 'vendorItems', label: 'Vendor Items (JSON)', type: 'json', rows: 3, help: 'Array of item IDs this NPC sells' },
-    { key: 'lootItems', label: 'Loot Items (JSON)', type: 'json', rows: 6, help: 'Array of loot entries, e.g. [{"itemId":"item:wolf_pelt","chance":0.8,"minQuantity":1,"maxQuantity":1}]' },
-    { key: 'coinDrop', label: 'Coin Drop (JSON)', type: 'json', rows: 3, help: 'e.g. {"minCopper":5,"maxCopper":20,"minSilver":0,"maxSilver":1}' },
-    { key: 'attackSound', label: 'Attack Sound', type: 'sfx', audioCategory: 'npcs' },
-    { key: 'missSound', label: 'Miss Sound', type: 'sfx', audioCategory: 'npcs' },
-    { key: 'deathSound', label: 'Death Sound', type: 'sfx', audioCategory: 'npcs' },
-    { key: 'interactSound', label: 'Interact Sound', type: 'sfx', audioCategory: 'npcs' },
-    { key: 'exitSound', label: 'Exit Sound', type: 'sfx', audioCategory: 'npcs' },
-    { key: 'imagePrompt', label: 'Image Prompt', type: 'textarea', rows: 3 },
-    { key: 'imageStyle', label: 'Image Style', type: 'text' },
-    { key: 'imageNegativePrompt', label: 'Image Negative Prompt', type: 'text' },
-    { key: 'imageWidth', label: 'Image Width (384 humanoid, 512 creature)', type: 'number', max: 512 },
-    { key: 'imageHeight', label: 'Image Height (512 humanoid, 384 creature)', type: 'number', max: 512 },
-  ];
+  // Load all zone rooms for the map (cached per zone)
+  const loadZoneRooms = useCallback(async (zoneId: string) => {
+    if (allZoneRooms.has(zoneId)) {
+      setRooms(allZoneRooms.get(zoneId)!);
+      return;
+    }
+    try {
+      const zoneRooms = await api.get<Room[]>(`/zones/${zoneId}/rooms`);
+      setAllZoneRooms((prev) => new Map(prev).set(zoneId, zoneRooms));
+      setRooms(zoneRooms);
+    } catch {
+      setRooms([]);
+    }
+  }, [allZoneRooms]);
+
+  // When selected NPC changes, load its zone's rooms
+  useEffect(() => {
+    const zoneId = form.zoneId;
+    if (zoneId) {
+      loadZoneRooms(zoneId);
+    } else {
+      setRooms([]);
+    }
+  }, [form.zoneId, loadZoneRooms]);
+
+  // Build all room options for dropdowns (cross-zone)
+  const allRoomOptions = useMemo(() => {
+    const opts: { value: string; label: string }[] = [];
+    for (const zone of zones) {
+      const zoneRooms = allZoneRooms.get(zone.id) || [];
+      for (const r of zoneRooms) {
+        opts.push({ value: r.id, label: `${zone.name} > ${r.name}` });
+      }
+    }
+    return opts;
+  }, [zones, allZoneRooms]);
+
+  // Eagerly load all zone rooms for dropdown options
+  useEffect(() => {
+    for (const zone of zones) {
+      if (!allZoneRooms.has(zone.id)) {
+        api.get<Room[]>(`/zones/${zone.id}/rooms`).then((zoneRooms) => {
+          setAllZoneRooms((prev) => new Map(prev).set(zone.id, zoneRooms));
+        }).catch(() => {});
+      }
+    }
+  }, [zones, allZoneRooms]);
+
+  const handleSelect = (id: string) => {
+    const npc = npcs.find((n) => n.id === id);
+    if (!npc) return;
+    setSelectedId(id);
+    setIsNew(false);
+    setError('');
+    setMapMode('view');
+    setForm({
+      ...npc,
+      vendorItems: prettyJson(npc.vendorItems),
+      lootItems: prettyJson(npc.lootItems),
+      coinDrop: prettyJson(npc.coinDrop),
+    });
+  };
+
+  const handleNew = () => {
+    setSelectedId(null);
+    setIsNew(true);
+    setError('');
+    setMapMode('view');
+    setForm({
+      id: '', name: '', description: '', zoneId: zones[0]?.id || '', startRoomId: '',
+      behaviorType: 'idle', hostile: false, level: 1, maxHp: 10, damage: 1,
+      accuracy: 0, defense: 0, evasion: 0, agility: 10, perception: 0, xpReward: 0,
+      patrolRoute: '', vendorItems: '', spawnPoints: '[]', lootItems: '', coinDrop: '',
+      attackSound: '', missSound: '', deathSound: '', interactSound: '', exitSound: '',
+      imagePrompt: '', imageStyle: '', imageNegativePrompt: '', imageWidth: 384, imageHeight: 512,
+    });
+  };
+
+  const handleChange = (key: string, value: any) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleSave = async () => {
+    setError('');
+    if (!form.id?.trim()) { setError('ID is required'); return; }
+    if (!form.name?.trim()) { setError('Name is required'); return; }
+    if (!form.zoneId) { setError('Zone is required'); return; }
+
+    // Validate JSON fields
+    for (const key of ['vendorItems', 'lootItems', 'coinDrop']) {
+      const val = form[key];
+      if (val && val.trim()) {
+        try { JSON.parse(val); } catch { setError(`Invalid JSON in ${key}`); return; }
+      }
+    }
+
+    try {
+      if (isNew) {
+        const created = await api.post<NpcRecord>('/npcs', form);
+        setNpcs((prev) => [...prev, created]);
+        setSelectedId(created.id);
+        setIsNew(false);
+        setForm({
+          ...created,
+          vendorItems: prettyJson(created.vendorItems),
+          lootItems: prettyJson(created.lootItems),
+          coinDrop: prettyJson(created.coinDrop),
+        });
+      } else if (selectedId) {
+        const { id: _id, ...updateData } = form;
+        const updated = await api.put<NpcRecord>(`/npcs/${selectedId}`, updateData);
+        setNpcs((prev) => prev.map((n) => (n.id === selectedId ? updated : n)));
+        setForm({
+          ...updated,
+          vendorItems: prettyJson(updated.vendorItems),
+          lootItems: prettyJson(updated.lootItems),
+          coinDrop: prettyJson(updated.coinDrop),
+        });
+      }
+    } catch (err: any) {
+      setError(err.message || 'Save failed');
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedId) return;
+    if (!confirm('Delete this NPC?')) return;
+    try {
+      await api.del(`/npcs/${selectedId}`);
+      setNpcs((prev) => prev.filter((n) => n.id !== selectedId));
+      setSelectedId(null);
+      setForm({});
+      setIsNew(false);
+    } catch (err: any) {
+      setError(err.message || 'Delete failed');
+    }
+  };
+
+  // Room name lookup
+  const roomNameMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const r of rooms) map.set(r.id, r.name);
+    return map;
+  }, [rooms]);
+
+  // Parse patrol route and spawn points from form
+  const patrolRoute = useMemo(() => parseJsonArray(form.patrolRoute), [form.patrolRoute]);
+  const spawnPoints = useMemo(() => parseJsonArray(form.spawnPoints), [form.spawnPoints]);
+
+  // Build map overlay based on selected NPC's behavior
+  const mapOverlay = useMemo((): MapOverlay | undefined => {
+    if (!form.zoneId || rooms.length === 0) return undefined;
+    const overlay: MapOverlay = {};
+
+    // Start room
+    if (form.startRoomId) overlay.startRoomId = form.startRoomId;
+
+    // Spawn points
+    if (spawnPoints.length > 0) overlay.spawnPoints = spawnPoints;
+
+    const bt = form.behaviorType;
+    if (bt === 'patrol' && patrolRoute.length >= 2) {
+      // Patrol: highlight route rooms magenta, draw route lines
+      overlay.patrolRoute = patrolRoute;
+      const tints = new Map<string, string>();
+      for (const rid of patrolRoute) tints.set(rid, '#e040fb');
+      overlay.roomTints = tints;
+    } else if (bt === 'wander') {
+      // Wander: all zone rooms tinted blue (NPC can move to any room in zone)
+      const tints = new Map<string, string>();
+      for (const r of rooms) tints.set(r.id, '#42a5f5');
+      overlay.roomTints = tints;
+    }
+    // idle/vendor/quest: no tint, just start room marker
+
+    return overlay;
+  }, [form.zoneId, form.startRoomId, form.behaviorType, rooms, patrolRoute, spawnPoints]);
+
+  // Map exit data
+  const mapExits = useMemo(() => {
+    const exits: { fromRoomId: string; toRoomId: string; direction: string }[] = [];
+    for (const room of rooms) {
+      for (const exit of (room.exits || [])) {
+        exits.push(exit);
+      }
+    }
+    return exits;
+  }, [rooms]);
+
+  // Handle map room click based on mode
+  const handleMapRoomClick = useCallback((roomId: string) => {
+    if (mapMode === 'start') {
+      handleChange('startRoomId', roomId);
+      setMapMode('view');
+    } else if (mapMode === 'patrol') {
+      const current = parseJsonArray(form.patrolRoute);
+      // Toggle: if last item is same room, remove it; otherwise append
+      if (current.length > 0 && current[current.length - 1] === roomId) {
+        current.pop();
+      } else {
+        current.push(roomId);
+      }
+      handleChange('patrolRoute', JSON.stringify(current));
+    } else if (mapMode === 'spawns') {
+      const current = parseJsonArray(form.spawnPoints);
+      const idx = current.indexOf(roomId);
+      if (idx >= 0) {
+        current.splice(idx, 1);
+      } else {
+        current.push(roomId);
+      }
+      handleChange('spawnPoints', JSON.stringify(current));
+    }
+  }, [mapMode, form.patrolRoute, form.spawnPoints]);
+
+  const noopCreate = useCallback(() => {}, []);
+  const noopExit = useCallback((_f: string, _t: string) => {}, []);
+
+  const showForm = isNew || selectedId !== null;
+  const showMapToolbar = showForm && !isNew && rooms.length > 0;
+
+  // Filtered NPC list
+  const filteredNpcs = useMemo(() => {
+    return npcs
+      .filter((n) => {
+        if (!search) return true;
+        const q = search.toLowerCase();
+        return n.name.toLowerCase().includes(q) || n.id.toLowerCase().includes(q);
+      })
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [npcs, search]);
 
   return (
-    <GenericCrudEditor
-      entityName="NPC"
-      apiPath="/npcs"
-      fields={fields}
-      imagePreview={{ entityType: 'npc', maxWidth: 384, maxHeight: 512 }}
-      disableCreate={zoneOptions.length === 0}
-      disableCreateMessage="Create a zone first before adding NPCs."
-    />
+    <div style={styles.container}>
+      {/* Left: NPC List */}
+      <div style={styles.listPanel}>
+        <div style={styles.listTop}>
+          <button
+            style={{ ...styles.newBtn, ...(zones.length === 0 ? { opacity: 0.5, cursor: 'not-allowed' } : {}) }}
+            onClick={zones.length === 0 ? undefined : handleNew}
+            disabled={zones.length === 0}
+          >
+            + New NPC
+          </button>
+          {zones.length === 0 && (
+            <div style={{ fontSize: 11, color: '#999', marginTop: 6, textAlign: 'center' }}>
+              Create a zone first before adding NPCs.
+            </div>
+          )}
+          <input
+            type="text"
+            placeholder="Search NPCs..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ ...styles.input, marginTop: 8, fontSize: 12 }}
+          />
+        </div>
+        <div style={styles.listItems}>
+          {filteredNpcs.map((npc) => (
+            <div
+              key={npc.id}
+              style={{
+                ...styles.listItem,
+                ...(npc.id === selectedId && !isNew ? styles.listItemSelected : {}),
+              }}
+              onClick={() => handleSelect(npc.id)}
+            >
+              <div>{npc.name || npc.id}</div>
+              <div style={{ fontSize: 10, color: '#999' }}>
+                {npc.behaviorType} &middot; {zones.find((z) => z.id === npc.zoneId)?.name || npc.zoneId}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Center: Zone Map */}
+      <div style={styles.centerPanel}>
+        {showMapToolbar && (
+          <div style={styles.mapToolbar}>
+            <span style={{ fontSize: 11, color: '#666', marginRight: 4 }}>Map Mode:</span>
+            {(['view', 'start', 'patrol', 'spawns'] as MapMode[]).map((mode) => {
+              // Only show patrol mode for patrol behavior
+              if (mode === 'patrol' && form.behaviorType !== 'patrol') return null;
+              const labels: Record<MapMode, string> = {
+                view: 'View', start: 'Set Start', patrol: 'Edit Patrol', spawns: 'Edit Spawns',
+              };
+              return (
+                <button
+                  key={mode}
+                  style={{
+                    ...styles.modeBtn,
+                    ...(mapMode === mode ? styles.modeBtnActive : {}),
+                  }}
+                  onClick={() => setMapMode(mapMode === mode ? 'view' : mode)}
+                >
+                  {labels[mode]}
+                </button>
+              );
+            })}
+            {mapMode !== 'view' && (
+              <span style={{ fontSize: 10, color: '#e65100', marginLeft: 8 }}>
+                {mapMode === 'start' && 'Click a room to set as start room'}
+                {mapMode === 'patrol' && 'Click rooms to add/remove from patrol route'}
+                {mapMode === 'spawns' && 'Click rooms to toggle as spawn points'}
+              </span>
+            )}
+          </div>
+        )}
+        <div style={styles.mapArea}>
+          {showForm && rooms.length > 0 ? (
+            <MapCanvas
+              rooms={rooms.map((r) => ({ id: r.id, name: r.name, x: r.x, y: r.y }))}
+              exits={mapExits}
+              selectedRoomId={form.startRoomId || null}
+              onSelectRoom={handleMapRoomClick}
+              onCreateRoom={noopCreate}
+              onCreateExit={noopExit}
+              overlay={mapOverlay}
+              readOnly
+            />
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#999' }}>
+              {showForm ? 'Select a zone to see the map' : 'Select an NPC to visualize its behavior on the map'}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Right: NPC Form */}
+      <div style={styles.rightPanel}>
+        {showForm ? (
+          <>
+            {/* Image preview for existing NPCs */}
+            {!isNew && selectedId && (
+              <ImagePreview
+                entityType="npc"
+                entityId={selectedId}
+                description={form.description}
+                imagePrompt={form.imagePrompt}
+                imageStyle={form.imageStyle}
+                imageNegativePrompt={form.imageNegativePrompt}
+                imageWidth={form.imageWidth}
+                imageHeight={form.imageHeight}
+                maxWidth={384}
+                maxHeight={512}
+                onUpdate={(fields) => setForm((f: any) => ({ ...f, ...fields }))}
+              />
+            )}
+
+            <div style={{ ...styles.sectionTitle, marginTop: 0 }}>
+              {isNew ? 'New NPC' : `Edit: ${form.name || selectedId}`}
+            </div>
+
+            {/* Identity */}
+            <label style={styles.label}>ID</label>
+            <input
+              style={{ ...styles.input, ...(selectedId && !isNew ? { backgroundColor: '#eee' } : {}) }}
+              value={form.id ?? ''}
+              placeholder="e.g. npc:goblin_guard"
+              disabled={!!selectedId && !isNew}
+              onChange={(e) => handleChange('id', e.target.value)}
+            />
+
+            <label style={styles.label}>Name</label>
+            <input
+              style={styles.input}
+              value={form.name ?? ''}
+              placeholder="e.g. Goblin Guard"
+              onChange={(e) => handleChange('name', e.target.value)}
+            />
+
+            <label style={styles.label}>Description</label>
+            <textarea
+              style={styles.textarea}
+              value={form.description ?? ''}
+              rows={3}
+              onChange={(e) => handleChange('description', e.target.value)}
+            />
+
+            {/* Zone & Behavior */}
+            <div style={styles.sectionTitle}>Location & Behavior</div>
+
+            <label style={styles.label}>Zone</label>
+            <select
+              style={styles.select}
+              value={form.zoneId ?? ''}
+              onChange={(e) => {
+                handleChange('zoneId', e.target.value);
+                // Clear room-specific fields when zone changes
+                handleChange('startRoomId', '');
+                handleChange('patrolRoute', '');
+                handleChange('spawnPoints', '[]');
+              }}
+            >
+              <option value="">-- Select Zone --</option>
+              {zones.map((z) => (
+                <option key={z.id} value={z.id}>{z.name}</option>
+              ))}
+            </select>
+
+            <label style={styles.label}>Start Room</label>
+            <div style={{ display: 'flex', gap: 4 }}>
+              <select
+                style={{ ...styles.select, flex: 1 }}
+                value={form.startRoomId ?? ''}
+                onChange={(e) => handleChange('startRoomId', e.target.value)}
+              >
+                <option value="">-- Select --</option>
+                {rooms.map((r) => (
+                  <option key={r.id} value={r.id}>{r.name} ({r.id})</option>
+                ))}
+              </select>
+              {rooms.length > 0 && (
+                <button
+                  style={{
+                    ...styles.modeBtn,
+                    ...(mapMode === 'start' ? styles.modeBtnActive : {}),
+                    whiteSpace: 'nowrap',
+                  }}
+                  onClick={() => setMapMode(mapMode === 'start' ? 'view' : 'start')}
+                  title="Click a room on the map to set start room"
+                >
+                  Pick
+                </button>
+              )}
+            </div>
+
+            <label style={styles.label}>Behavior Type</label>
+            <select
+              style={styles.select}
+              value={form.behaviorType ?? 'idle'}
+              onChange={(e) => handleChange('behaviorType', e.target.value)}
+            >
+              {BEHAVIOR_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+            <div style={{ fontSize: 10, color: '#888', marginTop: 2 }}>
+              {BEHAVIOR_DESCRIPTIONS[form.behaviorType] || ''}
+            </div>
+
+            <label style={{ ...styles.label, marginTop: 4 }}>
+              <input
+                type="checkbox"
+                checked={form.hostile ?? false}
+                onChange={(e) => handleChange('hostile', e.target.checked)}
+              />{' '}Hostile
+            </label>
+
+            {/* Patrol Route (visual editor) */}
+            {form.behaviorType === 'patrol' && (
+              <>
+                <div style={styles.sectionTitle}>Patrol Route</div>
+                {patrolRoute.length === 0 && (
+                  <div style={{ fontSize: 11, color: '#999', marginBottom: 4 }}>
+                    No patrol route. Click "Edit Patrol" and click rooms on the map to build a route.
+                  </div>
+                )}
+                {patrolRoute.map((roomId, i) => (
+                  <div key={`${roomId}-${i}`} style={styles.routeItem}>
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                      width: 18, height: 18, borderRadius: '50%', backgroundColor: '#e040fb',
+                      color: '#fff', fontSize: 10, fontWeight: 700, flexShrink: 0,
+                    }}>{i + 1}</span>
+                    <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      {roomNameMap.get(roomId) || roomId}
+                    </span>
+                    {i > 0 && (
+                      <button
+                        onClick={() => {
+                          const arr = [...patrolRoute];
+                          [arr[i - 1], arr[i]] = [arr[i], arr[i - 1]];
+                          handleChange('patrolRoute', JSON.stringify(arr));
+                        }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, padding: '0 2px', color: '#666' }}
+                        title="Move up"
+                      >&uarr;</button>
+                    )}
+                    {i < patrolRoute.length - 1 && (
+                      <button
+                        onClick={() => {
+                          const arr = [...patrolRoute];
+                          [arr[i], arr[i + 1]] = [arr[i + 1], arr[i]];
+                          handleChange('patrolRoute', JSON.stringify(arr));
+                        }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 12, padding: '0 2px', color: '#666' }}
+                        title="Move down"
+                      >&darr;</button>
+                    )}
+                    <button
+                      onClick={() => {
+                        const arr = patrolRoute.filter((_, j) => j !== i);
+                        handleChange('patrolRoute', JSON.stringify(arr));
+                      }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 700, padding: '0 4px', color: '#d32f2f' }}
+                      title="Remove from route"
+                    >x</button>
+                  </div>
+                ))}
+                {rooms.length > 0 && (
+                  <button
+                    style={{
+                      ...styles.modeBtn,
+                      ...(mapMode === 'patrol' ? styles.modeBtnActive : {}),
+                      width: '100%', marginTop: 4,
+                    }}
+                    onClick={() => setMapMode(mapMode === 'patrol' ? 'view' : 'patrol')}
+                  >
+                    {mapMode === 'patrol' ? 'Done Editing Route' : 'Edit Patrol on Map'}
+                  </button>
+                )}
+              </>
+            )}
+
+            {/* Spawn Points (visual editor) */}
+            <div style={styles.sectionTitle}>Spawn Points</div>
+            <div style={{ fontSize: 10, color: '#888', marginBottom: 4 }}>
+              Rooms where this NPC can respawn after death. If empty, uses start room only.
+            </div>
+            {spawnPoints.length === 0 && (
+              <div style={{ fontSize: 11, color: '#999', marginBottom: 4 }}>
+                No spawn points set (defaults to start room).
+              </div>
+            )}
+            {spawnPoints.map((roomId, i) => (
+              <div key={roomId} style={styles.spawnItem}>
+                <span style={{
+                  display: 'inline-block', width: 10, height: 10,
+                  backgroundColor: '#00bcd4', transform: 'rotate(45deg)', flexShrink: 0,
+                }} />
+                <span style={{ flex: 1 }}>{roomNameMap.get(roomId) || roomId}</span>
+                <button
+                  onClick={() => {
+                    const arr = spawnPoints.filter((_, j) => j !== i);
+                    handleChange('spawnPoints', JSON.stringify(arr));
+                  }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 700, padding: '0 4px', color: '#d32f2f' }}
+                  title="Remove spawn point"
+                >x</button>
+              </div>
+            ))}
+            {rooms.length > 0 && (
+              <button
+                style={{
+                  ...styles.modeBtn,
+                  ...(mapMode === 'spawns' ? styles.modeBtnActive : {}),
+                  width: '100%', marginTop: 4,
+                }}
+                onClick={() => setMapMode(mapMode === 'spawns' ? 'view' : 'spawns')}
+              >
+                {mapMode === 'spawns' ? 'Done Editing Spawns' : 'Edit Spawns on Map'}
+              </button>
+            )}
+
+            {/* Combat Stats */}
+            <div style={styles.sectionTitle}>Combat Stats</div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px 12px' }}>
+              {[
+                ['level', 'Level'], ['maxHp', 'Max HP'], ['damage', 'Damage'],
+                ['accuracy', 'Accuracy'], ['defense', 'Defense'], ['evasion', 'Evasion'],
+                ['agility', 'Agility'], ['perception', 'Perception'], ['xpReward', 'XP Reward'],
+              ].map(([key, label]) => (
+                <div key={key}>
+                  <label style={{ ...styles.label, marginTop: 2 }}>{label}</label>
+                  <input
+                    style={styles.input}
+                    type="number"
+                    value={form[key] ?? 0}
+                    onChange={(e) => handleChange(key, parseInt(e.target.value) || 0)}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Vendor Items (only for vendor NPCs) */}
+            {form.behaviorType === 'vendor' && (
+              <>
+                <div style={styles.sectionTitle}>Vendor Items</div>
+                <textarea
+                  style={styles.jsonTextarea}
+                  value={form.vendorItems ?? ''}
+                  placeholder='["item:health_potion", "item:iron_sword"]'
+                  rows={4}
+                  onChange={(e) => handleChange('vendorItems', e.target.value)}
+                />
+                <div style={{ fontSize: 10, color: '#888' }}>Array of item IDs this NPC sells</div>
+              </>
+            )}
+
+            {/* Loot */}
+            <div style={styles.sectionTitle}>Loot</div>
+            <label style={styles.label}>Loot Items</label>
+            <textarea
+              style={styles.jsonTextarea}
+              value={form.lootItems ?? ''}
+              placeholder='[{"itemId":"item:wolf_pelt","chance":0.8,"minQuantity":1,"maxQuantity":1}]'
+              rows={4}
+              onChange={(e) => handleChange('lootItems', e.target.value)}
+            />
+            <label style={styles.label}>Coin Drop</label>
+            <textarea
+              style={styles.jsonTextarea}
+              value={form.coinDrop ?? ''}
+              placeholder='{"minCopper":5,"maxCopper":20}'
+              rows={3}
+              onChange={(e) => handleChange('coinDrop', e.target.value)}
+            />
+
+            {/* Sounds */}
+            <div style={styles.sectionTitle}>Sounds</div>
+            {[
+              ['attackSound', 'Attack Sound'],
+              ['missSound', 'Miss Sound'],
+              ['deathSound', 'Death Sound'],
+              ['interactSound', 'Interact Sound'],
+              ['exitSound', 'Exit Sound'],
+            ].map(([key, label]) => (
+              <div key={key} style={{ marginBottom: 8 }}>
+                <label style={styles.label}>{label}</label>
+                <SfxPreview
+                  soundId={form[key] ?? ''}
+                  onSoundIdChange={(id) => handleChange(key, id)}
+                  entityLabel={form.name || form.id || ''}
+                  audioCategory="npcs"
+                />
+              </div>
+            ))}
+
+            {/* Image (only show fields when ImagePreview is not handling them) */}
+            {(isNew || !selectedId) && (
+              <>
+                <div style={styles.sectionTitle}>Image</div>
+                <label style={styles.label}>Image Prompt</label>
+                <textarea
+                  style={styles.textarea}
+                  value={form.imagePrompt ?? ''}
+                  rows={3}
+                  onChange={(e) => handleChange('imagePrompt', e.target.value)}
+                />
+                <label style={styles.label}>Image Style</label>
+                <input style={styles.input} value={form.imageStyle ?? ''} onChange={(e) => handleChange('imageStyle', e.target.value)} />
+                <label style={styles.label}>Negative Prompt</label>
+                <input style={styles.input} value={form.imageNegativePrompt ?? ''} onChange={(e) => handleChange('imageNegativePrompt', e.target.value)} />
+                <label style={styles.label}>Width</label>
+                <input style={styles.input} type="number" value={form.imageWidth ?? 384} max={512} onChange={(e) => handleChange('imageWidth', Math.min(parseInt(e.target.value) || 0, 512))} />
+                <label style={styles.label}>Height</label>
+                <input style={styles.input} type="number" value={form.imageHeight ?? 512} max={512} onChange={(e) => handleChange('imageHeight', Math.min(parseInt(e.target.value) || 0, 512))} />
+              </>
+            )}
+
+            {error && <div style={styles.error}>{error}</div>}
+            <div style={styles.btnRow}>
+              <button style={styles.btnSmall} onClick={handleSave}>
+                {isNew ? 'Create' : 'Save'}
+              </button>
+              {!isNew && selectedId && (
+                <button style={styles.btnDanger} onClick={handleDelete}>Delete</button>
+              )}
+            </div>
+          </>
+        ) : (
+          <div style={styles.empty}>
+            Select an NPC to edit, or click "+ New NPC" to create one.
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
