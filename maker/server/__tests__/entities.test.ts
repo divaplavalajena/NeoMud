@@ -466,3 +466,59 @@ describe('Item numeric range validation (#96)', () => {
   })
 })
 
+describe('Text field sanitization (#90)', () => {
+  it('rejects item name with HTML tags', async () => {
+    const res = await request(app).post('/api/items').send({
+      id: 'xss_item', name: 'Sword <script>alert(1)</script>', description: '', type: 'weapon',
+    })
+    expect(res.status).toBe(400)
+    expect(res.body.error).toContain('HTML')
+  })
+
+  it('rejects item name over 100 characters', async () => {
+    const res = await request(app).post('/api/items').send({
+      id: 'long_item', name: 'A'.repeat(101), description: '', type: 'weapon',
+    })
+    expect(res.status).toBe(400)
+    expect(res.body.error).toContain('100 characters')
+  })
+
+  it('rejects zone name with HTML tags', async () => {
+    const res = await request(app).post('/api/zones').send({
+      id: 'xss_zone', name: '<img onerror="alert(1)">', description: '',
+    })
+    expect(res.status).toBe(400)
+    expect(res.body.error).toContain('HTML')
+  })
+
+  it('rejects HTML name on update', async () => {
+    await request(app).post('/api/items').send({
+      id: 'update_test', name: 'Normal Item', description: '', type: 'weapon',
+    })
+    const res = await request(app).put('/api/items/update_test').send({
+      name: '<b>Bold Item</b>',
+    })
+    expect(res.status).toBe(400)
+    expect(res.body.error).toContain('HTML')
+    await request(app).delete('/api/items/update_test')
+  })
+
+  it('trims whitespace from text fields', async () => {
+    const res = await request(app).post('/api/items').send({
+      id: 'trim_item', name: '  Trimmed Sword  ', description: '', type: 'weapon',
+    })
+    expect(res.status).toBe(200)
+    expect(res.body.name).toBe('Trimmed Sword')
+    await request(app).delete('/api/items/trim_item')
+  })
+
+  it('allows normal text with special characters', async () => {
+    const res = await request(app).post('/api/items').send({
+      id: 'special_item', name: "Warrior's Blade (Mk. II)", description: '', type: 'weapon',
+    })
+    expect(res.status).toBe(200)
+    expect(res.body.name).toBe("Warrior's Blade (Mk. II)")
+    await request(app).delete('/api/items/special_item')
+  })
+})
+

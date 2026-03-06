@@ -21,7 +21,28 @@ function validateName(name: string | undefined, entityLabel: string, res: Respon
     res.status(400).json({ error: `${entityLabel} name is required` })
     return false
   }
+  if (name.length > 100) {
+    res.status(400).json({ error: `${entityLabel} name must be 100 characters or fewer` })
+    return false
+  }
+  if (/<[^>]*>/.test(name)) {
+    res.status(400).json({ error: `${entityLabel} name must not contain HTML tags` })
+    return false
+  }
   return true
+}
+
+const MAX_TEXT_LENGTH = 5000
+
+function sanitizeTextFields(body: Record<string, any>): void {
+  for (const key of Object.keys(body)) {
+    if (typeof body[key] === 'string') {
+      body[key] = body[key].trim()
+      if (body[key].length > MAX_TEXT_LENGTH && !body[key].startsWith('[') && !body[key].startsWith('{')) {
+        body[key] = body[key].substring(0, MAX_TEXT_LENGTH)
+      }
+    }
+  }
 }
 
 function articleFor(label: string): string {
@@ -87,6 +108,7 @@ zonesRouter.get('/zones', async (_req, res) => {
 
 // POST /zones — create zone
 zonesRouter.post('/zones', rejectIfReadOnly, async (req, res) => {
+  sanitizeTextFields(req.body)
   if (!validateId(req.body.id, 'Zone', res)) return
   if (!validateName(req.body.name, 'Zone', res)) return
   try {
@@ -133,6 +155,8 @@ zonesRouter.get('/zones/:id', async (req, res) => {
 
 // PUT /zones/:id — update zone
 zonesRouter.put('/zones/:id', rejectIfReadOnly, async (req, res) => {
+  sanitizeTextFields(req.body)
+  if (req.body.name !== undefined && !validateName(req.body.name, 'Zone', res)) return
   try {
     const zone = await db().zone.update({
       where: { id: req.params.id },
@@ -171,6 +195,7 @@ zonesRouter.get('/zones/:zoneId/rooms', async (req, res) => {
 
 // POST /zones/:zoneId/rooms — create room
 zonesRouter.post('/zones/:zoneId/rooms', rejectIfReadOnly, async (req, res) => {
+  sanitizeTextFields(req.body)
   if (!validateId(req.body.id, 'Room', res)) return
   if (!validateName(req.body.name, 'Room', res)) return
   try {
@@ -236,6 +261,8 @@ zonesRouter.get('/zones/:zoneId/rooms/:id', async (req, res) => {
 
 // PUT /zones/:zoneId/rooms/:id — update room (accepts local or fully-qualified ID)
 zonesRouter.put('/zones/:zoneId/rooms/:id', rejectIfReadOnly, async (req, res) => {
+  sanitizeTextFields(req.body)
+  if (req.body.name !== undefined && !validateName(req.body.name, 'Room', res)) return
   try {
     const { zoneId } = req.params
     const rawId = req.params.id

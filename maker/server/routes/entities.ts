@@ -23,7 +23,30 @@ function validateName(name: string | undefined, entityLabel: string, res: Respon
     res.status(400).json({ error: `${entityLabel} name is required` })
     return false
   }
+  if (name.length > 100) {
+    res.status(400).json({ error: `${entityLabel} name must be 100 characters or fewer` })
+    return false
+  }
+  if (/<[^>]*>/.test(name)) {
+    res.status(400).json({ error: `${entityLabel} name must not contain HTML tags` })
+    return false
+  }
   return true
+}
+
+const MAX_TEXT_LENGTH = 5000
+
+function sanitizeTextFields(body: Record<string, any>): void {
+  for (const key of Object.keys(body)) {
+    if (typeof body[key] === 'string') {
+      // Trim all string fields
+      body[key] = body[key].trim()
+      // Enforce max length on text content fields (not JSON blobs)
+      if (body[key].length > MAX_TEXT_LENGTH && !body[key].startsWith('[') && !body[key].startsWith('{')) {
+        body[key] = body[key].substring(0, MAX_TEXT_LENGTH)
+      }
+    }
+  }
 }
 
 function articleFor(label: string): string {
@@ -125,6 +148,7 @@ entitiesRouter.get('/items/:id', async (req, res) => {
 })
 
 entitiesRouter.post('/items', rejectIfReadOnly, async (req, res) => {
+  sanitizeTextFields(req.body)
   if (!validateId(req.body.id, 'Item', res)) return
   if (!validateName(req.body.name, 'Item', res)) return
   if (!validateNumericRanges(req.body, ITEM_NUMERIC_RULES, res)) return
@@ -137,6 +161,8 @@ entitiesRouter.post('/items', rejectIfReadOnly, async (req, res) => {
 })
 
 entitiesRouter.put('/items/:id', rejectIfReadOnly, async (req, res) => {
+  sanitizeTextFields(req.body)
+  if (req.body.name !== undefined && !validateName(req.body.name, 'Item', res)) return
   if (!validateNumericRanges(req.body, ITEM_NUMERIC_RULES, res)) return
   try {
     const item = await db().item.update({ where: { id: req.params.id }, data: req.body })
@@ -178,6 +204,7 @@ entitiesRouter.get('/npcs/:id', async (req, res) => {
 })
 
 entitiesRouter.post('/npcs', rejectIfReadOnly, async (req, res) => {
+  sanitizeTextFields(req.body)
   if (!validateId(req.body.id, 'NPC', res)) return
   if (!validateName(req.body.name, 'NPC', res)) return
   if (!validateNumericRanges(req.body, NPC_NUMERIC_RULES, res)) return
@@ -198,6 +225,8 @@ entitiesRouter.post('/npcs', rejectIfReadOnly, async (req, res) => {
 })
 
 entitiesRouter.put('/npcs/:id', rejectIfReadOnly, async (req, res) => {
+  sanitizeTextFields(req.body)
+  if (req.body.name !== undefined && !validateName(req.body.name, 'NPC', res)) return
   if (!validateNumericRanges(req.body, NPC_NUMERIC_RULES, res)) return
   try {
     const npc = await db().npc.update({ where: { id: req.params.id }, data: req.body })
@@ -238,6 +267,7 @@ entitiesRouter.get('/character-classes/:id', async (req, res) => {
 })
 
 entitiesRouter.post('/character-classes', rejectIfReadOnly, async (req, res) => {
+  sanitizeTextFields(req.body)
   if (!validateId(req.body.id, 'Class', res)) return
   if (!validateName(req.body.name, 'Class', res)) return
   try {
@@ -249,6 +279,8 @@ entitiesRouter.post('/character-classes', rejectIfReadOnly, async (req, res) => 
 })
 
 entitiesRouter.put('/character-classes/:id', rejectIfReadOnly, async (req, res) => {
+  sanitizeTextFields(req.body)
+  if (req.body.name !== undefined && !validateName(req.body.name, 'Class', res)) return
   try {
     const cls = await db().characterClass.update({ where: { id: req.params.id }, data: req.body })
     res.json(cls)
@@ -288,6 +320,7 @@ entitiesRouter.get('/races/:id', async (req, res) => {
 })
 
 entitiesRouter.post('/races', rejectIfReadOnly, async (req, res) => {
+  sanitizeTextFields(req.body)
   if (!validateId(req.body.id, 'Race', res)) return
   if (!validateName(req.body.name, 'Race', res)) return
   try {
@@ -299,6 +332,8 @@ entitiesRouter.post('/races', rejectIfReadOnly, async (req, res) => {
 })
 
 entitiesRouter.put('/races/:id', rejectIfReadOnly, async (req, res) => {
+  sanitizeTextFields(req.body)
+  if (req.body.name !== undefined && !validateName(req.body.name, 'Race', res)) return
   try {
     const race = await db().race.update({ where: { id: req.params.id }, data: req.body })
     res.json(race)
@@ -338,6 +373,7 @@ entitiesRouter.get('/skills/:id', async (req, res) => {
 })
 
 entitiesRouter.post('/skills', rejectIfReadOnly, async (req, res) => {
+  sanitizeTextFields(req.body)
   if (!validateId(req.body.id, 'Skill', res)) return
   if (!validateName(req.body.name, 'Skill', res)) return
   try {
@@ -349,6 +385,8 @@ entitiesRouter.post('/skills', rejectIfReadOnly, async (req, res) => {
 })
 
 entitiesRouter.put('/skills/:id', rejectIfReadOnly, async (req, res) => {
+  sanitizeTextFields(req.body)
+  if (req.body.name !== undefined && !validateName(req.body.name, 'Skill', res)) return
   try {
     const skill = await db().skill.update({ where: { id: req.params.id }, data: req.body })
     res.json(skill)
@@ -388,6 +426,7 @@ entitiesRouter.get('/spells/:id', async (req, res) => {
 })
 
 entitiesRouter.post('/spells', rejectIfReadOnly, async (req, res) => {
+  sanitizeTextFields(req.body)
   if (!validateId(req.body.id, 'Spell', res)) return
   if (!validateName(req.body.name, 'Spell', res)) return
   try {
@@ -399,6 +438,8 @@ entitiesRouter.post('/spells', rejectIfReadOnly, async (req, res) => {
 })
 
 entitiesRouter.put('/spells/:id', rejectIfReadOnly, async (req, res) => {
+  sanitizeTextFields(req.body)
+  if (req.body.name !== undefined && !validateName(req.body.name, 'Spell', res)) return
   try {
     const spell = await db().spell.update({ where: { id: req.params.id }, data: req.body })
     res.json(spell)
