@@ -1270,7 +1270,7 @@
       "race": "GNOME",
       "gender": "male",
       "characterClass": "RANGER",
-      "imagePrompt": "A male gnome, small with clever bright eyes and a large nose, ranger in a worn leather vest, carrying a short yew bow with a quiver of arrows on the back, full body standing pose facing forward, single character sprite on a plain white background, no scenery",
+      "imagePrompt": "A male gnome, small with clever bright eyes and a large nose, ranger in a worn leather vest, carrying a single short yew bow in one hand with a quiver of arrows on the back, full body standing pose facing forward, single character sprite on a plain white background, no scenery",
       "imageStyle": "digital painting, fantasy RPG character sprite, clean edges, solid white background, centered composition",
       "imageNegativePrompt": "background scenery, environment, ground, floor, shadows on ground, multiple characters, blurry, modern clothing, realistic photo, chibi, pixel art, anime, low quality, watermark, text",
       "imageWidth": 384,

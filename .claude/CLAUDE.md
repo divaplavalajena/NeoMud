@@ -167,12 +167,14 @@ export JAVA_HOME=/c/Users/lbarnes/.jdks/corretto-21.0.5
 
 **All sprite images (NPCs, items, coins, players) MUST go through background removal after generation.** AI image models cannot produce true alpha transparency — they render a visual checkerboard or white background that must be post-processed.
 
+**Prerequisite**: `uv`/`uvx` must be installed — the script calls `rembg` (birefnet-general model) via `uvx` subprocess.
+
 ### Pipeline Steps (mandatory for every sprite generation)
 
 1. **Generate** via nano-banana MCP (`generate_image`), using the `imagePrompt` + `imageStyle` + `imageNegativePrompt` from the relevant JSON data file
 2. **Convert** from PNG to WebP: `npx sharp-cli -i input.png -o output.webp --format webp`
 3. **Remove background**: `node scripts/remove-bg.mjs output.webp`
-4. **Verify** the result visually — check that the subject is intact (light-colored subjects like silver blades are vulnerable to over-removal)
+4. **Verify** the result visually — check that the subject is intact
 5. **Clean up** intermediate PNGs and the `nanobanana-output/` directory
 
 ### Batch background removal
@@ -180,7 +182,10 @@ export JAVA_HOME=/c/Users/lbarnes/.jdks/corretto-21.0.5
 node scripts/remove-bg.mjs --batch maker/default_world_src/assets/images/npcs
 node scripts/remove-bg.mjs --batch maker/default_world_src/assets/images/items
 node scripts/remove-bg.mjs --batch maker/default_world_src/assets/images/coins
+node scripts/remove-bg.mjs --batch maker/default_world_src/assets/images/players
 ```
+
+Use `--suffix nobg` for non-destructive output (e.g., `npc_rat_nobg.webp` alongside the original).
 
 ### Asset naming conventions and directories
 
@@ -205,7 +210,8 @@ Image generation prompts are stored in the data files:
 
 ### Important notes
 - **Room backgrounds do NOT need background removal** — they are full-bleed images, not sprites
-- The `remove-bg.mjs` script samples corner pixels to detect background colors, so it safely skips images with dark/complex backgrounds
+- The script uses ML segmentation (rembg/birefnet-general) — it handles any background color including dark, gradient, and checkerboard
+- No special prompt requirements for background color — the ML model segments the foreground regardless
 - `nanobanana-output/` is gitignored — always clean it up after generation
 
 ## Asset SFX Pipeline

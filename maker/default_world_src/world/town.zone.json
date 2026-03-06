@@ -161,8 +161,8 @@
       "startRoomId": "town:gate",
       "behaviorType": "patrol",
       "patrolRoute": ["town:gate", "town:square", "town:market", "town:square", "town:gate"],
-      "imagePrompt": "Full-body medieval town guard standing upright facing the viewer, chainmail armor over tabard, hand on sword pommel, stern expression. Single character, isolated on solid transparent background, no ground, no scenery.",
-      "imageStyle": "fantasy character sprite, full body, front-facing, clean edges, game asset, transparent background, PNG cutout",
+      "imagePrompt": "Full-body medieval town guard standing upright facing the viewer, chainmail armor over tabard, hand on sword pommel, stern expression. Single character, isolated on solid white background, no ground, no scenery.",
+      "imageStyle": "fantasy character sprite, full body, front-facing, clean edges, game asset, solid white background",
       "imageNegativePrompt": "background, scenery, ground, shadow on floor, multiple characters, portrait crop, bust only, modern, sci-fi, anime",
       "imageWidth": 384,
       "imageHeight": 512
@@ -181,8 +181,8 @@
         "item:ale",
         "item:bread_loaf"
       ],
-      "imagePrompt": "Full-body stout dwarf barkeep standing upright facing the viewer, barrel chest, magnificent braided beard, leather apron, holding a tankard. Single character, isolated on solid transparent background, no ground, no scenery.",
-      "imageStyle": "fantasy character sprite, full body, front-facing, clean edges, game asset, transparent background, PNG cutout",
+      "imagePrompt": "Full-body stout dwarf barkeep standing upright facing the viewer, barrel chest, magnificent braided beard, leather apron, holding a tankard. Single character, isolated on solid white background, no ground, no scenery.",
+      "imageStyle": "fantasy character sprite, full body, front-facing, clean edges, game asset, solid white background",
       "imageNegativePrompt": "background, scenery, ground, shadow on floor, multiple characters, portrait crop, bust only, modern, sci-fi, anime",
       "imageWidth": 384,
       "imageHeight": 512
@@ -195,8 +195,8 @@
       "behaviorType": "trainer",
       "interactSound": "guildmaster_intro",
       "exitSound": "guildmaster_exit",
-      "imagePrompt": "Full-body weathered veteran warrior standing upright facing the viewer, ornate plate armor with battle scars, keen assessing eyes, short grey hair, broad shoulders, guild emblem on breastplate. Single character, isolated on solid transparent background, no ground, no scenery.",
-      "imageStyle": "fantasy character sprite, full body, front-facing, clean edges, game asset, transparent background, PNG cutout",
+      "imagePrompt": "Full-body weathered veteran warrior standing upright facing the viewer, ornate plate armor with battle scars, keen assessing eyes, short grey hair, broad shoulders, guild emblem on breastplate. Single character, isolated on solid white background, no ground, no scenery.",
+      "imageStyle": "fantasy character sprite, full body, front-facing, clean edges, game asset, solid white background",
       "imageNegativePrompt": "background, scenery, ground, shadow on floor, multiple characters, portrait crop, bust only, modern, sci-fi, anime",
       "imageWidth": 384,
       "imageHeight": 512
@@ -227,8 +227,8 @@
         "item:health_potion",
         "item:mana_potion"
       ],
-      "imagePrompt": "Full-body brawny human blacksmith standing upright facing the viewer, muscular arms, soot-stained leather apron, holding a forge hammer in one hand and tongs in the other, short dark hair. Single character, isolated on solid transparent background, no ground, no scenery.",
-      "imageStyle": "fantasy character sprite, full body, front-facing, clean edges, game asset, transparent background, PNG cutout",
+      "imagePrompt": "Full-body brawny human blacksmith standing upright facing the viewer, muscular arms, soot-stained leather apron, holding a forge hammer in one hand and tongs in the other, short dark hair. Single character, isolated on solid white background, no ground, no scenery.",
+      "imageStyle": "fantasy character sprite, full body, front-facing, clean edges, game asset, solid white background",
       "imageNegativePrompt": "background, scenery, ground, shadow on floor, multiple characters, portrait crop, bust only, modern, sci-fi, anime",
       "imageWidth": 384,
       "imageHeight": 512
@@ -253,8 +253,8 @@
         "item:enchanted_robes",
         "item:mystic_staff"
       ],
-      "imagePrompt": "Full-body slender half-elf enchantress standing upright facing the viewer, silver-streaked hair, opalescent eyes, flowing robes with arcane tattoos on forearms, holding a glowing crystal. Single character, isolated on solid transparent background, no ground, no scenery.",
-      "imageStyle": "fantasy character sprite, full body, front-facing, clean edges, game asset, transparent background, PNG cutout",
+      "imagePrompt": "Full-body slender half-elf enchantress standing upright facing the viewer, silver-streaked hair, opalescent eyes, flowing robes with arcane tattoos on forearms, holding a glowing crystal. Single character, isolated on solid white background, no ground, no scenery.",
+      "imageStyle": "fantasy character sprite, full body, front-facing, clean edges, game asset, solid white background",
       "imageNegativePrompt": "background, scenery, ground, shadow on floor, multiple characters, portrait crop, bust only, modern, sci-fi, anime",
       "imageWidth": 384,
       "imageHeight": 512

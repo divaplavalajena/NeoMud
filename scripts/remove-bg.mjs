@@ -1,292 +1,408 @@
 #!/usr/bin/env node
 /**
- * Removes fake "checkerboard transparency" backgrounds from AI-generated sprites.
+ * Removes backgrounds from AI-generated sprites using either edge-based
+ * white flood-fill or ML-based segmentation.
  *
- * AI models render a visual checkerboard instead of actual alpha. This script:
- * 1. Samples corner regions to learn the actual background color(s)
- * 2. Flood-fills from edges, matching only pixels close to those sampled colors
- * 3. Applies a small alpha erosion to clean up fringing
+ * --white mode (recommended for sprites with solid white backgrounds):
+ *   Flood-fills from image edges through white/near-white pixels only.
+ *   Preserves interior white (gaps between arms, weapons, bow strings).
+ *   Applies graduated alpha at boundaries for smooth anti-aliased edges.
+ *   No external dependencies beyond sharp.
  *
- * Usage: node scripts/remove-bg.mjs <input.webp> [output.webp]
+ * Default mode (ML-based, for non-white backgrounds):
+ *   Uses rembg (birefnet-general model) via uvx for foreground segmentation.
+ *   Prerequisite: uv/uvx must be installed (https://docs.astral.sh/uv/)
+ *
+ * Usage: node scripts/remove-bg.mjs --white <input.webp>
+ *        node scripts/remove-bg.mjs --white --batch <directory>
+ *        node scripts/remove-bg.mjs <input.webp>
  *        node scripts/remove-bg.mjs --batch <directory> [--ext webp]
+ *        node scripts/remove-bg.mjs --preview <input.webp>
+ *        node scripts/remove-bg.mjs --suffix nobg <input.webp>
+ *
+ * Options:
+ *   --white             Use edge flood-fill white removal (fast, preserves interiors)
+ *   --threshold <n>     White detection threshold 0-255 (default: 240)
+ *   --batch <dir>       Process all matching files in directory
+ *   --ext <ext>         File extension filter for batch mode (default: webp)
+ *   --preview           Generate side-by-side before/after comparison
+ *   --suffix <str>      Output to {name}_{suffix}.webp instead of overwriting
  */
 
 import sharp from 'sharp';
-import { readdir, readFile, writeFile } from 'fs/promises';
-import { join, extname, basename } from 'path';
+import { execFile } from 'child_process';
+import { readdir, readFile, writeFile, unlink } from 'fs/promises';
+import { join, extname, basename, dirname } from 'path';
+import { tmpdir } from 'os';
+import { randomBytes } from 'crypto';
+import { promisify } from 'util';
 
-const COLOR_TOLERANCE = 30;   // max distance from sampled bg colors to count as bg
-const CORNER_SAMPLE = 8;      // sample NxN pixels from each corner
-const FRINGE_PASSES = 1;      // erosion passes to clean edges
-const FRINGE_THRESHOLD = 220; // only erode fringe pixels lighter than this (light bg)
-const DARK_FRINGE_THRESHOLD = 35; // only erode fringe pixels darker than this (dark bg)
-const ALPHA_CLAMP_THRESHOLD = 10; // pixels with alpha <= this are clamped to fully transparent
+const execFileAsync = promisify(execFile);
 
-async function removeBackground(inputPath, outputPath) {
-  // Read file into buffer first to release file handle (Windows lock issue)
+const UVX = process.platform === 'win32' ? 'uvx.exe' : 'uvx';
+const DEFAULT_WHITE_THRESHOLD = 240;
+const INTERIOR_REGION_MIN_PIXELS = 50; // white regions larger than this get removed in pass 2
+
+// --- White edge flood-fill mode ---
+
+async function removeWhiteBackground(inputPath, outputPath, options = {}) {
+  const actualOutput = resolveOutput(inputPath, outputPath, options);
+  const threshold = options.threshold || DEFAULT_WHITE_THRESHOLD;
+
+  // Read into buffer first to avoid file locking on Windows
   const inputBuffer = await readFile(inputPath);
-  const image = sharp(inputBuffer);
+  const meta = await sharp(inputBuffer).metadata();
+  const w = meta.width;
+  const h = meta.height;
 
   // Get raw RGBA pixel data
-  const { data, info } = await image
+  const { data, info } = await sharp(inputBuffer)
     .ensureAlpha()
     .raw()
     .toBuffer({ resolveWithObject: true });
 
-  const w = info.width;
-  const h = info.height;
-  const pixels = new Uint8Array(data.buffer, data.byteOffset, data.length);
+  const pixels = new Uint8Array(data);
+  const totalPixels = w * h;
 
-  // Pre-pass: clamp near-transparent pixels to fully transparent.
-  // AI models often produce "ghost" pixels with alpha 1-10 that still show
-  // checkerboard RGB values — these need to be zeroed out.
-  let clampedCount = 0;
-  for (let i = 0; i < w * h; i++) {
-    const a = pixels[i * 4 + 3];
-    if (a > 0 && a <= ALPHA_CLAMP_THRESHOLD) {
-      pixels[i * 4] = 0;
-      pixels[i * 4 + 1] = 0;
-      pixels[i * 4 + 2] = 0;
-      pixels[i * 4 + 3] = 0;
-      clampedCount++;
-    }
+  // Track which pixels to make transparent (flood-filled from edges)
+  const visited = new Uint8Array(totalPixels);
+  const toRemove = new Uint8Array(totalPixels);
+
+  function isWhite(idx) {
+    const off = idx * 4;
+    return pixels[off] >= threshold &&
+           pixels[off + 1] >= threshold &&
+           pixels[off + 2] >= threshold;
   }
 
-  // Sample corner regions to determine background colors
-  const bgColors = sampleBackgroundColors(pixels, w, h);
-
-  if (bgColors.length === 0) {
-    if (clampedCount > 0) {
-      // No flood-fill needed, but we did clamp ghost pixels — still write output
-      const out = outputPath || inputPath;
-      const ext = extname(out).toLowerCase();
-      let pipeline = sharp(Buffer.from(pixels.buffer), {
-        raw: { width: w, height: h, channels: 4 }
-      });
-      let outBuffer;
-      if (ext === '.webp') {
-        outBuffer = await pipeline.webp({ lossless: true }).toBuffer();
-      } else if (ext === '.png') {
-        outBuffer = await pipeline.png().toBuffer();
-      } else {
-        outBuffer = await pipeline.webp({ lossless: true }).toBuffer();
-      }
-      await writeFile(out, outBuffer);
-      const pct = ((clampedCount / (w * h)) * 100).toFixed(1);
-      console.log(`  ✓ ${basename(out)} (${pct}% ghost pixels clamped to transparent)`);
-      return;
-    }
-    console.log(`  - ${basename(inputPath)} (no clear background detected, skipped)`);
-    return;
-  }
-
-  // Check if pixel matches any sampled background color within tolerance
-  function isBackground(idx) {
-    const r = pixels[idx];
-    const g = pixels[idx + 1];
-    const b = pixels[idx + 2];
-    for (const bg of bgColors) {
-      const dist = Math.abs(r - bg.r) + Math.abs(g - bg.g) + Math.abs(b - bg.b);
-      if (dist <= COLOR_TOLERANCE) return true;
-    }
-    return false;
-  }
-
-  // Flood fill from edges to find connected background regions
-  const visited = new Uint8Array(w * h);
-  const bgMask = new Uint8Array(w * h);
+  // BFS flood-fill from all edge pixels that are white
   const queue = [];
 
-  // Seed from all edge pixels that match background
+  // Seed with all white edge pixels
   for (let x = 0; x < w; x++) {
-    const topIdx = x * 4;
-    if (isBackground(topIdx)) { queue.push(x); visited[x] = 1; }
-    const botPos = (h - 1) * w + x;
-    if (isBackground(botPos * 4) && !visited[botPos]) { queue.push(botPos); visited[botPos] = 1; }
+    // Top row
+    const topIdx = x;
+    if (isWhite(topIdx)) { queue.push(topIdx); visited[topIdx] = 1; }
+    // Bottom row
+    const botIdx = (h - 1) * w + x;
+    if (isWhite(botIdx)) { queue.push(botIdx); visited[botIdx] = 1; }
   }
-  for (let y = 0; y < h; y++) {
-    const leftPos = y * w;
-    if (isBackground(leftPos * 4) && !visited[leftPos]) { queue.push(leftPos); visited[leftPos] = 1; }
-    const rightPos = y * w + (w - 1);
-    if (isBackground(rightPos * 4) && !visited[rightPos]) { queue.push(rightPos); visited[rightPos] = 1; }
-  }
-
-  // BFS flood fill
-  while (queue.length > 0) {
-    const pos = queue.shift();
-    bgMask[pos] = 1;
-
-    const x = pos % w;
-    const y = Math.floor(pos / w);
-
-    if (x > 0 && !visited[pos - 1] && isBackground((pos - 1) * 4)) { visited[pos - 1] = 1; queue.push(pos - 1); }
-    if (x < w - 1 && !visited[pos + 1] && isBackground((pos + 1) * 4)) { visited[pos + 1] = 1; queue.push(pos + 1); }
-    if (y > 0 && !visited[pos - w] && isBackground((pos - w) * 4)) { visited[pos - w] = 1; queue.push(pos - w); }
-    if (y < h - 1 && !visited[pos + w] && isBackground((pos + w) * 4)) { visited[pos + w] = 1; queue.push(pos + w); }
+  for (let y = 1; y < h - 1; y++) {
+    // Left column
+    const leftIdx = y * w;
+    if (isWhite(leftIdx)) { queue.push(leftIdx); visited[leftIdx] = 1; }
+    // Right column
+    const rightIdx = y * w + (w - 1);
+    if (isWhite(rightIdx)) { queue.push(rightIdx); visited[rightIdx] = 1; }
   }
 
-  // Apply background mask
-  let removedCount = 0;
-  for (let i = 0; i < w * h; i++) {
-    if (bgMask[i]) {
-      const idx = i * 4;
-      pixels[idx] = 0;
-      pixels[idx + 1] = 0;
-      pixels[idx + 2] = 0;
-      pixels[idx + 3] = 0;
-      removedCount++;
+  // BFS through connected white pixels
+  let head = 0;
+  while (head < queue.length) {
+    const idx = queue[head++];
+    toRemove[idx] = 1;
+
+    const x = idx % w;
+    const y = (idx - x) / w;
+
+    // 4-connected neighbors
+    const neighbors = [];
+    if (x > 0) neighbors.push(idx - 1);
+    if (x < w - 1) neighbors.push(idx + 1);
+    if (y > 0) neighbors.push(idx - w);
+    if (y < h - 1) neighbors.push(idx + w);
+
+    for (const nIdx of neighbors) {
+      if (!visited[nIdx] && isWhite(nIdx)) {
+        visited[nIdx] = 1;
+        queue.push(nIdx);
+      }
     }
   }
 
-  // Alpha erosion to clean up fringing at edges
-  for (let pass = 0; pass < FRINGE_PASSES; pass++) {
-    const alphaSnapshot = new Uint8Array(w * h);
-    for (let i = 0; i < w * h; i++) {
-      alphaSnapshot[i] = pixels[i * 4 + 3];
-    }
+  // Pass 2: find remaining white regions not reached by edge flood-fill
+  // Remove any connected white region larger than INTERIOR_REGION_MIN_PIXELS
+  const regionId = new Int32Array(totalPixels); // 0 = unassigned
+  let nextRegion = 1;
 
-    for (let y = 0; y < h; y++) {
-      for (let x = 0; x < w; x++) {
-        const pos = y * w + x;
-        if (alphaSnapshot[pos] === 0) continue;
+  for (let i = 0; i < totalPixels; i++) {
+    if (toRemove[i] || regionId[i] || !isWhite(i)) continue;
 
-        let bordersTrans = false;
-        if (x > 0 && alphaSnapshot[pos - 1] === 0) bordersTrans = true;
-        if (x < w - 1 && alphaSnapshot[pos + 1] === 0) bordersTrans = true;
-        if (y > 0 && alphaSnapshot[pos - w] === 0) bordersTrans = true;
-        if (y < h - 1 && alphaSnapshot[pos + w] === 0) bordersTrans = true;
+    // BFS to find this connected white region
+    const regionPixels = [];
+    const rQueue = [i];
+    regionId[i] = nextRegion;
+    let rHead = 0;
 
-        if (bordersTrans) {
-          const idx = pos * 4;
-          const r = pixels[idx], g = pixels[idx + 1], b = pixels[idx + 2];
-          // Erode light fringe (white/gray remnants from light bg)
-          if (r >= FRINGE_THRESHOLD && g >= FRINGE_THRESHOLD && b >= FRINGE_THRESHOLD) {
-            pixels[idx + 3] = 0;
-          }
-          // Erode dark fringe (black remnants from dark bg)
-          if (r <= DARK_FRINGE_THRESHOLD && g <= DARK_FRINGE_THRESHOLD && b <= DARK_FRINGE_THRESHOLD) {
-            pixels[idx + 3] = 0;
-          }
+    while (rHead < rQueue.length) {
+      const idx = rQueue[rHead++];
+      regionPixels.push(idx);
+
+      const x = idx % w;
+      const y = (idx - x) / w;
+
+      const neighbors = [];
+      if (x > 0) neighbors.push(idx - 1);
+      if (x < w - 1) neighbors.push(idx + 1);
+      if (y > 0) neighbors.push(idx - w);
+      if (y < h - 1) neighbors.push(idx + w);
+
+      for (const nIdx of neighbors) {
+        if (!regionId[nIdx] && !toRemove[nIdx] && isWhite(nIdx)) {
+          regionId[nIdx] = nextRegion;
+          rQueue.push(nIdx);
         }
       }
     }
+
+    // Remove large white regions (likely background pockets)
+    if (regionPixels.length >= INTERIOR_REGION_MIN_PIXELS) {
+      for (const idx of regionPixels) {
+        toRemove[idx] = 1;
+      }
+    }
+
+    nextRegion++;
+  }
+
+  // Apply transparency with graduated alpha at boundaries
+  // For each pixel marked for removal: fully transparent
+  // For near-white pixels adjacent to removed pixels: graduated alpha
+  for (let i = 0; i < totalPixels; i++) {
+    if (toRemove[i]) {
+      pixels[i * 4 + 3] = 0; // fully transparent
+    }
+  }
+
+  // Anti-aliasing pass: for non-removed pixels that are near-white and
+  // adjacent to a removed pixel, apply graduated alpha based on brightness
+  const softenThreshold = 220; // pixels above this near the edge get partial alpha
+  for (let i = 0; i < totalPixels; i++) {
+    if (toRemove[i]) continue;
+
+    const x = i % w;
+    const y = (i - x) / w;
+    const off = i * 4;
+    const r = pixels[off], g = pixels[off + 1], b = pixels[off + 2];
+    const brightness = (r + g + b) / 3;
+
+    if (brightness < softenThreshold) continue;
+
+    // Check if any neighbor was removed
+    let adjacentToRemoved = false;
+    if (x > 0 && toRemove[i - 1]) adjacentToRemoved = true;
+    else if (x < w - 1 && toRemove[i + 1]) adjacentToRemoved = true;
+    else if (y > 0 && toRemove[i - w]) adjacentToRemoved = true;
+    else if (y < h - 1 && toRemove[i + w]) adjacentToRemoved = true;
+
+    if (adjacentToRemoved) {
+      // Graduated alpha: brightness 220→240 maps to alpha 255→0
+      const range = threshold - softenThreshold;
+      const fade = Math.max(0, Math.min(1, (brightness - softenThreshold) / range));
+      pixels[off + 3] = Math.round(255 * (1 - fade));
+    }
+  }
+
+  const resultBuffer = Buffer.from(pixels);
+
+  // Generate preview if requested
+  if (options.preview) {
+    const pngBuffer = await sharp(resultBuffer, { raw: { width: w, height: h, channels: 4 } })
+      .png()
+      .toBuffer();
+    await generatePreview(inputBuffer, pngBuffer, inputPath);
   }
 
   // Write output
-  const out = outputPath || inputPath;
-  const ext = extname(out).toLowerCase();
-
-  let pipeline = sharp(Buffer.from(pixels.buffer), {
-    raw: { width: w, height: h, channels: 4 }
-  });
-
+  const outExt = extname(actualOutput).toLowerCase();
   let outBuffer;
-  if (ext === '.webp') {
-    outBuffer = await pipeline.webp({ lossless: true }).toBuffer();
-  } else if (ext === '.png') {
-    outBuffer = await pipeline.png().toBuffer();
+  if (outExt === '.png') {
+    outBuffer = await sharp(resultBuffer, { raw: { width: w, height: h, channels: 4 } })
+      .png()
+      .toBuffer();
   } else {
-    outBuffer = await pipeline.webp({ lossless: true }).toBuffer();
+    outBuffer = await sharp(resultBuffer, { raw: { width: w, height: h, channels: 4 } })
+      .webp({ lossless: true })
+      .toBuffer();
   }
 
-  await writeFile(out, outBuffer);
-
-  const totalCleaned = removedCount + clampedCount;
-  const pct = ((totalCleaned / (w * h)) * 100).toFixed(1);
-  console.log(`  ✓ ${basename(out)} (${pct}% background removed${clampedCount > 0 ? `, ${clampedCount} ghost pixels clamped` : ''})`);
+  await writeFile(actualOutput, outBuffer);
+  console.log(`  ✓ ${basename(actualOutput)}`);
 }
 
-/**
- * Sample corner regions to find the dominant background color(s).
- * Returns an array of {r,g,b} colors that represent the background.
- * For checkerboard patterns, this typically returns two colors.
- * Detects both light backgrounds (white/gray) and dark backgrounds (black/near-black).
- */
-function sampleBackgroundColors(pixels, w, h) {
-  const n = CORNER_SAMPLE;
-  const colorCounts = new Map(); // "r,g,b" -> count
+// --- ML-based mode (rembg) ---
 
-  // Sample from all four corners
-  const corners = [
-    { x0: 0, y0: 0 },                     // top-left
-    { x0: w - n, y0: 0 },                  // top-right
-    { x0: 0, y0: h - n },                  // bottom-left
-    { x0: w - n, y0: h - n },              // bottom-right
-  ];
+async function runRembg(inputPath, outputPngPath) {
+  await execFileAsync(UVX, [
+    '--with', 'rembg[cpu,cli]',
+    'rembg', 'i',
+    '-a',
+    '-m', 'birefnet-general',
+    inputPath, outputPngPath,
+  ], { timeout: 120_000 });
+}
 
-  for (const { x0, y0 } of corners) {
-    for (let dy = 0; dy < n; dy++) {
-      for (let dx = 0; dx < n; dx++) {
-        const x = x0 + dx;
-        const y = y0 + dy;
-        if (x >= w || y >= h) continue;
-        const idx = (y * w + x) * 4;
-        // Quantize to reduce noise (round to nearest 4)
-        const r = (pixels[idx] >> 2) << 2;
-        const g = (pixels[idx + 1] >> 2) << 2;
-        const b = (pixels[idx + 2] >> 2) << 2;
-        const key = `${r},${g},${b}`;
-        colorCounts.set(key, (colorCounts.get(key) || 0) + 1);
-      }
+async function removeBackgroundML(inputPath, outputPath, options = {}) {
+  const actualOutput = resolveOutput(inputPath, outputPath, options);
+
+  const tempId = randomBytes(6).toString('hex');
+  const tempPng = join(tmpdir(), `rembg_${tempId}.png`);
+
+  try {
+    let rembgInput = inputPath;
+    let tempInput = null;
+    const inputExt = extname(inputPath).toLowerCase();
+    if (inputExt === '.webp') {
+      tempInput = join(tmpdir(), `rembg_in_${tempId}.png`);
+      await sharp(inputPath).png().toFile(tempInput);
+      rembgInput = tempInput;
     }
-  }
 
-  // Sort by frequency, take top colors that account for most corner pixels
-  const sorted = [...colorCounts.entries()].sort((a, b) => b[1] - a[1]);
-  const totalSampled = n * n * 4;
-  const bgColors = [];
-  let accounted = 0;
+    await runRembg(rembgInput, tempPng);
 
-  // Helper: check if a color is "light" (potential white/gray background)
-  const isLight = (r, g, b) => r >= 180 && g >= 180 && b >= 180;
-  // Helper: check if a color is "dark" (potential black/near-black background)
-  const isDark = (r, g, b) => r <= 50 && g <= 50 && b <= 50;
+    if (tempInput) {
+      await unlink(tempInput).catch(() => {});
+    }
 
-  for (const [key, count] of sorted) {
-    if (accounted >= totalSampled * 0.8) break; // stop once we've accounted for 80%
-    if (bgColors.length >= 3) break; // at most 3 bg colors
-    const [r, g, b] = key.split(',').map(Number);
-    if (isLight(r, g, b) || isDark(r, g, b)) {
-      bgColors.push({ r, g, b });
-      accounted += count;
+    const resultBuffer = await readFile(tempPng);
+
+    if (options.preview) {
+      const inputBuffer = await readFile(inputPath);
+      await generatePreview(inputBuffer, resultBuffer, inputPath);
+    }
+
+    const outExt = extname(actualOutput).toLowerCase();
+    let outBuffer;
+    if (outExt === '.png') {
+      outBuffer = resultBuffer;
     } else {
-      // Mid-tone dominant color in corners — ambiguous, skip if dominant
-      if (count > totalSampled * 0.3) {
-        return []; // mid-tone background — don't process (could damage subject)
-      }
+      outBuffer = await sharp(resultBuffer).webp({ lossless: true }).toBuffer();
+    }
+
+    await writeFile(actualOutput, outBuffer);
+    console.log(`  ✓ ${basename(actualOutput)}`);
+  } finally {
+    await unlink(tempPng).catch(() => {});
+  }
+}
+
+// --- Shared utilities ---
+
+function resolveOutput(inputPath, outputPath, options) {
+  if (options.suffix) {
+    const dir = dirname(inputPath);
+    const base = basename(inputPath, extname(inputPath));
+    return join(dir, `${base}_${options.suffix}.webp`);
+  }
+  return outputPath || inputPath;
+}
+
+async function generatePreview(originalBuffer, processedBuffer, inputPath) {
+  const original = sharp(originalBuffer);
+  const processed = sharp(processedBuffer);
+
+  const origMeta = await original.metadata();
+  const w = origMeta.width;
+  const h = origMeta.height;
+
+  const checkerSize = 16;
+  const checkerBuffer = Buffer.alloc(w * h * 4);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const idx = (y * w + x) * 4;
+      const isLight = ((Math.floor(x / checkerSize) + Math.floor(y / checkerSize)) % 2) === 0;
+      const val = isLight ? 220 : 180;
+      checkerBuffer[idx] = val;
+      checkerBuffer[idx + 1] = val;
+      checkerBuffer[idx + 2] = val;
+      checkerBuffer[idx + 3] = 255;
     }
   }
 
-  return bgColors;
+  const checkerBg = await sharp(checkerBuffer, { raw: { width: w, height: h, channels: 4 } })
+    .composite([{ input: await processed.resize(w, h).toBuffer(), blend: 'over' }])
+    .png()
+    .toBuffer();
+
+  const previewBuffer = await sharp({
+    create: { width: w * 2 + 4, height: h, channels: 4, background: { r: 40, g: 40, b: 40, alpha: 255 } }
+  })
+    .composite([
+      { input: await original.png().toBuffer(), left: 0, top: 0 },
+      { input: checkerBg, left: w + 4, top: 0 },
+    ])
+    .png()
+    .toBuffer();
+
+  const previewName = basename(inputPath, extname(inputPath)) + '_preview.png';
+  const previewPath = join(dirname(inputPath), previewName);
+  await writeFile(previewPath, previewBuffer);
+  console.log(`  📋 Preview: ${previewPath}`);
 }
 
-async function processDirectory(dir, ext = 'webp') {
+async function processDirectory(dir, ext = 'webp', options = {}) {
   const files = await readdir(dir);
-  const targets = files.filter(f => f.endsWith(`.${ext}`) && !f.startsWith('.'));
+  const targets = files.filter(f =>
+    f.endsWith(`.${ext}`) &&
+    !f.startsWith('.') &&
+    !f.includes('_preview') &&
+    !(options.suffix && f.includes(`_${options.suffix}.`))
+  );
 
   console.log(`Processing ${targets.length} .${ext} files in ${dir}...`);
+
+  const removeFn = options.white ? removeWhiteBackground : removeBackgroundML;
 
   for (const file of targets) {
     const fullPath = join(dir, file);
     try {
-      await removeBackground(fullPath, fullPath);
+      await removeFn(fullPath, fullPath, options);
     } catch (err) {
       console.error(`  ✗ ${file}: ${err.message}`);
     }
   }
 }
 
-// CLI
-const args = process.argv.slice(2);
+// --- CLI ---
 
-if (args[0] === '--batch') {
-  const dir = args[1];
-  const ext = args[2] === '--ext' ? args[3] : 'webp';
-  await processDirectory(dir, ext);
-} else if (args.length >= 1) {
-  await removeBackground(args[0], args[1] || args[0]);
+const args = process.argv.slice(2);
+const options = {};
+const positional = [];
+
+for (let i = 0; i < args.length; i++) {
+  if (args[i] === '--white') {
+    options.white = true;
+  } else if (args[i] === '--threshold' && args[i + 1]) {
+    options.threshold = parseInt(args[++i], 10);
+  } else if (args[i] === '--suffix' && args[i + 1]) {
+    options.suffix = args[++i];
+  } else if (args[i] === '--preview') {
+    options.preview = true;
+  } else if (args[i] === '--batch') {
+    options.batch = true;
+    if (args[i + 1] && !args[i + 1].startsWith('--')) {
+      positional.push(args[++i]);
+    }
+  } else if (args[i] === '--ext' && args[i + 1]) {
+    options.ext = args[++i];
+  } else if (!args[i].startsWith('--')) {
+    positional.push(args[i]);
+  }
+}
+
+const removeFn = options.white ? removeWhiteBackground : removeBackgroundML;
+
+if (options.batch && positional.length >= 1) {
+  await processDirectory(positional[0], options.ext || 'webp', options);
+} else if (!options.batch && positional.length >= 1) {
+  await removeFn(positional[0], positional[1] || positional[0], options);
 } else {
   console.log('Usage:');
-  console.log('  node scripts/remove-bg.mjs <input> [output]');
-  console.log('  node scripts/remove-bg.mjs --batch <directory> [--ext webp]');
+  console.log('  node scripts/remove-bg.mjs --white <input> [output]');
+  console.log('  node scripts/remove-bg.mjs --white --batch <directory>');
+  console.log('  node scripts/remove-bg.mjs <input> [output]        (ML mode, requires uvx)');
+  console.log('  node scripts/remove-bg.mjs --batch <directory>     (ML mode)');
+  console.log('  node scripts/remove-bg.mjs --preview <input>');
+  console.log('  node scripts/remove-bg.mjs --suffix nobg <input>');
+  console.log('  node scripts/remove-bg.mjs --threshold 230 --white <input>');
 }

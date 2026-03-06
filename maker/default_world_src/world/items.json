@@ -14,7 +14,7 @@
       "attackSound": "sword_swing",
       "missSound": "sword_miss",
       "imagePrompt": "A single sturdy iron sword with well-balanced blade, leather-wrapped grip, simple crossguard. Isolated object centered, no surface, no hands.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed",
       "imageNegativePrompt": "background, surface, table, hands, person, multiple items, modern, sci-fi"
     },
     {
@@ -31,7 +31,7 @@
       "attackSound": "dagger_slash",
       "missSound": "dagger_miss",
       "imagePrompt": "A single rustic dagger with a short slightly nicked blade and worn leather-wrapped grip, simple crossguard, humble starter weapon. Isolated object centered, no surface, no hands.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed",
       "imageNegativePrompt": "background, surface, table, hands, person, multiple items, modern, sci-fi"
     },
     {
@@ -48,7 +48,7 @@
       "attackSound": "staff_swing",
       "missSound": "staff_miss",
       "imagePrompt": "A single simple wooden quarterstaff made of smooth oak, slightly knotted wood grain, humble starter weapon for a mage. Isolated object centered, no surface, no hands.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed",
       "imageNegativePrompt": "background, surface, table, hands, person, multiple items, modern, sci-fi, crystal, gem, glowing"
     },
     {
@@ -65,7 +65,7 @@
       "attackSound": "bow_shot",
       "missSound": "bow_miss",
       "imagePrompt": "A single compact short bow of yew wood with simple hemp string, humble starter ranger weapon. Isolated object centered, no surface, no hands.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed",
       "imageNegativePrompt": "background, surface, table, hands, person, multiple items, modern, sci-fi, arrows, quiver"
     },
     {
@@ -79,7 +79,7 @@
       "weight": 4,
       "levelRequirement": 1,
       "imagePrompt": "A single round shield made of hardened oak with iron rim and central boss, weathered but sturdy. Isolated object centered, no surface, no hands.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed",
       "imageNegativePrompt": "background, surface, table, hands, person, multiple items, modern, sci-fi"
     },
     {
@@ -93,7 +93,7 @@
       "weight": 1,
       "levelRequirement": 1,
       "imagePrompt": "A single simple cap made of boiled brown leather, basic head protection. Isolated object centered, no surface, no head or mannequin.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed",
       "imageNegativePrompt": "background, surface, table, hands, person, head, mannequin, multiple items, modern, sci-fi"
     },
     {
@@ -107,7 +107,7 @@
       "weight": 4,
       "levelRequirement": 1,
       "imagePrompt": "A single vest of thick tanned brown leather with stitched seams, torso armor. Isolated object centered, no surface, no body or mannequin.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed",
       "imageNegativePrompt": "background, surface, table, hands, person, body, mannequin, multiple items, modern, sci-fi"
     },
     {
@@ -121,7 +121,7 @@
       "weight": 3,
       "levelRequirement": 1,
       "imagePrompt": "A single pair of tough leather leggings with reinforced knee patches. Isolated object centered, no surface, no legs or mannequin.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed",
       "imageNegativePrompt": "background, surface, table, hands, person, legs, mannequin, multiple items, modern, sci-fi"
     },
     {
@@ -135,7 +135,7 @@
       "weight": 2,
       "levelRequirement": 1,
       "imagePrompt": "A single pair of well-worn leather boots reaching mid-calf, thick soles and lacing. Isolated object centered, no surface, no feet.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed",
       "imageNegativePrompt": "background, surface, table, hands, person, feet, multiple items, modern, sci-fi"
     },
     {
@@ -149,7 +149,7 @@
       "weight": 1,
       "levelRequirement": 1,
       "imagePrompt": "A single pair of supple brown leather gloves with reinforced fingers. Isolated object centered, no surface, no hands.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed",
       "imageNegativePrompt": "background, surface, table, hands, person, multiple items, modern, sci-fi"
     },
     {
@@ -164,7 +164,7 @@
       "maxStack": 10,
       "useSound": "potion_drink",
       "imagePrompt": "A single small glass vial filled with glowing red liquid, corked and sealed, magical healing potion with faint luminescence. Isolated object centered, no surface.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed, magical glow",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed, magical glow",
       "imageNegativePrompt": "background, surface, table, hands, person, multiple items, modern, sci-fi"
     },
     {
@@ -179,7 +179,7 @@
       "maxStack": 10,
       "useSound": "potion_drink",
       "imagePrompt": "A single small glass vial filled with swirling blue liquid, corked and sealed, magical mana potion with faint arcane shimmer. Isolated object centered, no surface.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed, magical glow",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed, magical glow",
       "imageNegativePrompt": "background, surface, table, hands, person, multiple items, modern, sci-fi"
     },
     {
@@ -193,7 +193,7 @@
       "weight": 3,
       "levelRequirement": 3,
       "imagePrompt": "A single hood of interlocking iron chain rings, medieval coif armor for the head, silvery metal mesh. Isolated object centered, no surface, no head or mannequin.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed",
       "imageNegativePrompt": "background, surface, table, hands, person, head, mannequin, multiple items, modern, sci-fi"
     },
     {
@@ -207,7 +207,7 @@
       "weight": 8,
       "levelRequirement": 3,
       "imagePrompt": "A single vest of interlocking iron chain rings, medieval chainmail torso armor with short sleeves, silvery metal mesh. Isolated object centered, no surface, no body or mannequin.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed",
       "imageNegativePrompt": "background, surface, table, hands, person, body, mannequin, multiple items, modern, sci-fi"
     },
     {
@@ -221,7 +221,7 @@
       "weight": 5,
       "levelRequirement": 3,
       "imagePrompt": "A single pair of leggings reinforced with iron chain links, medieval leg armor, silvery metal mesh over leather. Isolated object centered, no surface, no legs or mannequin.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed",
       "imageNegativePrompt": "background, surface, table, hands, person, legs, mannequin, multiple items, modern, sci-fi"
     },
     {
@@ -235,7 +235,7 @@
       "weight": 4,
       "levelRequirement": 3,
       "imagePrompt": "A single pair of heavy boots with iron plating over leather, medieval foot armor with metal toe caps. Isolated object centered, no surface, no feet.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed",
       "imageNegativePrompt": "background, surface, table, hands, person, feet, multiple items, modern, sci-fi"
     },
     {
@@ -249,7 +249,7 @@
       "weight": 2,
       "levelRequirement": 3,
       "imagePrompt": "A single pair of sturdy gauntlets of hammered iron, medieval hand armor with articulated fingers. Isolated object centered, no surface, no hands.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed",
       "imageNegativePrompt": "background, surface, table, hands, person, multiple items, modern, sci-fi"
     },
     {
@@ -263,7 +263,7 @@
       "weight": 6,
       "levelRequirement": 3,
       "imagePrompt": "A single solid iron-banded kite shield with riveted iron bands and a central boss, battle-worn but sturdy. Isolated object centered, no surface, no hands.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed",
       "imageNegativePrompt": "background, surface, table, hands, person, multiple items, modern, sci-fi"
     },
     {
@@ -280,7 +280,7 @@
       "attackSound": "sword_swing",
       "missSound": "sword_miss",
       "imagePrompt": "A single finely forged steel longsword with a keen edge, polished blade, leather-wrapped grip, ornate crossguard. Isolated object centered, no surface, no hands.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed",
       "imageNegativePrompt": "background, surface, table, hands, person, multiple items, modern, sci-fi"
     },
     {
@@ -297,7 +297,7 @@
       "attackSound": "sword_swing",
       "missSound": "sword_miss",
       "imagePrompt": "A single massive two-handed steel greatsword with a wide blade, long grip wrapped in dark leather, heavy crossguard. Isolated object centered, no surface, no hands.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed",
       "imageNegativePrompt": "background, surface, table, hands, person, multiple items, modern, sci-fi"
     },
     {
@@ -311,7 +311,7 @@
       "weight": 4,
       "levelRequirement": 6,
       "imagePrompt": "A single steel helm with reinforced plating, medieval full-face visor helmet with rivets and a crest. Isolated object centered, no surface, no head or mannequin.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed",
       "imageNegativePrompt": "background, surface, table, hands, person, head, mannequin, multiple items, modern, sci-fi"
     },
     {
@@ -325,7 +325,7 @@
       "weight": 12,
       "levelRequirement": 6,
       "imagePrompt": "A single heavy steel plate chestguard riveted onto chain backing, medieval torso armor with polished plates and leather straps. Isolated object centered, no surface, no body or mannequin.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed",
       "imageNegativePrompt": "background, surface, table, hands, person, body, mannequin, multiple items, modern, sci-fi"
     },
     {
@@ -339,7 +339,7 @@
       "weight": 8,
       "levelRequirement": 6,
       "imagePrompt": "A single pair of steel plate greaves, medieval leg armor with articulated knee joints protecting from hip to shin. Isolated object centered, no surface, no legs or mannequin.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed",
       "imageNegativePrompt": "background, surface, table, hands, person, legs, mannequin, multiple items, modern, sci-fi"
     },
     {
@@ -353,7 +353,7 @@
       "weight": 5,
       "levelRequirement": 6,
       "imagePrompt": "A single pair of heavy steel sabatons, medieval articulated plate boots with segmented toe and ankle guards. Isolated object centered, no surface, no feet.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed",
       "imageNegativePrompt": "background, surface, table, hands, person, feet, multiple items, modern, sci-fi"
     },
     {
@@ -367,7 +367,7 @@
       "weight": 3,
       "levelRequirement": 6,
       "imagePrompt": "A single pair of articulated gauntlets of polished steel, medieval hand armor with segmented finger plates. Isolated object centered, no surface, no hands.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed",
       "imageNegativePrompt": "background, surface, table, hands, person, multiple items, modern, sci-fi"
     },
     {
@@ -381,7 +381,7 @@
       "weight": 10,
       "levelRequirement": 6,
       "imagePrompt": "A single massive tower shield of steel with reinforced edges, tall rectangular shape with a heraldic emblem embossed on the front. Isolated object centered, no surface, no hands.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed",
       "imageNegativePrompt": "background, surface, table, hands, person, multiple items, modern, sci-fi"
     },
     {
@@ -396,7 +396,7 @@
       "maxStack": 5,
       "useSound": "potion_drink",
       "imagePrompt": "A single frothy mug of dark stout ale, wooden tankard with foam overflowing, warm tavern drink. Isolated object centered, no surface.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed",
       "imageNegativePrompt": "background, surface, table, hands, person, multiple items, modern, sci-fi"
     },
     {
@@ -411,7 +411,7 @@
       "maxStack": 5,
       "useSound": "potion_drink",
       "imagePrompt": "A single thick loaf of crusty bread, golden-brown crust with flour dusting, fresh baked hearty tavern food. Isolated object centered, no surface.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed",
       "imageNegativePrompt": "background, surface, table, hands, person, multiple items, modern, sci-fi"
     },
     {
@@ -426,7 +426,7 @@
       "maxStack": 10,
       "useSound": "potion_drink",
       "imagePrompt": "A single large glass vial filled with deep crimson liquid that pulses with inner light, magical greater healing potion with golden swirls. Isolated object centered, no surface.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed, magical glow",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed, magical glow",
       "imageNegativePrompt": "background, surface, table, hands, person, multiple items, modern, sci-fi"
     },
     {
@@ -441,7 +441,7 @@
       "maxStack": 10,
       "useSound": "potion_drink",
       "imagePrompt": "A single large glass vial filled with swirling azure liquid crackling with tiny arcane lightning, magical greater mana potion with electric blue glow. Isolated object centered, no surface.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed, magical glow",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed, magical glow",
       "imageNegativePrompt": "background, surface, table, hands, person, multiple items, modern, sci-fi"
     },
     {
@@ -456,7 +456,7 @@
       "maxStack": 5,
       "useSound": "spell_cast",
       "imagePrompt": "A single tightly rolled parchment scroll with glowing orange-red runes, sealed with a wax sigil, fire magic scroll with faint ember glow at the edges. Isolated object centered, no surface.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed, magical glow",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed, magical glow",
       "imageNegativePrompt": "background, surface, table, hands, person, multiple items, modern, sci-fi"
     },
     {
@@ -471,7 +471,7 @@
       "maxStack": 5,
       "useSound": "spell_cast",
       "imagePrompt": "A single parchment scroll etched with glowing golden sacred glyphs, sealed with a white wax sigil, divine healing magic scroll with soft radiant light. Isolated object centered, no surface.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed, magical glow",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed, magical glow",
       "imageNegativePrompt": "background, surface, table, hands, person, multiple items, modern, sci-fi"
     },
     {
@@ -485,7 +485,7 @@
       "weight": 1,
       "levelRequirement": 3,
       "imagePrompt": "A single silver amulet on a delicate chain, set with a pale sapphire that glows faintly with protective magic, ornate filigree border. Isolated object centered, no surface.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed, magical glow",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed, magical glow",
       "imageNegativePrompt": "background, surface, table, hands, person, neck, multiple items, modern, sci-fi"
     },
     {
@@ -500,7 +500,7 @@
       "weight": 0,
       "levelRequirement": 3,
       "imagePrompt": "A single thin gold ring engraved with tiny glowing arcane runes, magical ring of intellect with faint blue shimmer. Isolated object centered, no surface.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed, magical glow",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed, magical glow",
       "imageNegativePrompt": "background, surface, table, hands, person, finger, multiple items, modern, sci-fi"
     },
     {
@@ -515,7 +515,7 @@
       "weight": 3,
       "levelRequirement": 5,
       "imagePrompt": "A single set of flowing robes of deep violet silk woven with silver threads, arcane sigils shimmering faintly across the fabric, enchanted mage armor. Isolated object centered, no surface, no body or mannequin.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed, magical glow",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed, magical glow",
       "imageNegativePrompt": "background, surface, table, hands, person, body, mannequin, multiple items, modern, sci-fi"
     },
     {
@@ -532,7 +532,7 @@
       "attackSound": "staff_swing",
       "missSound": "staff_miss",
       "imagePrompt": "A single gnarled oak staff crowned with a softly glowing amethyst crystal, magical wizard staff with arcane energy wisps, twisted wood grain. Isolated object centered, no surface, no hands.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed, magical glow",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed, magical glow",
       "imageNegativePrompt": "background, surface, table, hands, person, multiple items, modern, sci-fi"
     },
     {
@@ -545,7 +545,7 @@
       "stackable": true,
       "maxStack": 20,
       "imagePrompt": "A single long curved venomous fang from a giant spider, sharp and translucent with green venom residue. Isolated object centered, no surface.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed",
       "imageNegativePrompt": "background, surface, table, hands, person, spider, multiple items, modern, sci-fi"
     },
     {
@@ -558,7 +558,7 @@
       "stackable": true,
       "maxStack": 10,
       "imagePrompt": "A single dark luxurious fur pelt from a shadow wolf, midnight black with a slight shimmer. Isolated object centered, no surface.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed",
       "imageNegativePrompt": "background, surface, table, hands, person, wolf, multiple items, modern, sci-fi"
     },
     {
@@ -571,7 +571,7 @@
       "stackable": true,
       "maxStack": 20,
       "imagePrompt": "A single piece of tough scaly amphibian hide, greenish-brown with a wet sheen, water-resistant swamp creature leather. Isolated object centered, no surface.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed",
       "imageNegativePrompt": "background, surface, table, hands, person, creature, multiple items, modern, sci-fi"
     },
     {
@@ -584,7 +584,7 @@
       "stackable": true,
       "maxStack": 20,
       "imagePrompt": "A single small glass vial filled with swirling ghostly ectoplasmic residue, pale blue-green glow, necrotic wraith essence with wisps of spectral energy. Isolated object centered, no surface.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed, ethereal glow",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed, ethereal glow",
       "imageNegativePrompt": "background, surface, table, hands, person, ghost, multiple items, modern, sci-fi"
     },
     {
@@ -597,7 +597,7 @@
       "stackable": true,
       "maxStack": 20,
       "imagePrompt": "A single razor-sharp shard of volcanic obsidian glass, jet black with glossy reflective surface, faintly glowing orange at the edges from residual heat. Isolated object centered, no surface.",
-      "imageStyle": "fantasy item sprite, game icon, clean edges, transparent background, PNG cutout, detailed",
+      "imageStyle": "fantasy item sprite, game icon, clean edges, solid white background, detailed",
       "imageNegativePrompt": "background, surface, table, hands, person, multiple items, modern, sci-fi"
     }
   ]
