@@ -723,6 +723,20 @@ function ZoneEditor() {
     );
   }, [selectedZoneId, allRooms]);
 
+  // Stable zone-to-color mapping (index based on sorted zone IDs)
+  const zoneColorIndex = useMemo(() => {
+    const ZONE_COLORS = [
+      '#3f51b5', '#e91e63', '#009688', '#ff9800', '#673ab7',
+      '#4caf50', '#f44336', '#00bcd4', '#795548', '#607d8b',
+    ];
+    const map = new Map<string, string>();
+    const sortedIds = allRooms.map((g) => g.zoneId).sort();
+    for (let i = 0; i < sortedIds.length; i++) {
+      map.set(sortedIds[i], ZONE_COLORS[i % ZONE_COLORS.length]);
+    }
+    return map;
+  }, [allRooms]);
+
   const worldMapZoneLabels = useMemo(() => {
     if (selectedZoneId) return [];
     return allRooms
@@ -730,9 +744,20 @@ function ZoneEditor() {
       .map((g) => {
         const cx = g.rooms.reduce((sum, r) => sum + r.x, 0) / g.rooms.length;
         const cy = g.rooms.reduce((sum, r) => sum + r.y, 0) / g.rooms.length;
-        return { zoneName: g.zoneName, cx, cy };
+        return { zoneName: g.zoneName, cx, cy, color: zoneColorIndex.get(g.zoneId) };
       });
-  }, [selectedZoneId, allRooms]);
+  }, [selectedZoneId, allRooms, zoneColorIndex]);
+
+  // Per-room zone color map for world map view
+  const worldMapRoomColors = useMemo(() => {
+    if (selectedZoneId) return undefined;
+    const map = new Map<string, string>();
+    for (const g of allRooms) {
+      const color = zoneColorIndex.get(g.zoneId) || '#3f51b5';
+      for (const r of g.rooms) map.set(r.id, color);
+    }
+    return map.size > 0 ? map : undefined;
+  }, [selectedZoneId, allRooms, zoneColorIndex]);
 
   // Handle clicking a room in world map view (find zone and select it)
   const handleWorldMapSelectRoom = useCallback((roomId: string) => {
@@ -992,7 +1017,7 @@ function ZoneEditor() {
                 ...styles.zoneItem,
                 ...(z.id === selectedZoneId ? styles.zoneItemSelected : {}),
               }}
-              onClick={() => setSelectedZoneId(z.id)}
+              onClick={() => setSelectedZoneId(z.id === selectedZoneId ? null : z.id)}
             >
               {z.name}
             </div>
@@ -1182,6 +1207,7 @@ function ZoneEditor() {
             onCreateExit={() => {}}
             readOnly
             zoneLabels={worldMapZoneLabels}
+            roomZoneColors={worldMapRoomColors}
           />
         )}
       </div>

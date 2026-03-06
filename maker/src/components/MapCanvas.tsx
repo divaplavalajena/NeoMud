@@ -42,7 +42,14 @@ interface ZoneLabel {
   zoneName: string;
   cx: number;  // centroid x in grid coords
   cy: number;  // centroid y in grid coords
+  color?: string;  // optional zone color for world map view
 }
+
+// Palette for distinguishing zones in the world map view
+const ZONE_COLORS = [
+  '#3f51b5', '#e91e63', '#009688', '#ff9800', '#673ab7',
+  '#4caf50', '#f44336', '#00bcd4', '#795548', '#607d8b',
+];
 
 interface MapCanvasProps {
   rooms: RoomNode[];
@@ -59,8 +66,10 @@ interface MapCanvasProps {
   readOnly?: boolean;
   /** Room IDs to render at reduced opacity (other zones' rooms in world map view) */
   dimmedRoomIds?: Set<string>;
-  /** Labels to draw at zone centroids for dimmed zones */
+  /** Labels to draw at zone centroids for dimmed zones or world map zones */
   zoneLabels?: ZoneLabel[];
+  /** Per-room zone color override (world map view) — roomId → color */
+  roomZoneColors?: Map<string, string>;
 }
 
 const CELL_SIZE = 80;
@@ -81,6 +90,7 @@ function MapCanvas({
   readOnly = false,
   dimmedRoomIds,
   zoneLabels = [],
+  roomZoneColors,
 }: MapCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -118,14 +128,20 @@ function MapCanvas({
   }, []);
 
   // Center view on rooms' bounding-box center whenever the room set changes
+  // When dimmedRoomIds is provided, center on non-dimmed (active zone) rooms only
   const prevRoomKey = useRef('');
   useEffect(() => {
     if (canvasSize.w <= 0 || canvasSize.h <= 0) return;
-    const key = rooms.map((r) => r.id).sort().join(',');
+    // Build key from non-dimmed rooms so layer/zone changes trigger re-centering
+    const activeRooms = dimmedRoomIds
+      ? rooms.filter((r) => !dimmedRoomIds.has(r.id))
+      : rooms;
+    const key = activeRooms.map((r) => r.id).sort().join(',');
     if (key === prevRoomKey.current) return;
     prevRoomKey.current = key;
 
-    if (rooms.length === 0) {
+    const centerRooms = activeRooms.length > 0 ? activeRooms : rooms;
+    if (centerRooms.length === 0) {
       setOffset({
         x: Math.floor(canvasSize.w / 2 - STRIDE / 2),
         y: Math.floor(canvasSize.h / 2 - STRIDE / 2),
@@ -133,15 +149,15 @@ function MapCanvas({
       return;
     }
 
-    const xs = rooms.map((r) => r.x);
-    const ys = rooms.map((r) => r.y);
+    const xs = centerRooms.map((r) => r.x);
+    const ys = centerRooms.map((r) => r.y);
     const cx = (Math.min(...xs) + Math.max(...xs)) / 2;
     const cy = (Math.min(...ys) + Math.max(...ys)) / 2;
     setOffset({
       x: Math.floor(canvasSize.w / 2 - cx * STRIDE - STRIDE / 2),
       y: Math.floor(canvasSize.h / 2 + cy * STRIDE - STRIDE / 2),
     });
-  }, [rooms, canvasSize.w, canvasSize.h]);
+  }, [rooms, canvasSize.w, canvasSize.h, dimmedRoomIds]);
 
   // Convert grid coords to pixel coords (center of cell, centered within stride)
   const gridToPixel = useCallback(
@@ -281,12 +297,14 @@ function MapCanvas({
         ctx.fillText(displayName, px, py);
       }
       ctx.restore();
+    }
 
-      // Zone labels at centroids
+    // Zone labels at centroids (renders in both dimmed and world map views)
+    if (zoneLabels.length > 0) {
       for (const label of zoneLabels) {
         const { px, py } = gridToPixel(label.cx, label.cy);
         ctx.save();
-        ctx.fillStyle = 'rgba(100,100,100,0.5)';
+        ctx.fillStyle = label.color ? label.color + '99' : 'rgba(100,100,100,0.5)';
         ctx.font = 'bold 14px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
@@ -358,7 +376,7 @@ function MapCanvas({
       ctx.roundRect(x, y, CELL_SIZE, CELL_SIZE, ROOM_RADIUS);
       ctx.closePath();
 
-      ctx.fillStyle = '#3f51b5';
+      ctx.fillStyle = roomZoneColors?.get(room.id) ?? '#3f51b5';
       ctx.fill();
 
       if (room.id === selectedRoomId) {
@@ -613,7 +631,7 @@ function MapCanvas({
       ctx.fillText(cze.targetZone, 0, 0);
       ctx.restore();
     }
-  }, [rooms, exits, selectedRoomId, offset, canvasSize, gridToPixel, dragPreview, roomAtPixel, verticalExits, crossZoneExits, overlay, dimmedRoomIds, zoneLabels]);
+  }, [rooms, exits, selectedRoomId, offset, canvasSize, gridToPixel, dragPreview, roomAtPixel, verticalExits, crossZoneExits, overlay, dimmedRoomIds, zoneLabels, roomZoneColors]);
 
   // Mouse handlers
   const handleMouseDown = useCallback(
