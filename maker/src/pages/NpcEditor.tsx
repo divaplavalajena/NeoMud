@@ -72,7 +72,7 @@ const BEHAVIOR_OPTIONS = [
 
 const BEHAVIOR_DESCRIPTIONS: Record<string, string> = {
   idle: 'Stays in start room, never moves.',
-  wander: 'Wanders randomly through all rooms in the zone.',
+  wander: 'Wanders randomly through connected rooms in the zone.',
   patrol: 'Walks a fixed route of rooms in sequence.',
   vendor: 'Stays in start room. Players can buy/sell items.',
   trainer: 'Stays in start room. Players can train skills/levels.',
@@ -349,9 +349,36 @@ function NpcEditor() {
       for (const rid of patrolRoute) tints.set(rid, '#e040fb');
       overlay.roomTints = tints;
     } else if (bt === 'wander') {
-      // Wander: all zone rooms tinted blue (NPC can move to any room in zone)
+      // Wander: BFS from start room through same-zone exits to find reachable rooms
       const tints = new Map<string, string>();
-      for (const r of rooms) tints.set(r.id, '#42a5f5');
+      const roomMap = new Map<string, Room>();
+      for (const r of rooms) roomMap.set(r.id, r);
+      const zoneRoomIds = new Set(rooms.map((r) => r.id));
+
+      if (form.startRoomId && roomMap.has(form.startRoomId)) {
+        const visited = new Set<string>();
+        const queue = [form.startRoomId];
+        visited.add(form.startRoomId);
+        while (queue.length > 0) {
+          const cur = queue.shift()!;
+          const room = roomMap.get(cur);
+          if (!room) continue;
+          for (const exit of room.exits || []) {
+            if (!visited.has(exit.toRoomId) && zoneRoomIds.has(exit.toRoomId)) {
+              visited.add(exit.toRoomId);
+              queue.push(exit.toRoomId);
+            }
+          }
+        }
+        for (const rid of visited) tints.set(rid, '#42a5f5');
+        // Unreachable rooms in zone get a muted tint
+        for (const r of rooms) {
+          if (!visited.has(r.id)) tints.set(r.id, '#e0e0e0');
+        }
+      } else {
+        // No start room set — tint all rooms blue
+        for (const r of rooms) tints.set(r.id, '#42a5f5');
+      }
       overlay.roomTints = tints;
     }
     // idle/vendor/quest: no tint, just start room marker

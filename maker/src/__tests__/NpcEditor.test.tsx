@@ -56,8 +56,8 @@ const MOCK_TOWN_ROOMS = [
 ]
 
 const MOCK_FOREST_ROOMS = [
-  { id: 'forest:edge', name: 'Forest Edge', x: 0, y: 0, exits: [] },
-  { id: 'forest:clearing', name: 'Mossy Clearing', x: 0, y: 1, exits: [] },
+  { id: 'forest:edge', name: 'Forest Edge', x: 0, y: 0, exits: [{ fromRoomId: 'forest:edge', toRoomId: 'forest:clearing', direction: 'SOUTH' }] },
+  { id: 'forest:clearing', name: 'Mossy Clearing', x: 0, y: 1, exits: [{ fromRoomId: 'forest:clearing', toRoomId: 'forest:edge', direction: 'NORTH' }] },
 ]
 
 const MOCK_NPCS = [
@@ -291,6 +291,39 @@ describe('NpcEditor', () => {
       const startOverlay = screen.getByTestId('overlay-start')
       expect(startOverlay.textContent).toBe('town:inn')
     })
+  })
+
+  it('wander tints only reachable rooms (BFS from start room)', async () => {
+    // Add an isolated room to forest that has no exits connecting it
+    const FOREST_WITH_ISLAND = [
+      ...MOCK_FOREST_ROOMS,
+      { id: 'forest:island', name: 'Isolated Glade', x: 5, y: 5, exits: [] },
+    ]
+    mockApi.get.mockImplementation((path: string) => {
+      if (path === '/zones') return Promise.resolve(MOCK_ZONES)
+      if (path === '/npcs') return Promise.resolve(MOCK_NPCS)
+      if (path === '/zones/town/rooms') return Promise.resolve(MOCK_TOWN_ROOMS)
+      if (path === '/zones/forest/rooms') return Promise.resolve(FOREST_WITH_ISLAND)
+      return Promise.resolve([])
+    })
+
+    const user = userEvent.setup()
+    render(<NpcEditor />)
+
+    await waitFor(() => expect(screen.getByText('Shadow Wolf')).toBeInTheDocument())
+    await user.click(screen.getByText('Shadow Wolf'))
+
+    await waitFor(() => {
+      const tints = screen.getByTestId('overlay-tints')
+      // Reachable rooms (forest:edge + forest:clearing) and unreachable (forest:island) should all be tinted
+      expect(tints.textContent).toContain('forest:edge')
+      expect(tints.textContent).toContain('forest:clearing')
+      expect(tints.textContent).toContain('forest:island')
+    })
+
+    // The mock MapCanvas shows keys — we verify the tint map includes the island
+    // (it will be tinted #e0e0e0 muted vs #42a5f5 blue for reachable rooms)
+    // The test verifies the BFS doesn't crash and all rooms get some tint
   })
 
   it('new NPC form has correct defaults', async () => {

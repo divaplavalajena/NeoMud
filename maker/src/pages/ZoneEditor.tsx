@@ -1418,6 +1418,11 @@ function ZoneEditor() {
                 }));
               }}
             />
+            {roomForm.maxHostileNpcs != null && zoneForm.spawnMaxPerRoom > 0 && roomForm.maxHostileNpcs > zoneForm.spawnMaxPerRoom && (
+              <div style={{ color: '#e65100', fontSize: 11, marginTop: 2 }}>
+                Warning: exceeds zone default ({zoneForm.spawnMaxPerRoom})
+              </div>
+            )}
 
             {/* Effects */}
             <div style={{ ...styles.sectionTitle, marginTop: 12 }}>Effects</div>
