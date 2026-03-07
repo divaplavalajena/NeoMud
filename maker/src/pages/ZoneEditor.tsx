@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import api from '../api';
-import MapCanvas from '../components/MapCanvas';
+import MapCanvas, { inferDirection } from '../components/MapCanvas';
 import ImagePreview from '../components/ImagePreview';
 import AudioPreview from '../components/AudioPreview';
 import SfxPreview from '../components/SfxPreview';
@@ -904,6 +904,127 @@ function ZoneEditor() {
     [rooms, selectedZoneId]
   );
 
+  const handleMoveRoom = useCallback(
+    async (roomId: string, newX: number, newY: number) => {
+      if (!selectedZoneId) return;
+
+      const room = rooms.find((r) => r.id === roomId);
+      if (!room) return;
+
+      // Pre-compute which exits need direction changes
+      // Collect only FORWARD exits (fromRoomId side) to avoid double-processing
+      // since deleting an exit also deletes its reverse
+      const exitsToFix: { fromRoomId: string; oldDir: string; newDir: string; toRoomId: string }[] = [];
+      const exitWarnings: string[] = [];
+      const processed = new Set<string>(); // "fromId:dir" keys to avoid duplicates
+
+      for (const r of rooms) {
+        for (const exit of r.exits || []) {
+          if (exit.direction === 'UP' || exit.direction === 'DOWN') continue;
+
+          let sourceX: number, sourceY: number, targetX: number, targetY: number;
+          if (exit.fromRoomId === roomId) {
+            const target = rooms.find((t) => t.id === exit.toRoomId);
+            if (!target) continue;
+            sourceX = newX; sourceY = newY;
+            targetX = target.x; targetY = target.y;
+          } else if (exit.toRoomId === roomId) {
+            sourceX = r.x; sourceY = r.y;
+            targetX = newX; targetY = newY;
+          } else {
+            continue;
+          }
+
+          const dx = targetX - sourceX;
+          const dy = targetY - sourceY;
+          const newDir = inferDirection(dx, dy);
+          if (!newDir || newDir === exit.direction) continue;
+
+          const key = `${exit.fromRoomId}:${exit.direction}`;
+          if (processed.has(key)) continue;
+          processed.add(key);
+
+          // Check if target direction slot is free
+          const fromExits = rooms.find((rm) => rm.id === exit.fromRoomId)?.exits || [];
+          const slotTaken = fromExits.some((e) => e.direction === newDir && e.fromRoomId === exit.fromRoomId);
+
+          if (slotTaken) {
+            exitWarnings.push(`${exit.direction} exit from ${exit.fromRoomId} → ${newDir} slot occupied`);
+          } else {
+            exitsToFix.push({ fromRoomId: exit.fromRoomId, oldDir: exit.direction, newDir, toRoomId: exit.toRoomId });
+          }
+        }
+      }
+
+      // Confirmation dialog
+      const roomName = room.name || roomId;
+      let confirmMsg = `Move "${roomName}" from (${room.x}, ${room.y}) to (${newX}, ${newY})?`;
+      if (exitsToFix.length > 0) {
+        confirmMsg += `\n\n${exitsToFix.length} exit(s) will be updated to match new directions.`;
+      }
+      if (exitWarnings.length > 0) {
+        confirmMsg += `\n\n${exitWarnings.length} exit(s) cannot be auto-fixed:\n${exitWarnings.join('\n')}`;
+      }
+      if (!window.confirm(confirmMsg)) return;
+
+      const slug = roomId.startsWith(`${selectedZoneId}:`) ? roomId.slice(selectedZoneId.length + 1) : roomId;
+
+      try {
+        // Step 1: Move the room coordinates
+        await api.put(`/zones/${selectedZoneId}/rooms/${slug}`, { x: newX, y: newY });
+
+        // Step 2: Fix exit directions (delete old, create new)
+        // Deleting an exit also deletes the reverse, and creating re-creates the reverse.
+        // So we only process one side of each bidirectional pair.
+        const fixedPairs = new Set<string>(); // track "roomA:roomB" pairs we've already fixed
+        for (const fix of exitsToFix) {
+          const pairKey = [fix.fromRoomId, fix.toRoomId].sort().join('|');
+          if (fixedPairs.has(pairKey)) continue;
+          fixedPairs.add(pairKey);
+
+          try {
+            await api.del(`/rooms/${fix.fromRoomId}/exits/${fix.oldDir}`);
+            await api.post(`/rooms/${fix.fromRoomId}/exits`, {
+              direction: fix.newDir,
+              toRoomId: fix.toRoomId,
+            });
+          } catch {
+            exitWarnings.push(`Failed to update ${fix.oldDir} → ${fix.newDir} from ${fix.fromRoomId}`);
+          }
+        }
+
+        // Step 3: Reload zone to get fresh data
+        const data = await api.get<ZoneWithRooms>(`/zones/${selectedZoneId}`);
+        setRooms(data.rooms || []);
+
+        // Update allRooms
+        setAllRooms((prev) => prev.map((g) =>
+          g.zoneId === selectedZoneId
+            ? { ...g, rooms: (data.rooms || []).map((r) => ({ id: r.id, name: r.name, x: r.x, y: r.y, exits: r.exits || [] })) }
+            : g
+        ));
+
+        // Sync roomForm if the moved room is selected
+        if (selectedRoomId === roomId) {
+          const updated = (data.rooms || []).find((r) => r.id === roomId);
+          if (updated) setRoomForm(updated);
+        }
+
+        if (exitWarnings.length > 0) {
+          alert(`Room moved. Some exits could not be auto-fixed:\n${exitWarnings.join('\n')}`);
+        }
+      } catch (err: any) {
+        alert(err.message || 'Failed to move room');
+        // Reload to ensure consistent state
+        try {
+          const data = await api.get<ZoneWithRooms>(`/zones/${selectedZoneId}`);
+          setRooms(data.rooms || []);
+        } catch {}
+      }
+    },
+    [rooms, selectedZoneId, selectedRoomId]
+  );
+
   const handleSaveRoom = async () => {
     if (!selectedZoneId || !selectedRoomId) return;
     // Validate interactables have success messages
@@ -1191,6 +1312,7 @@ function ZoneEditor() {
               onSelectRoom={handleCombinedSelectRoom}
               onCreateRoom={handleCreateRoom}
               onCreateExit={handleCreateExit}
+              onMoveRoom={handleMoveRoom}
               verticalExits={verticalExits}
               crossZoneExits={crossZoneExits}
               dimmedRoomIds={dimmedRoomIds}

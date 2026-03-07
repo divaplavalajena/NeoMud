@@ -51,6 +51,16 @@ const ZONE_COLORS = [
   '#4caf50', '#f44336', '#00bcd4', '#795548', '#607d8b',
 ];
 
+interface MovePreview {
+  roomId: string;
+  origX: number;
+  origY: number;
+  ghostX: number;
+  ghostY: number;
+  mouseX: number;
+  mouseY: number;
+}
+
 interface MapCanvasProps {
   rooms: RoomNode[];
   exits: ExitEdge[];
@@ -58,6 +68,8 @@ interface MapCanvasProps {
   onSelectRoom: (id: string) => void;
   onCreateRoom: (x: number, y: number) => void;
   onCreateExit: (fromId: string, toId: string) => void;
+  /** Called when a room is alt-dragged to a new grid position */
+  onMoveRoom?: (roomId: string, newX: number, newY: number) => void;
   verticalExits?: VerticalExit[];
   crossZoneExits?: CrossZoneExit[];
   /** NPC behavior overlays (tints, patrol routes, markers) */
@@ -77,6 +89,23 @@ const GAP = 20;
 const STRIDE = CELL_SIZE + GAP; // 100
 const ROOM_RADIUS = 8;
 
+/** Infer compass direction from grid delta (dx = target.x - source.x, dy = target.y - source.y) */
+function inferDirection(dx: number, dy: number): string | null {
+  if (dx === 0 && dy === 0) return null;
+  // Normalize to sign only for direction inference
+  const sx = Math.sign(dx);
+  const sy = Math.sign(dy);
+  if (sy > 0 && sx === 0) return 'NORTH';
+  if (sy < 0 && sx === 0) return 'SOUTH';
+  if (sx > 0 && sy === 0) return 'EAST';
+  if (sx < 0 && sy === 0) return 'WEST';
+  if (sy > 0 && sx > 0) return 'NORTHEAST';
+  if (sy > 0 && sx < 0) return 'NORTHWEST';
+  if (sy < 0 && sx > 0) return 'SOUTHEAST';
+  if (sy < 0 && sx < 0) return 'SOUTHWEST';
+  return null;
+}
+
 function MapCanvas({
   rooms,
   exits,
@@ -84,6 +113,7 @@ function MapCanvas({
   onSelectRoom,
   onCreateRoom,
   onCreateExit,
+  onMoveRoom,
   verticalExits = [],
   crossZoneExits = [],
   overlay,
@@ -98,19 +128,24 @@ function MapCanvas({
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [canvasSize, setCanvasSize] = useState({ w: 800, h: 600 });
 
-  // Track current mouse position for drag preview
+  // Track current mouse position for drag preview (exit creation)
   const [dragPreview, setDragPreview] = useState<{
     fromId: string;
     mouseX: number;
     mouseY: number;
   } | null>(null);
 
+  // Track room move drag preview
+  const [movePreview, setMovePreview] = useState<MovePreview | null>(null);
+
   const dragState = useRef<{
-    type: 'none' | 'pan' | 'exit';
+    type: 'none' | 'pan' | 'exit' | 'move';
     startX: number;
     startY: number;
     offsetStart: { x: number; y: number };
     fromRoomId?: string;
+    origGridX?: number;
+    origGridY?: number;
   }>({ type: 'none', startX: 0, startY: 0, offsetStart: { x: 0, y: 0 } });
 
   // ResizeObserver
@@ -379,9 +414,13 @@ function MapCanvas({
     // Draw rooms — skip dimmed rooms (already drawn)
     for (const room of rooms) {
       if (isDimmed(room.id)) continue;
+      const isMoving = movePreview && room.id === movePreview.roomId;
       const { px, py } = gridToPixel(room.x, room.y);
       const x = px - CELL_SIZE / 2;
       const y = py - CELL_SIZE / 2;
+
+      ctx.save();
+      if (isMoving) ctx.globalAlpha = 0.3;
 
       ctx.beginPath();
       ctx.roundRect(x, y, CELL_SIZE, CELL_SIZE, ROOM_RADIUS);
@@ -390,7 +429,13 @@ function MapCanvas({
       ctx.fillStyle = roomZoneColors?.get(room.id) ?? '#3f51b5';
       ctx.fill();
 
-      if (room.id === selectedRoomId) {
+      if (isMoving) {
+        ctx.strokeStyle = '#999';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 4]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      } else if (room.id === selectedRoomId) {
         ctx.strokeStyle = '#ffc107';
         ctx.lineWidth = 3;
         ctx.stroke();
@@ -404,6 +449,74 @@ function MapCanvas({
       const displayName =
         room.name.length > 10 ? room.name.substring(0, 9) + '...' : room.name;
       ctx.fillText(displayName, px, py);
+      ctx.restore();
+    }
+
+    // Draw move preview ghost room + stretched exit lines
+    if (movePreview) {
+      const movingRoom = roomMap.get(movePreview.roomId);
+      if (movingRoom) {
+        const { px: ghostPx, py: ghostPy } = gridToPixel(movePreview.ghostX, movePreview.ghostY);
+        const occupied = rooms.some(
+          (r) => r.id !== movePreview.roomId && r.x === movePreview.ghostX && r.y === movePreview.ghostY
+        );
+
+        // Draw stretched exit lines from connected rooms to ghost position
+        for (const exit of exits) {
+          let connectedRoom: RoomNode | undefined;
+          if (exit.fromRoomId === movePreview.roomId) connectedRoom = roomMap.get(exit.toRoomId);
+          else if (exit.toRoomId === movePreview.roomId) connectedRoom = roomMap.get(exit.fromRoomId);
+          if (!connectedRoom) continue;
+          const { px: cx, py: cy } = gridToPixel(connectedRoom.x, connectedRoom.y);
+
+          // Check if exit direction still matches geometry
+          const dx = exit.fromRoomId === movePreview.roomId
+            ? connectedRoom.x - movePreview.ghostX
+            : movePreview.ghostX - connectedRoom.x;
+          const dy = exit.fromRoomId === movePreview.roomId
+            ? connectedRoom.y - movePreview.ghostY
+            : movePreview.ghostY - connectedRoom.y;
+          const newDir = inferDirection(dx, dy);
+          const dirMatches = newDir === exit.direction;
+
+          ctx.strokeStyle = dirMatches ? '#4caf50' : '#ff9800';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([6, 4]);
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(ghostPx, ghostPy);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+
+        // Ghost room
+        const gx = ghostPx - CELL_SIZE / 2;
+        const gy = ghostPy - CELL_SIZE / 2;
+        ctx.save();
+        ctx.globalAlpha = 0.7;
+        ctx.beginPath();
+        ctx.roundRect(gx, gy, CELL_SIZE, CELL_SIZE, ROOM_RADIUS);
+        ctx.closePath();
+        ctx.fillStyle = occupied ? '#d32f2f' : '#4caf50';
+        ctx.fill();
+        // Ghost room name
+        ctx.fillStyle = '#fff';
+        ctx.font = '11px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const ghostName = movingRoom.name.length > 10 ? movingRoom.name.substring(0, 9) + '...' : movingRoom.name;
+        ctx.fillText(ghostName, ghostPx, ghostPy);
+        ctx.restore();
+
+        // Collision indicator border
+        if (occupied) {
+          ctx.strokeStyle = '#d32f2f';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.roundRect(gx - 2, gy - 2, CELL_SIZE + 4, CELL_SIZE + 4, ROOM_RADIUS + 2);
+          ctx.stroke();
+        }
+      }
     }
 
     // NPC behavior overlay pass
@@ -642,7 +755,7 @@ function MapCanvas({
       ctx.fillText(cze.targetZone, 0, 0);
       ctx.restore();
     }
-  }, [rooms, exits, selectedRoomId, offset, canvasSize, gridToPixel, dragPreview, roomAtPixel, verticalExits, crossZoneExits, overlay, dimmedRoomIds, zoneLabels, roomZoneColors]);
+  }, [rooms, exits, selectedRoomId, offset, canvasSize, gridToPixel, dragPreview, movePreview, roomAtPixel, verticalExits, crossZoneExits, overlay, dimmedRoomIds, zoneLabels, roomZoneColors]);
 
   // Mouse handlers
   const handleMouseDown = useCallback(
@@ -675,13 +788,26 @@ function MapCanvas({
       }
 
       if (room) {
-        dragState.current = {
-          type: 'exit',
-          startX: px,
-          startY: py,
-          offsetStart: offset,
-          fromRoomId: room.id,
-        };
+        // Alt+click on room = move mode
+        if (e.altKey && onMoveRoom) {
+          dragState.current = {
+            type: 'move',
+            startX: px,
+            startY: py,
+            offsetStart: offset,
+            fromRoomId: room.id,
+            origGridX: room.x,
+            origGridY: room.y,
+          };
+        } else {
+          dragState.current = {
+            type: 'exit',
+            startX: px,
+            startY: py,
+            offsetStart: offset,
+            fromRoomId: room.id,
+          };
+        }
       } else {
         dragState.current = {
           type: 'pan',
@@ -691,7 +817,7 @@ function MapCanvas({
         };
       }
     },
-    [offset, roomAtPixel, readOnly]
+    [offset, roomAtPixel, readOnly, onMoveRoom]
   );
 
   const handleMouseMove = useCallback(
@@ -717,9 +843,27 @@ function MapCanvas({
             mouseY: py,
           });
         }
+      } else if (dragState.current.type === 'move' && dragState.current.fromRoomId) {
+        const rect = canvasRef.current!.getBoundingClientRect();
+        const px = e.clientX - rect.left;
+        const py = e.clientY - rect.top;
+        const dx = Math.abs(px - dragState.current.startX);
+        const dy = Math.abs(py - dragState.current.startY);
+        if (dx > 5 || dy > 5) {
+          const { gx, gy } = pixelToGrid(px, py);
+          setMovePreview({
+            roomId: dragState.current.fromRoomId,
+            origX: dragState.current.origGridX!,
+            origY: dragState.current.origGridY!,
+            ghostX: gx,
+            ghostY: gy,
+            mouseX: px,
+            mouseY: py,
+          });
+        }
       }
     },
-    []
+    [pixelToGrid]
   );
 
   const handleMouseUp = useCallback(
@@ -730,6 +874,7 @@ function MapCanvas({
       const state = dragState.current;
       dragState.current = { type: 'none', startX: 0, startY: 0, offsetStart: { x: 0, y: 0 } };
       setDragPreview(null);
+      setMovePreview(null);
 
       if (state.type === 'pan') {
         const dx = Math.abs(e.clientX - state.startX);
@@ -749,6 +894,24 @@ function MapCanvas({
         return;
       }
 
+      if (state.type === 'move' && state.fromRoomId && onMoveRoom) {
+        const dx = Math.abs(px - state.startX);
+        const dy = Math.abs(py - state.startY);
+        if (dx < 3 && dy < 3) {
+          // Tiny movement = click-to-select
+          onSelectRoom(state.fromRoomId);
+        } else {
+          const { gx, gy } = pixelToGrid(px, py);
+          // Don't move to same position
+          if (gx === state.origGridX && gy === state.origGridY) return;
+          // Don't move to occupied position
+          const occupied = rooms.some((r) => r.id !== state.fromRoomId && r.x === gx && r.y === gy);
+          if (occupied) return;
+          onMoveRoom(state.fromRoomId, gx, gy);
+        }
+        return;
+      }
+
       if (state.type === 'exit' && state.fromRoomId) {
         const dx = Math.abs(px - state.startX);
         const dy = Math.abs(py - state.startY);
@@ -761,13 +924,25 @@ function MapCanvas({
         }
       }
     },
-    [roomAtPixel, pixelToGrid, rooms, onCreateRoom, onSelectRoom, onCreateExit, readOnly]
+    [roomAtPixel, pixelToGrid, rooms, onCreateRoom, onSelectRoom, onCreateExit, onMoveRoom, readOnly]
   );
+
+  // Cancel move on Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && dragState.current.type === 'move') {
+        dragState.current = { type: 'none', startX: 0, startY: 0, offsetStart: { x: 0, y: 0 } };
+        setMovePreview(null);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   return (
     <div
       ref={containerRef}
-      style={{ width: '100%', height: '100%', overflow: 'hidden', cursor: readOnly ? 'default' : 'crosshair' }}
+      style={{ width: '100%', height: '100%', overflow: 'hidden', cursor: movePreview ? 'grabbing' : readOnly ? 'default' : 'crosshair' }}
     >
       <canvas
         ref={canvasRef}
@@ -782,4 +957,5 @@ function MapCanvas({
 }
 
 export default MapCanvas;
+export { inferDirection };
 export type { RoomNode, ExitEdge };

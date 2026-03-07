@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 import GenericCrudEditor from '../components/GenericCrudEditor'
@@ -41,7 +41,7 @@ describe('GenericCrudEditor', () => {
     mockApi.get.mockResolvedValue([])
   })
 
-  it('renders all 7 field types when new item form is shown', async () => {
+  it('renders all original field types when new item form is shown', async () => {
     const user = userEvent.setup()
     render(<GenericCrudEditor entityName="Item" apiPath="/items" fields={allFields} />)
 
@@ -58,9 +58,11 @@ describe('GenericCrudEditor', () => {
     expect(screen.getByText('Mode Y')).toBeInTheDocument()
   })
 
-  it('shows empty state message when nothing selected', () => {
+  it('shows empty state message when nothing selected', async () => {
     render(<GenericCrudEditor entityName="Item" apiPath="/items" fields={allFields} />)
-    expect(screen.getByText(/Select an item to edit/i)).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.getByText(/Select an item to edit/i)).toBeInTheDocument()
+    })
   })
 
   it('"New" button creates empty form', async () => {
@@ -223,6 +225,165 @@ describe('GenericCrudEditor', () => {
 
     const input = screen.getByRole('spinbutton')
     expect(input).not.toHaveAttribute('max')
+  })
+
+  it('renders stat-grid with 6 labeled number inputs', async () => {
+    const user = userEvent.setup()
+    const statField: FieldConfig = { key: 'minimumStats', label: 'Minimum Stats', type: 'stat-grid' }
+    render(<GenericCrudEditor entityName="Item" apiPath="/items" fields={[statField]} />)
+
+    await user.click(screen.getByText('+ New Item'))
+
+    expect(screen.getByText('Strength')).toBeInTheDocument()
+    expect(screen.getByText('Agility')).toBeInTheDocument()
+    expect(screen.getByText('Intellect')).toBeInTheDocument()
+    expect(screen.getByText('Willpower')).toBeInTheDocument()
+    expect(screen.getByText('Health')).toBeInTheDocument()
+    expect(screen.getByText('Charm')).toBeInTheDocument()
+    // Should have 6 number inputs
+    const inputs = screen.getAllByRole('spinbutton')
+    expect(inputs.length).toBe(6)
+  })
+
+  it('stat-grid loads existing JSON values into inputs', async () => {
+    const user = userEvent.setup()
+    const statField: FieldConfig = { key: 'stats', label: 'Stats', type: 'stat-grid' }
+    const items = [{ id: 'elf', name: 'Elf', stats: '{"strength":12,"agility":18}' }]
+    mockApi.get.mockResolvedValue(items)
+
+    render(<GenericCrudEditor entityName="Race" apiPath="/races" fields={[{ key: 'id', label: 'ID', type: 'text' }, statField]} />)
+
+    await waitFor(() => expect(screen.getByText('Elf')).toBeInTheDocument())
+    await user.click(screen.getByText('Elf'))
+
+    const inputs = screen.getAllByRole('spinbutton')
+    // Find the strength and agility inputs by their values
+    const values = inputs.map(i => (i as HTMLInputElement).value)
+    expect(values).toContain('12')
+    expect(values).toContain('18')
+  })
+
+  it('stat-grid with allowNegative has no min attribute', async () => {
+    const user = userEvent.setup()
+    const statField: FieldConfig = { key: 'mods', label: 'Mods', type: 'stat-grid', allowNegative: true }
+    render(<GenericCrudEditor entityName="Race" apiPath="/races" fields={[statField]} />)
+
+    await user.click(screen.getByText('+ New Race'))
+
+    const inputs = screen.getAllByRole('spinbutton')
+    // With allowNegative, min should not be set
+    for (const input of inputs) {
+      expect(input).not.toHaveAttribute('min')
+    }
+  })
+
+  it('stat-grid without allowNegative has min=0', async () => {
+    const user = userEvent.setup()
+    const statField: FieldConfig = { key: 'stats', label: 'Stats', type: 'stat-grid' }
+    render(<GenericCrudEditor entityName="Class" apiPath="/classes" fields={[statField]} />)
+
+    await user.click(screen.getByText('+ New Class'))
+
+    const inputs = screen.getAllByRole('spinbutton')
+    for (const input of inputs) {
+      expect(input).toHaveAttribute('min', '0')
+    }
+  })
+
+  it('renders checklist with grouped checkboxes', async () => {
+    const user = userEvent.setup()
+    const checklistField: FieldConfig = {
+      key: 'skills', label: 'Skills', type: 'checklist',
+      checklistOptions: [
+        { value: 'BASH', label: 'Bash', group: 'combat' },
+        { value: 'KICK', label: 'Kick', group: 'combat' },
+        { value: 'DODGE', label: 'Dodge', group: 'defense' },
+      ],
+    }
+    render(<GenericCrudEditor entityName="Class" apiPath="/classes" fields={[checklistField]} />)
+
+    await user.click(screen.getByText('+ New Class'))
+
+    // Group headers should render
+    expect(screen.getByText('combat')).toBeInTheDocument()
+    expect(screen.getByText('defense')).toBeInTheDocument()
+    // Checkbox labels should render
+    expect(screen.getByText('Bash')).toBeInTheDocument()
+    expect(screen.getByText('Kick')).toBeInTheDocument()
+    expect(screen.getByText('Dodge')).toBeInTheDocument()
+  })
+
+  it('checklist loads existing JSON array and checks correct items', async () => {
+    const user = userEvent.setup()
+    const checklistField: FieldConfig = {
+      key: 'skills', label: 'Skills', type: 'checklist',
+      checklistOptions: [
+        { value: 'BASH', label: 'Bash' },
+        { value: 'KICK', label: 'Kick' },
+        { value: 'DODGE', label: 'Dodge' },
+      ],
+    }
+    const items = [{ id: 'warrior', name: 'Warrior', skills: '["BASH","DODGE"]' }]
+    mockApi.get.mockResolvedValue(items)
+
+    render(<GenericCrudEditor entityName="Class" apiPath="/classes" fields={[{ key: 'id', label: 'ID', type: 'text' }, checklistField]} />)
+
+    await waitFor(() => expect(screen.getByText('Warrior')).toBeInTheDocument())
+    await user.click(screen.getByText('Warrior'))
+
+    const checkboxes = screen.getAllByRole('checkbox')
+    const bashCheckbox = checkboxes.find(cb => cb.closest('label')?.textContent?.includes('Bash'))
+    const kickCheckbox = checkboxes.find(cb => cb.closest('label')?.textContent?.includes('Kick'))
+    const dodgeCheckbox = checkboxes.find(cb => cb.closest('label')?.textContent?.includes('Dodge'))
+
+    expect(bashCheckbox).toBeChecked()
+    expect(kickCheckbox).not.toBeChecked()
+    expect(dodgeCheckbox).toBeChecked()
+  })
+
+  it('renders school-levels with 5 school dropdowns', async () => {
+    const user = userEvent.setup()
+    const schoolField: FieldConfig = { key: 'magicSchools', label: 'Magic Schools', type: 'school-levels' }
+    render(<GenericCrudEditor entityName="Class" apiPath="/classes" fields={[schoolField]} />)
+
+    await user.click(screen.getByText('+ New Class'))
+
+    expect(screen.getByText('Mage')).toBeInTheDocument()
+    expect(screen.getByText('Priest')).toBeInTheDocument()
+    expect(screen.getByText('Druid')).toBeInTheDocument()
+    expect(screen.getByText('Kai')).toBeInTheDocument()
+    expect(screen.getByText('Bard')).toBeInTheDocument()
+
+    // Each school has a dropdown with 4 levels (None, 1, 2, 3)
+    const selects = screen.getAllByRole('combobox')
+    expect(selects.length).toBe(5)
+    for (const select of selects) {
+      const options = within(select).getAllByRole('option')
+      expect(options.length).toBe(4)
+      expect(options[0].textContent).toBe('None')
+      expect(options[3].textContent).toBe('Level 3')
+    }
+  })
+
+  it('school-levels loads existing JSON with correct levels selected', async () => {
+    const user = userEvent.setup()
+    const schoolField: FieldConfig = { key: 'magicSchools', label: 'Magic Schools', type: 'school-levels' }
+    const items = [{ id: 'mage', name: 'Mage', magicSchools: '{"mage":3,"priest":1}' }]
+    mockApi.get.mockResolvedValue(items)
+
+    render(<GenericCrudEditor entityName="Class" apiPath="/classes" fields={[{ key: 'id', label: 'ID', type: 'text' }, schoolField]} />)
+
+    await waitFor(() => expect(screen.getByText('Mage')).toBeInTheDocument())
+    await user.click(screen.getByText('Mage'))
+
+    const selects = screen.getAllByRole('combobox')
+    // Mage school should be level 3, Priest should be level 1, rest should be 0
+    const values = selects.map(s => (s as HTMLSelectElement).value)
+    expect(values[0]).toBe('3') // mage
+    expect(values[1]).toBe('1') // priest
+    expect(values[2]).toBe('0') // druid
+    expect(values[3]).toBe('0') // kai
+    expect(values[4]).toBe('0') // bard
   })
 
   it('passes maxWidth and maxHeight to ImagePreview', async () => {

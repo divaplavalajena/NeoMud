@@ -60,6 +60,12 @@ const MOCK_FOREST_ROOMS = [
   { id: 'forest:clearing', name: 'Mossy Clearing', x: 0, y: 1, exits: [{ fromRoomId: 'forest:clearing', toRoomId: 'forest:edge', direction: 'NORTH' }] },
 ]
 
+const MOCK_ITEMS = [
+  { id: 'item:iron_sword', name: 'Iron Sword' },
+  { id: 'item:health_potion', name: 'Health Potion' },
+  { id: 'item:leather_armor', name: 'Leather Armor' },
+]
+
 const MOCK_NPCS = [
   {
     id: 'npc:blacksmith', name: 'Blacksmith Torren', description: 'A brawny smith.',
@@ -94,6 +100,7 @@ function setupMockApi() {
   mockApi.get.mockImplementation((path: string) => {
     if (path === '/zones') return Promise.resolve(MOCK_ZONES)
     if (path === '/npcs') return Promise.resolve(MOCK_NPCS)
+    if (path === '/items') return Promise.resolve(MOCK_ITEMS)
     if (path === '/zones/town/rooms') return Promise.resolve(MOCK_TOWN_ROOMS)
     if (path === '/zones/forest/rooms') return Promise.resolve(MOCK_FOREST_ROOMS)
     return Promise.resolve([])
@@ -338,5 +345,114 @@ describe('NpcEditor', () => {
     expect(screen.getByText('Combat Stats')).toBeInTheDocument()
     expect(screen.getByText('Loot Items')).toBeInTheDocument()
     expect(screen.getByText('Sounds')).toBeInTheDocument()
+  })
+
+  it('vendor NPC shows existing vendor items with item names', async () => {
+    const user = userEvent.setup()
+    render(<NpcEditor />)
+
+    await waitFor(() => expect(screen.getByText('Blacksmith Torren')).toBeInTheDocument())
+    await user.click(screen.getByText('Blacksmith Torren'))
+
+    await waitFor(() => {
+      expect(screen.getByText('Vendor Items')).toBeInTheDocument()
+      // The vendor has item:iron_sword, should show the resolved name
+      expect(screen.getByText('Iron Sword')).toBeInTheDocument()
+    })
+  })
+
+  it('loot items section shows empty state and add button', async () => {
+    const user = userEvent.setup()
+    render(<NpcEditor />)
+
+    // Shadow Wolf has no loot items
+    await waitFor(() => expect(screen.getByText('Shadow Wolf')).toBeInTheDocument())
+    await user.click(screen.getByText('Shadow Wolf'))
+
+    await waitFor(() => {
+      expect(screen.getByText('Loot Items')).toBeInTheDocument()
+      expect(screen.getByText(/No loot entries/)).toBeInTheDocument()
+      expect(screen.getByText('+ Add Loot Entry')).toBeInTheDocument()
+    })
+  })
+
+  it('loot items shows structured cards when data exists', async () => {
+    // Give shadow wolf some loot
+    const npcWithLoot = MOCK_NPCS.map(n =>
+      n.id === 'npc:shadow_wolf'
+        ? { ...n, lootItems: '[{"itemId":"item:health_potion","chance":0.5,"minQuantity":1,"maxQuantity":2}]' }
+        : n
+    )
+    mockApi.get.mockImplementation((path: string) => {
+      if (path === '/zones') return Promise.resolve(MOCK_ZONES)
+      if (path === '/npcs') return Promise.resolve(npcWithLoot)
+      if (path === '/items') return Promise.resolve(MOCK_ITEMS)
+      if (path === '/zones/town/rooms') return Promise.resolve(MOCK_TOWN_ROOMS)
+      if (path === '/zones/forest/rooms') return Promise.resolve(MOCK_FOREST_ROOMS)
+      return Promise.resolve([])
+    })
+
+    const user = userEvent.setup()
+    render(<NpcEditor />)
+
+    await waitFor(() => expect(screen.getByText('Shadow Wolf')).toBeInTheDocument())
+    await user.click(screen.getByText('Shadow Wolf'))
+
+    await waitFor(() => {
+      expect(screen.getByText('Loot Entry 1')).toBeInTheDocument()
+      expect(screen.getByText('Chance')).toBeInTheDocument()
+      expect(screen.getByText('Min Qty')).toBeInTheDocument()
+      expect(screen.getByText('Max Qty')).toBeInTheDocument()
+    })
+  })
+
+  it('coin drop section shows 6 labeled number inputs', async () => {
+    const user = userEvent.setup()
+    render(<NpcEditor />)
+
+    await waitFor(() => expect(screen.getByText('Shadow Wolf')).toBeInTheDocument())
+    await user.click(screen.getByText('Shadow Wolf'))
+
+    await waitFor(() => {
+      expect(screen.getByText('Coin Drop')).toBeInTheDocument()
+      expect(screen.getByText('Min Copper')).toBeInTheDocument()
+      expect(screen.getByText('Max Copper')).toBeInTheDocument()
+      expect(screen.getByText('Min Silver')).toBeInTheDocument()
+      expect(screen.getByText('Max Silver')).toBeInTheDocument()
+      expect(screen.getByText('Min Gold')).toBeInTheDocument()
+      expect(screen.getByText('Max Gold')).toBeInTheDocument()
+    })
+  })
+
+  it('coin drop loads existing values', async () => {
+    const npcWithCoins = MOCK_NPCS.map(n =>
+      n.id === 'npc:shadow_wolf'
+        ? { ...n, coinDrop: '{"minCopper":5,"maxCopper":20}' }
+        : n
+    )
+    mockApi.get.mockImplementation((path: string) => {
+      if (path === '/zones') return Promise.resolve(MOCK_ZONES)
+      if (path === '/npcs') return Promise.resolve(npcWithCoins)
+      if (path === '/items') return Promise.resolve(MOCK_ITEMS)
+      if (path === '/zones/town/rooms') return Promise.resolve(MOCK_TOWN_ROOMS)
+      if (path === '/zones/forest/rooms') return Promise.resolve(MOCK_FOREST_ROOMS)
+      return Promise.resolve([])
+    })
+
+    const user = userEvent.setup()
+    render(<NpcEditor />)
+
+    await waitFor(() => expect(screen.getByText('Shadow Wolf')).toBeInTheDocument())
+    await user.click(screen.getByText('Shadow Wolf'))
+
+    await waitFor(() => {
+      expect(screen.getByText('Coin Drop')).toBeInTheDocument()
+    })
+
+    // Find spinbuttons in the coin drop section — check that values include 5 and 20
+    const allInputs = screen.getAllByRole('spinbutton')
+    const values = allInputs.map(i => (i as HTMLInputElement).value)
+    expect(values).toContain('5')
+    expect(values).toContain('20')
   })
 })
