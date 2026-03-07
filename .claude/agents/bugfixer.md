@@ -61,5 +61,5 @@ After fixing a batch of issues:
 
 - Windows 11, Git Bash shell — use Unix syntax
 - Maker: React 18 + Express + Prisma + Vite (`cd maker && npx vitest run`)
-- Server: Kotlin + Ktor + Gradle (`export JAVA_HOME=/c/Users/lbarnes/.jdks/corretto-21.0.5 && ./gradlew :server:test :shared:jvmTest`)
+- Server: Kotlin + Ktor + Gradle (`./gradlew :server:test :shared:jvmTest`)
 - **ALWAYS run `./gradlew packageWorld --rerun-tasks` before server tests** if you changed anything in `default_world_src/`

@@ -45,9 +45,6 @@ maker/default_world.nmd
 # Claude (track agents, skills, memory — exclude local settings)
 .claude/settings.local.json
 
-# MCP config (contains API keys)
-.mcp.json
-
 # Playwright MCP browser cache
 .playwright-mcp/
 

@@ -3,7 +3,7 @@
 # Handles Windows/MSYS path mangling and provides high-level commands
 export MSYS_NO_PATHCONV=1
 
-ADB="/c/Users/lbarnes/AppData/Local/Android/Sdk/platform-tools/adb"
+ADB="${ANDROID_HOME:-$HOME/AppData/Local/Android/Sdk}/platform-tools/adb"
 
 usage() {
     echo "Usage: adb-helper.sh <command> [args...]"

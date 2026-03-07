@@ -10,20 +10,25 @@
 - Default Players has sprite gallery with filter dropdowns (race/gender/class)
 - Default SFX has category-filtered list with colored status dots
 
-### Known Issues (as of Session 7 - 2026-03-06)
+### Known Issues (as of Session 8 - 2026-03-06)
 - Canvas room hit-testing misaligned at ALL DPR values (Issue #106) -- regression from Issue #69 fix
-- NPC Behavior Type dropdown missing Wander and Trainer options (Issue #122) -- data shows correct behavior but dropdown falls back to Idle, saving would corrupt data
+- World map: clicking dimmed room tries to create new room instead of switching zones (Issue #125)
+- World map: no way to deselect zone and return to unified view (Issue #126)
+- World map: clicking rooms in unselected view does nothing (Issue #127)
+- World map: room creation allowed at coordinates occupied by other zones (Issue #128) -- CRITICAL
+- World map: no zone labels or color differentiation in unified view (Issue #129)
+- World map: layer switch doesn't center on target layer rooms (Issue #130)
+- NPC Behavior Type dropdown missing Wander and Trainer options (Issue #122)
 - React CSS warning: borderColor/border shorthand conflict on NPC map mode changes (Issue #123)
 - NPC Name field placeholder says "Goblin Guard" instead of generic text (Issue #124)
 - Package .nmd uses native confirm() instead of proper modal (Issue #100)
 - NPC list placeholder uses lowercase 'npc' (Issue #98)
-- Zone deletion has no confirmation dialog (Issue #99)
 - No server-side input validation/sanitization (Issue #90)
-- Room creation allows overlapping coordinates (Issue #91)
+- Room creation allows overlapping coordinates within same zone (Issue #91)
 - API key visible in accessibility tree + API response despite visual masking (Issue #82)
 - Class/NPC editors use raw JSON for structured data (Issue #75)
 - NPC creature image dimension labels show humanoid maximums (Issue #74)
-- Search placeholder says "Search Classs..." on Classes page (Issue #114) -- naive pluralization
+- Search placeholder says "Search Classs..." on Classes page (Issue #114)
 
 ### Fixed Since Session 3
 - Room ID double zone-prefix (Issue #87) -- FIXED
@@ -73,6 +78,16 @@
 - NPC list shows behavior type + zone subtitle (e.g., "wander - Whispering Forest")
 - NPC search filters list by name (case-insensitive)
 - Room-level Max Hostile NPCs field in Zone Editor (after Depart Sound, before Effects)
+
+### World Map View (Session 8)
+- No zone selected: unified grid showing ALL zones' rooms (all same blue, no labels)
+- Zone selected: selected zone at full opacity, others dimmed gray with zone name labels
+- Cross-zone exit labels shown in orange text with orange marker arrows
+- Exit arrows: green between rooms in selected zone, gray in world map view
+- Zone deletion now has confirmation dialog (Issue #99 FIXED)
+- New zone creation auto-selects and shows empty map with dimmed other zones
+- Layer navigation only appears when selected zone has multiple layers
+- Console stays clean -- no JS errors during zone switching, creation, deletion
 
 ### What Works Well
 - Zone map rendering with room boxes, exit arrows, cross-zone labels

@@ -21,17 +21,12 @@ Run this **every time** files are modified in `maker/default_world_src/`, includ
 
 ## Steps
 
-1. **Export JAVA_HOME** (required — not set system-wide):
-   ```
-   export JAVA_HOME=/c/Users/lbarnes/.jdks/corretto-21.0.5
-   ```
-
-2. **Run packageWorld** with `--rerun-tasks` to force rebuild (Gradle UP-TO-DATE checks sometimes miss JSON changes):
+1. **Run packageWorld** with `--rerun-tasks` to force rebuild (Gradle UP-TO-DATE checks sometimes miss JSON changes):
    ```
    ./gradlew packageWorld --rerun-tasks
    ```
 
-3. **Verify** the output exists:
+2. **Verify** the output exists:
    - `server/build/worlds/default-world.nmd` (used by server at runtime)
    - `maker/default_world.nmd` (copy for maker import)
 

@@ -1,4 +1,5 @@
-    # NeoMud — Project Instructions
+
+# NeoMud — Project Instructions
 
 A multiplayer dungeon game (MUD) inspired by '90s text MUDs like MajorMUD, built with Kotlin Multiplatform, Ktor, Jetpack Compose, and a React-based world editor.
 
@@ -20,7 +21,6 @@ NeoMud/
 
 ```bash
 # Server
-export JAVA_HOME=/c/Users/lbarnes/.jdks/corretto-21.0.5
 ./gradlew :server:run          # Starts on :8080, WebSocket at /game, health at /health
 
 # Client
@@ -30,12 +30,11 @@ export JAVA_HOME=/c/Users/lbarnes/.jdks/corretto-21.0.5
 cd maker && npm install && npm run dev  # http://localhost:5173
 
 # Tests
-export JAVA_HOME=/c/Users/lbarnes/.jdks/corretto-21.0.5
 ./gradlew :shared:jvmTest :server:test  # All server + shared tests
 ./gradlew :client:compileDebugKotlin    # Client compile check (no runtime tests yet)
 ```
 
-**Gradle notes**: Configuration cache is enabled. `JAVA_HOME` must be exported before any gradlew command (not set system-wide).
+**Gradle notes**: Configuration cache is enabled. `JAVA_HOME` must be set (configured in `settings.local.json` env).
 
 **CRITICAL — World Bundle**: The server loads world data from `server/build/worlds/default-world.nmd`, built by `./gradlew packageWorld` from `maker/default_world_src/`. **Always run `./gradlew packageWorld --rerun-tasks`** after ANY change to `default_world_src/` (skills, items, zones, assets, etc.) and before running the server, running tests, or doing any verification. Gradle's UP-TO-DATE check for this task is unreliable — never trust it, always force with `--rerun-tasks`.
 
@@ -121,7 +120,6 @@ Everything is JSON-defined, loaded into catalogs at startup:
 
 ### Running Tests
 ```bash
-export JAVA_HOME=/c/Users/lbarnes/.jdks/corretto-21.0.5
 ./gradlew :shared:jvmTest :server:test
 ```
 
@@ -251,7 +249,7 @@ Image generation prompts are stored in the data files:
 
 ### After generation
 - Run `cd maker && npm run rebuild-world` if the Vite server isn't running
-- Run `export JAVA_HOME=/c/Users/lbarnes/.jdks/corretto-21.0.5 && ./gradlew packageWorld` to rebuild the `.nmd` bundle
+- Run `./gradlew packageWorld` to rebuild the `.nmd` bundle
 
 ## Maker Dev Server Gotchas
 
@@ -264,6 +262,6 @@ Image generation prompts are stored in the data files:
 ## Environment Notes
 
 - Windows 11, Git Bash shell — use Unix shell syntax (forward slashes, `/dev/null`)
-- Python available via `uv`/`uvx` (installed at `/c/Users/lbarnes/.local/bin/uv`)
+- Python available via `uv`/`uvx`
 - `.nmd` bundles are ZIP files — inspect with `jar tf file.nmd`
 - `packageWorld` Gradle task builds `default_world.nmd` from `server/src/main/resources/`
