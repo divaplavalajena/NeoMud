@@ -33,7 +33,7 @@ object MapRoomFilter {
         mapRoom.copy(
             exits = visibleExits,
             hasPlayers = sessionManager.getPlayerNamesInRoom(mapRoom.id).isNotEmpty(),
-            hasNpcs = npcManager.getNpcsInRoom(mapRoom.id).isNotEmpty(),
+            hasNpcs = npcManager.getNpcsInRoom(mapRoom.id).any { !it.hostile },
             lockedExits = locked,
             hiddenExits = hidden
         )
