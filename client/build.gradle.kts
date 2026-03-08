@@ -24,7 +24,16 @@ kotlin {
             implementation(libs.compose.ui)
             implementation(libs.compose.ui.tooling.preview)
 
-            // Serialization (used by shared models in UI code)
+            // Navigation + Lifecycle (JetBrains multiplatform versions)
+            implementation(libs.navigation.compose)
+            implementation(libs.lifecycle.viewmodel.compose)
+            implementation(libs.lifecycle.runtime.compose)
+
+            // Networking
+            implementation(libs.ktor.client.core)
+            implementation(libs.ktor.client.websockets)
+
+            // Serialization
             implementation(libs.kotlinx.serialization.json)
 
             // Image loading (Coil 3 is multiplatform)
@@ -36,16 +45,11 @@ kotlin {
         }
 
         androidMain.dependencies {
-            // AndroidX (Android-specific, not provided by JetBrains)
+            // AndroidX (Android-specific)
             implementation(libs.activity.compose)
-            implementation(libs.navigation.compose)
-            implementation(libs.lifecycle.viewmodel.compose)
-            implementation(libs.lifecycle.runtime.compose)
 
-            // Networking (Android-specific engines)
-            implementation(libs.ktor.client.core)
+            // Networking (Android-specific engine)
             implementation(libs.ktor.client.okhttp)
-            implementation(libs.ktor.client.websockets)
             implementation(libs.kotlinx.coroutines.android)
 
             // Image loading (Android-specific network backend)

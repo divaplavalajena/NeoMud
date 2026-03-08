@@ -1,11 +1,11 @@
 package com.neomud.client.network
 
 import com.neomud.client.platform.PlatformLogger
+import com.neomud.client.platform.createPlatformHttpClient
 import com.neomud.shared.protocol.ClientMessage
 import com.neomud.shared.protocol.MessageSerializer
 import com.neomud.shared.protocol.ServerMessage
 import io.ktor.client.*
-import io.ktor.client.engine.okhttp.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.websocket.*
 import kotlinx.coroutines.*
@@ -15,9 +15,7 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 
 class WebSocketClient {
-    private val client = HttpClient(OkHttp) {
-        install(WebSockets)
-    }
+    private val client = createPlatformHttpClient()
 
     private var session: DefaultClientWebSocketSession? = null
     private var connectionJob: Job? = null
@@ -33,7 +31,7 @@ class WebSocketClient {
 
     fun connect(host: String, port: Int, scope: CoroutineScope) {
         connectionJob?.cancel()
-        connectionJob = scope.launch(Dispatchers.IO) {
+        connectionJob = scope.launch(Dispatchers.Default) {
             _connectionState.value = ConnectionState.CONNECTING
             _connectionError.value = null
             try {
