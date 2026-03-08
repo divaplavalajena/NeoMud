@@ -1,11 +1,17 @@
 package com.neomud.client.ui.navigation
 
+import android.app.Activity
+import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.neomud.client.audio.AudioManager
+import com.neomud.client.platform.LocalIsLandscape
+import com.neomud.client.platform.LocalSetLayoutPreference
 import com.neomud.client.ui.screens.GameScreen
 import com.neomud.client.ui.screens.LoginScreen
 import com.neomud.client.ui.screens.RegistrationScreen
@@ -18,6 +24,21 @@ fun NeoMudNavGraph(authViewModel: AuthViewModel) {
     val navController = rememberNavController()
     val context = LocalContext.current
     val audioManager = remember { AudioManager(context) }
+
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val activity = context as? Activity
+    val onSetLayoutPreference: (Boolean) -> Unit = remember(context, activity) {
+        { landscape ->
+            val prefs = context.getSharedPreferences("neomud_settings", Activity.MODE_PRIVATE)
+            prefs.edit().putBoolean("landscape_layout", landscape).apply()
+            activity?.requestedOrientation = if (landscape) {
+                ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+            } else {
+                ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            }
+        }
+    }
 
     DisposableEffect(Unit) {
         onDispose { audioManager.release() }
@@ -51,6 +72,10 @@ fun NeoMudNavGraph(authViewModel: AuthViewModel) {
         }
     }
 
+    CompositionLocalProvider(
+        LocalIsLandscape provides isLandscape,
+        LocalSetLayoutPreference provides onSetLayoutPreference
+    ) {
     NavHost(navController = navController, startDestination = "login") {
         composable("login") {
             // Play intro BGM while on login screen
@@ -113,4 +138,5 @@ fun NeoMudNavGraph(authViewModel: AuthViewModel) {
             )
         }
     }
+    } // CompositionLocalProvider
 }

@@ -1,8 +1,5 @@
 package com.neomud.client.ui.screens
 
-import android.app.Activity
-import android.content.pm.ActivityInfo
-import android.content.res.Configuration
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -19,8 +16,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -44,6 +39,8 @@ import com.neomud.client.ui.components.MiniMap
 import com.neomud.client.ui.components.PlayerStatusPanel
 import com.neomud.client.ui.components.RoomBackground
 import com.neomud.client.ui.components.RoomItemsSidebar
+import com.neomud.client.platform.LocalIsLandscape
+import com.neomud.client.platform.LocalSetLayoutPreference
 import com.neomud.client.platform.PlatformAudioManager
 import com.neomud.client.ui.components.SettingsPanel
 import com.neomud.client.ui.components.SpellBar
@@ -120,21 +117,8 @@ fun GameScreen(
     val showTrainerButton = hasTrainer && (canLevelUp || (player?.unspentCp ?: 0) > 0)
     val hasVendor = roomEntities.any { it.behaviorType == "vendor" }
 
-    val configuration = LocalConfiguration.current
-    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
-
-    val context = LocalContext.current
-    val activity = context as? Activity
-
-    val onSetLayoutPreference: (Boolean) -> Unit = { landscape ->
-        val prefs = context.getSharedPreferences("neomud_settings", Activity.MODE_PRIVATE)
-        prefs.edit().putBoolean("landscape_layout", landscape).apply()
-        activity?.requestedOrientation = if (landscape) {
-            ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-        } else {
-            ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-        }
-    }
+    val isLandscape = LocalIsLandscape.current
+    val onSetLayoutPreference = LocalSetLayoutPreference.current
 
     CompositionLocalProvider(LocalServerBaseUrl provides gameViewModel.serverBaseUrl) {
     Box(modifier = Modifier.fillMaxSize()) {
