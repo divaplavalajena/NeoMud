@@ -912,19 +912,27 @@ function ZoneEditor() {
       if (!room) return;
 
       // Pre-compute which exits need direction changes
+      // Scan ALL rooms (including cross-zone) to catch exits pointing to the moved room
       // Collect only FORWARD exits (fromRoomId side) to avoid double-processing
       // since deleting an exit also deletes its reverse
       const exitsToFix: { fromRoomId: string; oldDir: string; newDir: string; toRoomId: string }[] = [];
       const exitWarnings: string[] = [];
       const processed = new Set<string>(); // "fromId:dir" keys to avoid duplicates
 
-      for (const r of rooms) {
+      // Build a flat list of all rooms across all zones for coordinate/exit lookup
+      const allRoomsList = allRooms.flatMap((g) => g.rooms);
+      // Include current zone rooms (which may have fresher data than allRooms)
+      const roomById = new Map<string, { x: number; y: number; exits: Exit[] }>();
+      for (const r of allRoomsList) roomById.set(r.id, r);
+      for (const r of rooms) roomById.set(r.id, r); // current zone overrides
+
+      for (const [, r] of roomById) {
         for (const exit of r.exits || []) {
           if (exit.direction === 'UP' || exit.direction === 'DOWN') continue;
 
           let sourceX: number, sourceY: number, targetX: number, targetY: number;
           if (exit.fromRoomId === roomId) {
-            const target = rooms.find((t) => t.id === exit.toRoomId);
+            const target = roomById.get(exit.toRoomId);
             if (!target) continue;
             sourceX = newX; sourceY = newY;
             targetX = target.x; targetY = target.y;
@@ -945,7 +953,8 @@ function ZoneEditor() {
           processed.add(key);
 
           // Check if target direction slot is free
-          const fromExits = rooms.find((rm) => rm.id === exit.fromRoomId)?.exits || [];
+          const fromRoom = roomById.get(exit.fromRoomId);
+          const fromExits = fromRoom?.exits || [];
           const slotTaken = fromExits.some((e) => e.direction === newDir && e.fromRoomId === exit.fromRoomId);
 
           if (slotTaken) {
@@ -1022,7 +1031,7 @@ function ZoneEditor() {
         } catch {}
       }
     },
-    [rooms, selectedZoneId, selectedRoomId]
+    [rooms, allRooms, selectedZoneId, selectedRoomId]
   );
 
   const handleSaveRoom = async () => {

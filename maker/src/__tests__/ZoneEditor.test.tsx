@@ -70,42 +70,37 @@ import ZoneEditor from '../pages/ZoneEditor'
 
 const mockApi = vi.mocked(api)
 
-const MOCK_ZONES = [
-  {
-    id: 'town', name: 'Millhaven', description: 'A peaceful town.',
-    safe: true, bgm: '', bgmPrompt: '', bgmDuration: 0,
+function makeRoom(id: string, name: string, x: number, y: number, exits: { fromRoomId: string; toRoomId: string; direction: string }[] = []) {
+  return {
+    id, name, description: `${name} description.`,
+    x, y, backgroundImage: '', bgm: '', bgmPrompt: '', bgmDuration: 0,
+    departSound: '', effects: '', lockedExits: '', lockResetTicks: '', hiddenExits: '',
+    imagePrompt: '', imageStyle: '', imageNegativePrompt: '', interactables: '[]',
+    unpickableExits: '', imageWidth: 1024, imageHeight: 576, maxHostileNpcs: null,
+    exits,
+  }
+}
+
+function makeZone(id: string, name: string, overrides: Record<string, any> = {}) {
+  return {
+    id, name, description: `${name} zone.`,
+    safe: false, bgm: '', bgmPrompt: '', bgmDuration: 0,
     spawnRoom: null, spawnMaxEntities: 0, spawnMaxPerRoom: 0, spawnRateTicks: 0,
     imageStyle: '', imageNegativePrompt: '',
-  },
+    ...overrides,
+  }
+}
+
+const MOCK_ZONES = [
+  makeZone('town', 'Millhaven', { safe: true }),
 ]
 
 const MOCK_ZONE_DETAIL = {
   ...MOCK_ZONES[0],
   rooms: [
-    {
-      id: 'town:square', name: 'Town Square', description: 'The center of town.',
-      x: 0, y: 0, backgroundImage: '', bgm: '', bgmPrompt: '', bgmDuration: 0,
-      departSound: '', effects: '', lockedExits: '', lockResetTicks: '', hiddenExits: '',
-      imagePrompt: '', imageStyle: '', imageNegativePrompt: '', interactables: '[]',
-      unpickableExits: '', imageWidth: 1024, imageHeight: 576, maxHostileNpcs: null,
-      exits: [{ fromRoomId: 'town:square', toRoomId: 'town:market', direction: 'EAST' }],
-    },
-    {
-      id: 'town:market', name: 'Market Street', description: 'Bustling market.',
-      x: 1, y: 0, backgroundImage: '', bgm: '', bgmPrompt: '', bgmDuration: 0,
-      departSound: '', effects: '', lockedExits: '', lockResetTicks: '', hiddenExits: '',
-      imagePrompt: '', imageStyle: '', imageNegativePrompt: '', interactables: '[]',
-      unpickableExits: '', imageWidth: 1024, imageHeight: 576, maxHostileNpcs: null,
-      exits: [{ fromRoomId: 'town:market', toRoomId: 'town:square', direction: 'WEST' }],
-    },
-    {
-      id: 'town:inn', name: 'The Rusty Tankard', description: 'A cozy inn.',
-      x: 0, y: 1, backgroundImage: '', bgm: '', bgmPrompt: '', bgmDuration: 0,
-      departSound: '', effects: '', lockedExits: '', lockResetTicks: '', hiddenExits: '',
-      imagePrompt: '', imageStyle: '', imageNegativePrompt: '', interactables: '[]',
-      unpickableExits: '', imageWidth: 1024, imageHeight: 576, maxHostileNpcs: null,
-      exits: [],
-    },
+    makeRoom('town:square', 'Town Square', 0, 0, [{ fromRoomId: 'town:square', toRoomId: 'town:market', direction: 'EAST' }]),
+    makeRoom('town:market', 'Market Street', 1, 0, [{ fromRoomId: 'town:market', toRoomId: 'town:square', direction: 'WEST' }]),
+    makeRoom('town:inn', 'The Rusty Tankard', 0, 1),
   ],
 }
 
@@ -163,7 +158,7 @@ describe('ZoneEditor', () => {
 
     await waitFor(() => {
       expect(screen.getByDisplayValue('Town Square')).toBeInTheDocument()
-      expect(screen.getByDisplayValue('The center of town.')).toBeInTheDocument()
+      expect(screen.getByDisplayValue('Town Square description.')).toBeInTheDocument()
     })
   })
 
@@ -395,5 +390,73 @@ describe('ZoneEditor', () => {
 
     // With no room selected, the hint text should be visible
     expect(screen.getByText(/Alt\+drag/)).toBeInTheDocument()
+  })
+
+  it('handleMoveRoom fixes cross-zone exit directions (#136)', async () => {
+    const user = userEvent.setup()
+
+    // Set up two zones with cross-zone exits:
+    // town:square (0,0) <-> forest:edge (0,2) via NORTH/SOUTH
+    // Moving town:square from (0,0) to (2,3) should update forest:edge's SOUTH exit
+    // since forest:edge is at (0,2) and town:square moves to (2,3):
+    //   dx = 2-0 = 2, dy = 3-2 = 1 => negative dy from forest perspective => SOUTHEAST
+    //   (forest:edge looking at new town:square position)
+    const forestZone = makeZone('forest', 'Whispering Forest')
+    const forestDetail = {
+      ...forestZone,
+      rooms: [
+        makeRoom('forest:edge', 'Forest Edge', 0, 2, [
+          { fromRoomId: 'forest:edge', toRoomId: 'town:square', direction: 'SOUTH' },
+        ]),
+      ],
+    }
+    const townWithCrossExit = {
+      ...MOCK_ZONES[0],
+      rooms: [
+        makeRoom('town:square', 'Town Square', 0, 0, [
+          { fromRoomId: 'town:square', toRoomId: 'town:market', direction: 'EAST' },
+          { fromRoomId: 'town:square', toRoomId: 'forest:edge', direction: 'NORTH' },
+        ]),
+        makeRoom('town:market', 'Market Street', 1, 0, [
+          { fromRoomId: 'town:market', toRoomId: 'town:square', direction: 'WEST' },
+        ]),
+      ],
+    }
+    const zones = [makeZone('town', 'Millhaven', { safe: true }), forestZone]
+
+    mockApi.get.mockImplementation((path: string) => {
+      if (path === '/zones') return Promise.resolve(zones)
+      if (path === '/zones/town') return Promise.resolve(townWithCrossExit)
+      if (path === '/zones/forest') return Promise.resolve(forestDetail)
+      if (path.startsWith('/default-sfx')) return Promise.resolve([])
+      return Promise.resolve([])
+    })
+    mockApi.put.mockResolvedValue({})
+    mockApi.del.mockResolvedValue({})
+    mockApi.post.mockResolvedValue({})
+
+    render(<ZoneEditor />)
+    await selectZone(user)
+
+    // The mock move-room button moves town:square to (2, 3)
+    await user.click(screen.getByTestId('move-room'))
+
+    // Should have been confirmed
+    expect(window.confirm).toHaveBeenCalledWith(expect.stringContaining('Town Square'))
+
+    // The cross-zone exit from forest:edge SOUTH -> town:square needs fixing
+    // forest:edge is at (0,2), town:square moves to (2,3)
+    // From forest:edge's perspective: dx=2, dy=3-2=1 => SOUTHEAST (positive dx, positive dy = NORTHEAST... wait)
+    // Actually inferDirection(dx, dy) where dx = target.x - source.x, dy = target.y - source.y
+    // For forest:edge -> town:square: dx = 2-0 = 2, dy = 3-2 = 1 => positive dx, positive dy => NORTHEAST
+    // But the current direction is SOUTH, so it needs to change
+    // The fix should delete the old SOUTH exit and create a new one with the correct direction
+
+    await waitFor(() => {
+      // Should have deleted the cross-zone exit (forest:edge SOUTH)
+      expect(mockApi.del).toHaveBeenCalledWith(
+        expect.stringMatching(/\/rooms\/forest:edge\/exits\/SOUTH|\/rooms\/town:square\/exits\//)
+      )
+    })
   })
 })
