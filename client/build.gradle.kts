@@ -16,14 +16,6 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            // Empty for now — code will migrate here in later steps
-        }
-
-        commonTest.dependencies {
-            implementation(libs.kotlin.test)
-        }
-
-        androidMain.dependencies {
             implementation(project(":shared"))
 
             // Compose Multiplatform (JetBrains-published artifacts)
@@ -32,21 +24,31 @@ kotlin {
             implementation(libs.compose.ui)
             implementation(libs.compose.ui.tooling.preview)
 
+            // Serialization (used by shared models in UI code)
+            implementation(libs.kotlinx.serialization.json)
+
+            // Image loading (Coil 3 is multiplatform)
+            implementation(libs.coil.compose)
+        }
+
+        commonTest.dependencies {
+            implementation(libs.kotlin.test)
+        }
+
+        androidMain.dependencies {
             // AndroidX (Android-specific, not provided by JetBrains)
             implementation(libs.activity.compose)
             implementation(libs.navigation.compose)
             implementation(libs.lifecycle.viewmodel.compose)
             implementation(libs.lifecycle.runtime.compose)
 
-            // Networking
+            // Networking (Android-specific engines)
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.okhttp)
             implementation(libs.ktor.client.websockets)
-            implementation(libs.kotlinx.serialization.json)
             implementation(libs.kotlinx.coroutines.android)
 
-            // Image loading
-            implementation(libs.coil.compose)
+            // Image loading (Android-specific network backend)
             implementation(libs.coil.network.okhttp)
         }
 
