@@ -22,7 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
+import coil3.compose.LocalPlatformContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -196,7 +196,7 @@ private fun BagItemCell(
     val serverBaseUrl = LocalServerBaseUrl.current
     val isConsumable = item?.type == "consumable"
     val borderColor = if (isConsumable) ConsumableBorder else DefaultBorder
-    val context = LocalContext.current
+    val context = LocalPlatformContext.current
 
     // Debounce: ignore rapid taps within 500ms
     var lastTapTime by remember { mutableStateOf(0L) }

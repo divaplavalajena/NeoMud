@@ -15,7 +15,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
+import coil3.compose.LocalPlatformContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -264,7 +264,7 @@ private fun EquipmentSlotBox(
     val serverBaseUrl = LocalServerBaseUrl.current
     val item = equippedItemId?.let { itemCatalog[it] }
     val borderColor = if (equippedItemId != null) SlotFilledBorder else SlotEmptyBorder
-    val context = LocalContext.current
+    val context = LocalPlatformContext.current
 
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
@@ -310,7 +310,7 @@ private fun EquippableBagCell(
     onEquip: () -> Unit
 ) {
     val serverBaseUrl = LocalServerBaseUrl.current
-    val context = LocalContext.current
+    val context = LocalPlatformContext.current
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier

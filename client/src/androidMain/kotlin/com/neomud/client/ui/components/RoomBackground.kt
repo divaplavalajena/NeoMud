@@ -23,7 +23,7 @@ fun RoomBackground(
     Box(modifier = modifier.background(FallbackColor)) {
         if (imageUrl.isNotEmpty()) {
             AsyncImage(
-                model = coil3.request.ImageRequest.Builder(androidx.compose.ui.platform.LocalContext.current)
+                model = coil3.request.ImageRequest.Builder(coil3.compose.LocalPlatformContext.current)
                     .data("$serverBaseUrl$imageUrl")
                     .crossfade(300)
                     .memoryCachePolicy(CachePolicy.ENABLED)

@@ -14,7 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
+import coil3.compose.LocalPlatformContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -188,7 +188,7 @@ private fun BuyItemRow(
     val canAfford = playerCoins.totalCopper() >= vendorItem.price.totalCopper()
     val meetsLevel = playerLevel >= item.levelRequirement
     val canBuy = canAfford && meetsLevel
-    val context = LocalContext.current
+    val context = LocalPlatformContext.current
     val serverBaseUrl = LocalServerBaseUrl.current
 
     val nameColor = when {
@@ -296,7 +296,7 @@ private fun SellItemRow(
     val sellPriceCopper = if (itemValue > 0) Coins.sellPriceCopper(itemValue, inventoryItem.quantity, playerCharm, hasHaggle) else 0L
     val sellPrice = Coins.fromCopper(sellPriceCopper)
     val canSell = itemValue > 0
-    val context = LocalContext.current
+    val context = LocalPlatformContext.current
     val serverBaseUrl = LocalServerBaseUrl.current
 
     Row(

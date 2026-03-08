@@ -652,7 +652,7 @@ private fun CharacterPreviewStep(
                     modifier = Modifier.fillMaxWidth().padding(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    val context = androidx.compose.ui.platform.LocalContext.current
+                    val context = coil3.compose.LocalPlatformContext.current
                     AsyncImage(
                         model = coil3.request.ImageRequest.Builder(context)
                             .data(spriteUrl)

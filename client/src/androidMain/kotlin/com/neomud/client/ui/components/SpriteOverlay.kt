@@ -107,7 +107,7 @@ fun SpriteOverlay(
             // Back row: overflow entities 5-7
             val backRow = allEntities.drop(4)
 
-            val context = androidx.compose.ui.platform.LocalContext.current
+            val context = coil3.compose.LocalPlatformContext.current
 
             // Back row — sits higher, smaller scale
             if (backRow.isNotEmpty()) {
@@ -217,7 +217,7 @@ fun SpriteOverlay(
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.Bottom
             ) {
-                val context = androidx.compose.ui.platform.LocalContext.current
+                val context = coil3.compose.LocalPlatformContext.current
 
                 // Coin piles
                 val coinTypes = listOf(
@@ -259,7 +259,7 @@ fun SpriteOverlay(
 private fun EntitySprite(
     entity: RoomEntity,
     serverBaseUrl: String,
-    context: android.content.Context,
+    context: coil3.PlatformContext,
     selectedTargetId: String?,
     onSelectTarget: (String?) -> Unit,
     onPlayerTap: ((PlayerInfo) -> Unit)?,
@@ -521,7 +521,7 @@ private fun LootSprite(
     contentDescription: String,
     quantity: Int,
     onClick: () -> Unit,
-    context: android.content.Context
+    context: coil3.PlatformContext
 ) {
     Box(
         modifier = Modifier.clickable { onClick() }

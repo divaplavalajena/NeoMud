@@ -17,7 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
+import coil3.compose.LocalPlatformContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -213,7 +213,7 @@ private fun NameAndVitals(player: Player, classCatalog: Map<String, CharacterCla
             val classId = player.characterClass.lowercase()
             val gender = player.gender
             val spriteUrl = "$serverBaseUrl/assets/images/players/${raceId}_${gender}_${classId}.webp"
-            val context = LocalContext.current
+            val context = LocalPlatformContext.current
             AsyncImage(
                 model = coil3.request.ImageRequest.Builder(context)
                     .data(spriteUrl)
