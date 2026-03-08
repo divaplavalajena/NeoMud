@@ -3,6 +3,7 @@ package com.neomud.server.game
 import com.neomud.server.game.npc.NpcManager
 import com.neomud.server.session.SessionManager
 import com.neomud.server.world.HiddenExitData
+import com.neomud.server.world.NpcData
 import com.neomud.server.world.WorldGraph
 import com.neomud.shared.model.Direction
 import com.neomud.shared.model.MapRoom
@@ -87,7 +88,7 @@ class MapRoomFilterTest {
         mapRoom.copy(
             exits = visibleExits,
             hasPlayers = sessionManager.getPlayerNamesInRoom(mapRoom.id).isNotEmpty(),
-            hasNpcs = npcManager.getNpcsInRoom(mapRoom.id).isNotEmpty(),
+            hasNpcs = npcManager.getNpcsInRoom(mapRoom.id).any { !it.hostile },
             lockedExits = locked,
             hiddenExits = hidden
         )
@@ -199,6 +200,97 @@ class MapRoomFilterTest {
 
         assertTrue(Direction.UP in r1.exits, "UP exit should be preserved")
         assertTrue(Direction.DOWN in r4.exits, "DOWN exit should be preserved")
+    }
+
+    @Test
+    fun testHostileNpcsNotShownOnMinimap() {
+        val graph = buildGraph()
+        val session = FakeSession()
+        val sm = SessionManager()
+        val nm = NpcManager(graph)
+
+        // Spawn a hostile NPC in r1
+        val hostileNpc = NpcData(
+            id = "npc:wolf",
+            name = "Wolf",
+            description = "A snarling wolf",
+            startRoomId = "r1",
+            behaviorType = "wander",
+            hostile = true,
+            maxHp = 50,
+            damage = 5
+        )
+        nm.loadNpcs(listOf(hostileNpc to "zone"))
+
+        val rawRooms = graph.getRoomsNear("r1")
+        val enriched = enrichForFake(rawRooms, session, graph, sm, nm)
+        val r1 = enriched.find { it.id == "r1" }!!
+
+        assertFalse(r1.hasNpcs, "Hostile NPCs should not show on minimap")
+    }
+
+    @Test
+    fun testFriendlyNpcsShownOnMinimap() {
+        val graph = buildGraph()
+        val session = FakeSession()
+        val sm = SessionManager()
+        val nm = NpcManager(graph)
+
+        // Spawn a vendor (non-hostile) NPC in r1
+        val vendorNpc = NpcData(
+            id = "npc:shopkeeper",
+            name = "Shopkeeper",
+            description = "A friendly shopkeeper",
+            startRoomId = "r1",
+            behaviorType = "vendor",
+            hostile = false,
+            maxHp = 100,
+            damage = 0
+        )
+        nm.loadNpcs(listOf(vendorNpc to "zone"))
+
+        val rawRooms = graph.getRoomsNear("r1")
+        val enriched = enrichForFake(rawRooms, session, graph, sm, nm)
+        val r1 = enriched.find { it.id == "r1" }!!
+
+        assertTrue(r1.hasNpcs, "Friendly NPCs (vendors/trainers) should show on minimap")
+    }
+
+    @Test
+    fun testMixedNpcsOnlyShowsFriendly() {
+        val graph = buildGraph()
+        val session = FakeSession()
+        val sm = SessionManager()
+        val nm = NpcManager(graph)
+
+        // Spawn both hostile and friendly NPCs in r1
+        val hostileNpc = NpcData(
+            id = "npc:wolf",
+            name = "Wolf",
+            description = "A snarling wolf",
+            startRoomId = "r1",
+            behaviorType = "wander",
+            hostile = true,
+            maxHp = 50,
+            damage = 5
+        )
+        val trainerNpc = NpcData(
+            id = "npc:trainer",
+            name = "Trainer",
+            description = "A combat trainer",
+            startRoomId = "r1",
+            behaviorType = "trainer",
+            hostile = false,
+            maxHp = 200,
+            damage = 0
+        )
+        nm.loadNpcs(listOf(hostileNpc to "zone", trainerNpc to "zone"))
+
+        val rawRooms = graph.getRoomsNear("r1")
+        val enriched = enrichForFake(rawRooms, session, graph, sm, nm)
+        val r1 = enriched.find { it.id == "r1" }!!
+
+        assertTrue(r1.hasNpcs, "Room with friendly NPC should show hasNpcs even if hostile NPCs also present")
     }
 
     @Test

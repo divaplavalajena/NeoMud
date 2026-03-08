@@ -24,8 +24,8 @@ fun FloatingMiniMap(
 ) {
     val isLandscape = LocalIsLandscape.current
     val mapSize = if (isLandscape) 160.dp else 80.dp
-    val cellSize = if (isLandscape) 28f else 48f
-    val roomSize = if (isLandscape) 20f else 36f
+    val cellSize = if (isLandscape) 36f else 48f
+    val roomSize = if (isLandscape) 26f else 36f
 
     Box(
         modifier = modifier
