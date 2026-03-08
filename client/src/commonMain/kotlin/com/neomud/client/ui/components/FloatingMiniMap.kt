@@ -11,6 +11,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.neomud.client.platform.LocalIsLandscape
 import com.neomud.shared.model.MapRoom
 import com.neomud.shared.model.RoomId
 
@@ -21,9 +22,14 @@ fun FloatingMiniMap(
     visitedRoomIds: Set<RoomId> = emptySet(),
     modifier: Modifier = Modifier
 ) {
+    val isLandscape = LocalIsLandscape.current
+    val mapSize = if (isLandscape) 160.dp else 80.dp
+    val cellSize = if (isLandscape) 28f else 48f
+    val roomSize = if (isLandscape) 20f else 36f
+
     Box(
         modifier = modifier
-            .size(80.dp)
+            .size(mapSize)
             .alpha(0.6f)
             .clip(RoundedCornerShape(8.dp))
             .background(Color(0xCC0D1117))
@@ -33,7 +39,9 @@ fun FloatingMiniMap(
             rooms = rooms,
             playerRoomId = playerRoomId,
             visitedRoomIds = visitedRoomIds,
-            fogOfWar = true
+            fogOfWar = true,
+            cellSize = cellSize,
+            roomSize = roomSize
         )
     }
 }
