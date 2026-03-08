@@ -1,5 +1,6 @@
 package com.neomud.client.network
 
+import com.neomud.client.platform.PlatformLogger
 import com.neomud.shared.protocol.ClientMessage
 import com.neomud.shared.protocol.MessageSerializer
 import com.neomud.shared.protocol.ServerMessage
@@ -47,7 +48,7 @@ class WebSocketClient {
                                 val message = MessageSerializer.decodeServerMessage(text)
                                 _messages.emit(message)
                             } catch (e: Exception) {
-                                android.util.Log.w("WebSocketClient", "Failed to decode message: ${text.take(200)}", e)
+                                PlatformLogger.w("WebSocketClient", "Failed to decode message: ${text.take(200)}", e)
                             }
                         }
                     }
@@ -65,7 +66,7 @@ class WebSocketClient {
 
     suspend fun send(message: ClientMessage): Boolean {
         val s = session ?: run {
-            android.util.Log.w("WebSocketClient", "send() called with no active session for ${message::class.simpleName}")
+            PlatformLogger.w("WebSocketClient", "send() called with no active session for ${message::class.simpleName}")
             return false
         }
         val text = MessageSerializer.encodeClientMessage(message)
@@ -73,7 +74,7 @@ class WebSocketClient {
             s.send(Frame.Text(text))
             true
         } catch (e: Exception) {
-            android.util.Log.e("WebSocketClient", "send() failed for ${message::class.simpleName}", e)
+            PlatformLogger.e("WebSocketClient", "send() failed for ${message::class.simpleName}", e)
             false
         }
     }

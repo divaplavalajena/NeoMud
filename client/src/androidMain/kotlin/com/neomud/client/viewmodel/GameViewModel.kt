@@ -3,6 +3,7 @@ package com.neomud.client.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neomud.client.audio.AudioManager
+import com.neomud.client.platform.PlatformLogger
 import com.neomud.client.network.WebSocketClient
 import com.neomud.client.ui.theme.MudColors
 import com.neomud.shared.model.*
@@ -212,7 +213,7 @@ class GameViewModel(
                 try {
                     handleMessage(message)
                 } catch (e: Exception) {
-                    android.util.Log.e("GameViewModel", "handleMessage crashed for ${message::class.simpleName}", e)
+                    PlatformLogger.e("GameViewModel", "handleMessage crashed for ${message::class.simpleName}", e)
                 }
             }
         }

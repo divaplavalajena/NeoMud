@@ -3,6 +3,7 @@ package com.neomud.client.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.neomud.client.network.ConnectionState
+import com.neomud.client.platform.PlatformLogger
 import com.neomud.client.network.WebSocketClient
 import com.neomud.shared.model.CharacterClassDef
 import com.neomud.shared.model.Item
@@ -111,7 +112,7 @@ class AuthViewModel : ViewModel() {
                         else -> { /* handled by GameViewModel */ }
                     }
                 } catch (e: Exception) {
-                    android.util.Log.e("AuthViewModel", "Message handling failed for ${message::class.simpleName}", e)
+                    PlatformLogger.e("AuthViewModel", "Message handling failed for ${message::class.simpleName}", e)
                 }
             }
         }

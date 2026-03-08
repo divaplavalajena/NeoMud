@@ -4,7 +4,7 @@ import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.media.SoundPool
-import android.util.Log
+import com.neomud.client.platform.PlatformLogger
 import kotlinx.coroutines.*
 import java.io.File
 import java.net.URL
@@ -86,7 +86,7 @@ class AudioManager(context: Context) {
                 sfxCache[cacheKey] = loadedId
                 pendingFirstPlay.add(loadedId)
             } catch (e: Exception) {
-                Log.w(tag, "Failed to load SFX '$category/$soundId': ${e.message}")
+                PlatformLogger.w(tag, "Failed to load SFX '$category/$soundId': ${e.message}")
             } finally {
                 sfxLoading.remove(cacheKey)
             }
@@ -120,14 +120,14 @@ class AudioManager(context: Context) {
                     mp.setVolume(vol, vol)
                     mp.setOnPreparedListener { it.start() }
                     mp.setOnErrorListener { _, what, extra ->
-                        Log.w(tag, "BGM error for '$trackId': what=$what extra=$extra")
+                        PlatformLogger.w(tag, "BGM error for '$trackId': what=$what extra=$extra")
                         true
                     }
                     mp.prepareAsync()
                     mediaPlayer = mp
                 }
             } catch (e: Exception) {
-                Log.w(tag, "Failed to load BGM '$trackId': ${e.message}")
+                PlatformLogger.w(tag, "Failed to load BGM '$trackId': ${e.message}")
             }
         }
     }
@@ -140,7 +140,7 @@ class AudioManager(context: Context) {
                 release()
             }
         } catch (e: Exception) {
-            Log.w(tag, "Error stopping BGM: ${e.message}")
+            PlatformLogger.w(tag, "Error stopping BGM: ${e.message}")
         }
         mediaPlayer = null
         currentBgmTrack = null
