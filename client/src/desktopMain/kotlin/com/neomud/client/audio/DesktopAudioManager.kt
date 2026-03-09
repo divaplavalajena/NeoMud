@@ -73,6 +73,10 @@ class DesktopAudioManager : PlatformAudioManager {
     }
 
     override fun playBgm(serverBaseUrl: String, trackId: String) {
+        playBgmFromUri("$serverBaseUrl/assets/audio/bgm/$trackId.mp3", trackId)
+    }
+
+    override fun playBgmFromUri(uri: String, trackId: String) {
         if (trackId == currentBgmTrack) return
         if (trackId.isBlank()) {
             stopBgm()
@@ -84,8 +88,7 @@ class DesktopAudioManager : PlatformAudioManager {
 
         scope.launch {
             try {
-                val url = "$serverBaseUrl/assets/audio/bgm/$trackId.mp3"
-                val media = Media(url)
+                val media = Media(uri)
                 val mp = MediaPlayer(media)
                 mp.cycleCount = MediaPlayer.INDEFINITE
                 val vol = (masterVolume * bgmVolume).toDouble()

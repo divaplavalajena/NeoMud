@@ -11,6 +11,7 @@ import com.neomud.client.ui.screens.RegistrationScreen
 import com.neomud.client.viewmodel.AuthState
 import com.neomud.client.viewmodel.AuthViewModel
 import com.neomud.client.viewmodel.GameViewModel
+import neomud.client.generated.resources.Res
 
 /**
  * Shared navigation graph for all platforms.
@@ -59,12 +60,10 @@ fun NeoMudApp(
 
     NavHost(navController = navController, startDestination = "login") {
         composable("login") {
-            // Play intro BGM while on login screen
-            val loginServerBaseUrl = authViewModel.serverBaseUrl
+            // Play intro BGM from embedded resource (no server needed)
             LaunchedEffect(Unit) {
-                if (loginServerBaseUrl.isNotBlank()) {
-                    audioManager.playBgm(loginServerBaseUrl, "intro_theme")
-                }
+                val introUri = Res.getUri("files/intro_theme.mp3")
+                audioManager.playBgmFromUri(introUri, "intro_theme")
             }
             LoginScreen(
                 connectionState = connectionState,

@@ -79,6 +79,9 @@ Every room has hand-prompted AI-generated background art. Every NPC and item has
 - Ground loot rendered as clickable sprites
 
 ### Client
+- **Stone & Torchlight UI** — custom dark medieval forge aesthetic across all screens: stone-framed panels with beveled edges, corner rivets, runic inner glow, and torchlight-gold typography (no Material3 defaults)
+- Login/registration splash screen with embedded forge background art and cinematic intro BGM
+- Equipment paperdoll with tap-to-inspect flow (stats, description, unequip) instead of instant unequip
 - Room scene: background art + NPC sprites + item sprites + player sprites
 - BFS-based minimap with fog-of-war, zone color-coding, locked/hidden/interactable exit indicators
 - 10-direction navigation (cardinal, diagonal, up/down)
@@ -90,8 +93,10 @@ Every room has hand-prompted AI-generated background art. Every NPC and item has
 - Configurable volume controls for BGM and SFX
 
 ### Audio
-- AI-generated sound effects via ElevenLabs — 103 audio files across combat, spells, items, NPCs, and ambient categories
-- Per-zone background music (4 tracks) with crossfade transitions
+- AI-generated sound effects via ElevenLabs — 104 audio files across combat, spells, items, NPCs, and ambient categories
+- AI-composed background music via ElevenLabs — 5 BGM tracks including cinematic login theme
+- Per-zone background music with crossfade transitions
+- Embedded intro theme plays on login screen without server connection
 - Per-NPC attack, miss, death, and interaction sounds
 - Per-weapon attack and miss sounds
 - Per-spell cast, impact, and miss sounds
@@ -144,7 +149,7 @@ NeoMud/
 | Language | Kotlin 2.3 (JVM 21) |
 | Server | Ktor 3.4 + Netty |
 | Database | SQLite + Exposed ORM |
-| Client | Compose Multiplatform + Material 3 (Android + Desktop, iOS/Web planned) |
+| Client | Compose Multiplatform (Android + Desktop, iOS/Web planned) |
 | Images | Coil 3 (WebP with transparency, multiplatform) |
 | Audio | Android MediaPlayer + SoundPool; Desktop JavaFX Media (via expect/actual `PlatformAudioManager`) |
 | Protocol | kotlinx.serialization over WebSocket |
@@ -161,7 +166,7 @@ NeoMud/
 | Lines of code | ~45,500 (30.5k Kotlin, 15k TypeScript) |
 | Commits | 246 |
 | Tests | 830 (386 server, 151 shared, 293 maker) |
-| Assets | 460 (357 images, 103 audio) |
+| Assets | 462 (357 images, 105 audio) |
 | Player sprites | 270 (6 races x 3 genders x 15 classes) |
 | World content | 4 zones, 25 rooms, 17 NPCs, 41 items, 23 spells, 12 skills, 15 classes, 6 races |
 
@@ -240,7 +245,7 @@ This project is built entirely with [Claude Code](https://claude.com/claude-code
 | `/playtest` | AI playtester — plays the game via WebSocket relay, files GitHub issues for bugs |
 | `/worldmaker` | Browser-based QA agent — tests the Maker UI through Playwright interaction |
 | `/bugfixer` | Automated issue triage — works through the GitHub backlog |
-| `/elevenlabs-sfx` | Sound effect generation via ElevenLabs AI |
+| `/elevenlabs-sfx` | Sound effect and BGM generation via ElevenLabs AI |
 | `/rebuild-world` | Rebuilds the `.nmd` bundle after asset changes |
 
 Agent memory in `.claude/agent-memory/` persists findings across sessions — the game designer remembers its balance audits, the worldmaker remembers UI patterns it's tested, and the playtester remembers what it's explored.
