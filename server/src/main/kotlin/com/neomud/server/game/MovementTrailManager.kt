@@ -2,6 +2,7 @@ package com.neomud.server.game
 
 import com.neomud.shared.model.Direction
 import com.neomud.shared.model.RoomId
+import java.util.concurrent.ConcurrentHashMap
 
 data class TrailEntry(
     val entityName: String,
@@ -15,22 +16,26 @@ class MovementTrailManager(
     private val maxEntriesPerRoom: Int = GameConfig.Trails.MAX_ENTRIES_PER_ROOM,
     private val trailLifetimeMs: Long = GameConfig.Trails.LIFETIME_MS
 ) {
-    private val trails = HashMap<RoomId, MutableList<TrailEntry>>()
+    private val trails = ConcurrentHashMap<RoomId, MutableList<TrailEntry>>()
 
     fun recordTrail(roomId: RoomId, entry: TrailEntry) {
         val list = trails.getOrPut(roomId) { mutableListOf() }
-        list.add(entry)
-        if (list.size > maxEntriesPerRoom) {
-            list.removeAt(0)
+        synchronized(list) {
+            list.add(entry)
+            if (list.size > maxEntriesPerRoom) {
+                list.removeAt(0)
+            }
         }
     }
 
     fun getTrails(roomId: RoomId, entityId: String? = null, now: Long = System.currentTimeMillis()): List<TrailEntry> {
         val list = trails[roomId] ?: return emptyList()
         val cutoff = now - trailLifetimeMs
-        val fresh = list.filter { it.timestamp >= cutoff }
-        val filtered = if (entityId != null) fresh.filter { it.entityId == entityId } else fresh
-        return filtered.sortedByDescending { it.timestamp }
+        synchronized(list) {
+            val fresh = list.filter { it.timestamp >= cutoff }
+            val filtered = if (entityId != null) fresh.filter { it.entityId == entityId } else fresh
+            return filtered.sortedByDescending { it.timestamp }
+        }
     }
 
     /**
@@ -48,8 +53,10 @@ class MovementTrailManager(
         val iter = trails.iterator()
         while (iter.hasNext()) {
             val (_, list) = iter.next()
-            list.removeAll { it.timestamp < cutoff }
-            if (list.isEmpty()) iter.remove()
+            synchronized(list) {
+                list.removeAll { it.timestamp < cutoff }
+                if (list.isEmpty()) iter.remove()
+            }
         }
     }
 }

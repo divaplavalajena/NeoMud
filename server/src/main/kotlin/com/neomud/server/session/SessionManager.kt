@@ -8,18 +8,29 @@ import java.util.concurrent.ConcurrentHashMap
 
 class SessionManager {
     private val sessions = ConcurrentHashMap<String, PlayerSession>()
+    /** Maps login username (lowercase) → character name for duplicate login detection */
+    private val usernameToCharacter = ConcurrentHashMap<String, String>()
 
-    fun addSession(playerName: String, session: PlayerSession) {
+    fun addSession(playerName: String, session: PlayerSession, username: String? = null) {
         sessions[playerName] = session
+        if (username != null) {
+            usernameToCharacter[username.lowercase()] = playerName
+        }
     }
 
     fun removeSession(playerName: String) {
         sessions.remove(playerName)
+        // Clean up username mapping
+        usernameToCharacter.entries.removeIf { it.value == playerName }
     }
 
     fun getSession(playerName: String): PlayerSession? = sessions[playerName]
 
     fun isLoggedIn(playerName: String): Boolean = sessions.containsKey(playerName)
+
+    /** Check if a login username already has an active session */
+    fun isUsernameLoggedIn(username: String): Boolean =
+        usernameToCharacter.containsKey(username.lowercase())
 
     fun getSessionsInRoom(roomId: RoomId): List<PlayerSession> =
         sessions.values.filter { it.currentRoomId == roomId }

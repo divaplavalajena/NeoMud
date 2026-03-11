@@ -88,7 +88,7 @@ class AdminCommandTest {
         charClass: String = "WARRIOR",
         stats: Stats = adminStats
     ) {
-        send(sendMsg(ClientMessage.Register(username, "pass123", charName, charClass, allocatedStats = stats)))
+        send(sendMsg(ClientMessage.Register(username, "pass1234", charName, charClass, allocatedStats = stats)))
         assertIs<ServerMessage.RegisterOk>(receiveServerMessage())
     }
 
@@ -107,7 +107,7 @@ class AdminCommandTest {
 
         ws.webSocket("/game") {
             consumeCatalogSync()
-            send(sendMsg(ClientMessage.Login("adminuser", "pass123")))
+            send(sendMsg(ClientMessage.Login("adminuser", "pass1234")))
             val loginOk = consumeLoginSequence()
             assertTrue(loginOk.player.isAdmin, "Player should be admin")
         }
@@ -126,7 +126,7 @@ class AdminCommandTest {
 
         ws.webSocket("/game") {
             consumeCatalogSync()
-            send(sendMsg(ClientMessage.Login("regularuser", "pass123")))
+            send(sendMsg(ClientMessage.Login("regularuser", "pass1234")))
             val loginOk = consumeLoginSequence()
             assertTrue(!loginOk.player.isAdmin, "Player should NOT be admin")
         }
@@ -145,7 +145,7 @@ class AdminCommandTest {
 
         ws.webSocket("/game") {
             consumeCatalogSync()
-            send(sendMsg(ClientMessage.Login("nonadmin", "pass123")))
+            send(sendMsg(ClientMessage.Login("nonadmin", "pass1234")))
             consumeLoginSequence()
 
             send(sendMsg(ClientMessage.Say("/help")))
@@ -167,7 +167,7 @@ class AdminCommandTest {
 
         ws.webSocket("/game") {
             consumeCatalogSync()
-            send(sendMsg(ClientMessage.Login("adminuser", "pass123")))
+            send(sendMsg(ClientMessage.Login("adminuser", "pass1234")))
             consumeLoginSequence()
 
             send(sendMsg(ClientMessage.Say("/help")))
@@ -192,7 +192,7 @@ class AdminCommandTest {
 
         ws.webSocket("/game") {
             consumeCatalogSync()
-            send(sendMsg(ClientMessage.Login("adminuser", "pass123")))
+            send(sendMsg(ClientMessage.Login("adminuser", "pass1234")))
             val loginOk = consumeLoginSequence()
             val maxHp = loginOk.player.maxHp
             val maxMp = loginOk.player.maxMp
@@ -218,7 +218,7 @@ class AdminCommandTest {
 
         ws.webSocket("/game") {
             consumeCatalogSync()
-            send(sendMsg(ClientMessage.Login("adminuser", "pass123")))
+            send(sendMsg(ClientMessage.Login("adminuser", "pass1234")))
             consumeLoginSequence()
 
             send(sendMsg(ClientMessage.Say("/grantxp 500")))
@@ -241,7 +241,7 @@ class AdminCommandTest {
 
         ws.webSocket("/game") {
             consumeCatalogSync()
-            send(sendMsg(ClientMessage.Login("adminuser", "pass123")))
+            send(sendMsg(ClientMessage.Login("adminuser", "pass1234")))
             val loginOk = consumeLoginSequence()
             val xpNeeded = loginOk.player.xpToNextLevel
 
@@ -266,7 +266,7 @@ class AdminCommandTest {
 
         ws.webSocket("/game") {
             consumeCatalogSync()
-            send(sendMsg(ClientMessage.Login("adminuser", "pass123")))
+            send(sendMsg(ClientMessage.Login("adminuser", "pass1234")))
             consumeLoginSequence()
 
             send(sendMsg(ClientMessage.Say("/setlevel 5")))
@@ -292,7 +292,7 @@ class AdminCommandTest {
 
         ws.webSocket("/game") {
             consumeCatalogSync()
-            send(sendMsg(ClientMessage.Login("adminuser", "pass123")))
+            send(sendMsg(ClientMessage.Login("adminuser", "pass1234")))
             consumeLoginSequence()
 
             send(sendMsg(ClientMessage.Say("/setlevel 31")))
@@ -314,7 +314,7 @@ class AdminCommandTest {
 
         ws.webSocket("/game") {
             consumeCatalogSync()
-            send(sendMsg(ClientMessage.Login("adminuser", "pass123")))
+            send(sendMsg(ClientMessage.Login("adminuser", "pass1234")))
             consumeLoginSequence()
 
             send(sendMsg(ClientMessage.Say("/teleport town:square")))
@@ -339,7 +339,7 @@ class AdminCommandTest {
 
         ws.webSocket("/game") {
             consumeCatalogSync()
-            send(sendMsg(ClientMessage.Login("adminuser", "pass123")))
+            send(sendMsg(ClientMessage.Login("adminuser", "pass1234")))
             consumeLoginSequence()
 
             send(sendMsg(ClientMessage.Say("/teleport nonexistent:room")))
@@ -361,7 +361,7 @@ class AdminCommandTest {
 
         ws.webSocket("/game") {
             consumeCatalogSync()
-            send(sendMsg(ClientMessage.Login("adminuser", "pass123")))
+            send(sendMsg(ClientMessage.Login("adminuser", "pass1234")))
             consumeLoginSequence()
 
             send(sendMsg(ClientMessage.Say("/spawn npc:shadow_wolf")))
@@ -388,7 +388,7 @@ class AdminCommandTest {
 
         ws.webSocket("/game") {
             consumeCatalogSync()
-            send(sendMsg(ClientMessage.Login("adminuser", "pass123")))
+            send(sendMsg(ClientMessage.Login("adminuser", "pass1234")))
             consumeLoginSequence()
 
             send(sendMsg(ClientMessage.Say("/spawn fake_npc")))
@@ -410,7 +410,7 @@ class AdminCommandTest {
 
         ws.webSocket("/game") {
             consumeCatalogSync()
-            send(sendMsg(ClientMessage.Login("adminuser", "pass123")))
+            send(sendMsg(ClientMessage.Login("adminuser", "pass1234")))
             consumeLoginSequence()
 
             // Spawn then kill
@@ -441,7 +441,7 @@ class AdminCommandTest {
 
         ws.webSocket("/game") {
             consumeCatalogSync()
-            send(sendMsg(ClientMessage.Login("adminuser", "pass123")))
+            send(sendMsg(ClientMessage.Login("adminuser", "pass1234")))
             consumeLoginSequence()
 
             send(sendMsg(ClientMessage.Say("/grantcp 50")))
@@ -464,7 +464,7 @@ class AdminCommandTest {
 
         ws.webSocket("/game") {
             consumeCatalogSync()
-            send(sendMsg(ClientMessage.Login("adminuser", "pass123")))
+            send(sendMsg(ClientMessage.Login("adminuser", "pass1234")))
             consumeLoginSequence()
 
             send(sendMsg(ClientMessage.Say("/grantitem item:health_potion 3")))
@@ -488,7 +488,7 @@ class AdminCommandTest {
 
         ws.webSocket("/game") {
             consumeCatalogSync()
-            send(sendMsg(ClientMessage.Login("adminuser", "pass123")))
+            send(sendMsg(ClientMessage.Login("adminuser", "pass1234")))
             consumeLoginSequence()
 
             send(sendMsg(ClientMessage.Say("/grantitem fake_item")))
@@ -510,7 +510,7 @@ class AdminCommandTest {
 
         ws.webSocket("/game") {
             consumeCatalogSync()
-            send(sendMsg(ClientMessage.Login("adminuser", "pass123")))
+            send(sendMsg(ClientMessage.Login("adminuser", "pass1234")))
             val loginOk = consumeLoginSequence()
             val originalStr = loginOk.player.stats.strength
 
@@ -534,7 +534,7 @@ class AdminCommandTest {
 
         ws.webSocket("/game") {
             consumeCatalogSync()
-            send(sendMsg(ClientMessage.Login("adminuser", "pass123")))
+            send(sendMsg(ClientMessage.Login("adminuser", "pass1234")))
             consumeLoginSequence()
 
             // Toggle on
@@ -569,14 +569,14 @@ class AdminCommandTest {
         val regularClient = createClient { install(WebSockets) }
         regularClient.webSocket("/game") {
             consumeCatalogSync()
-            send(sendMsg(ClientMessage.Login("regular", "pass123")))
+            send(sendMsg(ClientMessage.Login("regular", "pass1234")))
             consumeLoginSequence()
 
             // Login admin in separate connection and broadcast
             val adminClient = createClient { install(WebSockets) }
             adminClient.webSocket("/game") {
                 consumeCatalogSync()
-                send(sendMsg(ClientMessage.Login("adminuser", "pass123")))
+                send(sendMsg(ClientMessage.Login("adminuser", "pass1234")))
                 consumeLoginSequence()
 
                 // May receive PlayerEntered for regular player — just drain
@@ -612,7 +612,7 @@ class AdminCommandTest {
 
         ws.webSocket("/game") {
             consumeCatalogSync()
-            send(sendMsg(ClientMessage.Login("adminuser", "pass123")))
+            send(sendMsg(ClientMessage.Login("adminuser", "pass1234")))
             consumeLoginSequence()
 
             send(sendMsg(ClientMessage.Say("/badcommand")))
@@ -635,7 +635,7 @@ class AdminCommandTest {
 
         ws.webSocket("/game") {
             consumeCatalogSync()
-            send(sendMsg(ClientMessage.Login("adminuser", "pass123")))
+            send(sendMsg(ClientMessage.Login("adminuser", "pass1234")))
             consumeLoginSequence()
 
             send(sendMsg(ClientMessage.Say("hello world")))
@@ -664,14 +664,14 @@ class AdminCommandTest {
         val targetClient = createClient { install(WebSockets) }
         targetClient.webSocket("/game") {
             consumeCatalogSync()
-            send(sendMsg(ClientMessage.Login("target", "pass123")))
+            send(sendMsg(ClientMessage.Login("target", "pass1234")))
             consumeLoginSequence()
 
             // Login admin and grant XP to target
             val adminClient = createClient { install(WebSockets) }
             adminClient.webSocket("/game") {
                 consumeCatalogSync()
-                send(sendMsg(ClientMessage.Login("adminuser", "pass123")))
+                send(sendMsg(ClientMessage.Login("adminuser", "pass1234")))
                 consumeLoginSequence()
 
                 send(sendMsg(ClientMessage.Say("/grantxp 1000 TargetHero")))
@@ -700,7 +700,7 @@ class AdminCommandTest {
 
         ws.webSocket("/game") {
             consumeCatalogSync()
-            send(sendMsg(ClientMessage.Login("adminuser", "pass123")))
+            send(sendMsg(ClientMessage.Login("adminuser", "pass1234")))
             consumeLoginSequence()
 
             // Test each command that requires args

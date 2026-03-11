@@ -118,7 +118,7 @@ class IntegrationTest {
         wsClient.webSocket("/game") {
             consumeCatalogSync()
             send(Frame.Text(MessageSerializer.encodeClientMessage(
-                ClientMessage.Register("starter_mage", "pass123", "StarterMage", "MAGE", race = "ELF", gender = "male",
+                ClientMessage.Register("starter_mage", "pass1234", "StarterMage", "MAGE", race = "ELF", gender = "male",
                     allocatedStats = Stats(strength = 11, agility = 23, intellect = 37, willpower = 25, health = 13, charm = 25))
             )))
             val reg = receiveServerMessage()
@@ -129,7 +129,7 @@ class IntegrationTest {
         wsClient.webSocket("/game") {
             consumeCatalogSync()
             send(Frame.Text(MessageSerializer.encodeClientMessage(
-                ClientMessage.Login("starter_mage", "pass123")
+                ClientMessage.Login("starter_mage", "pass1234")
             )))
             receiveServerMessage() // LoginOk
             receiveServerMessage() // RoomInfo
@@ -165,7 +165,7 @@ class IntegrationTest {
         wsClient.webSocket("/game") {
             consumeCatalogSync()
             send(Frame.Text(MessageSerializer.encodeClientMessage(
-                ClientMessage.Register("starter_warrior", "pass123", "StarterWarrior", "WARRIOR",
+                ClientMessage.Register("starter_warrior", "pass1234", "StarterWarrior", "WARRIOR",
                     allocatedStats = Stats(strength = 30, agility = 22, intellect = 18, willpower = 18, health = 30, charm = 18))
             )))
             assertIs<ServerMessage.RegisterOk>(receiveServerMessage())
@@ -175,7 +175,7 @@ class IntegrationTest {
         wsClient.webSocket("/game") {
             consumeCatalogSync()
             send(Frame.Text(MessageSerializer.encodeClientMessage(
-                ClientMessage.Login("starter_warrior", "pass123")
+                ClientMessage.Login("starter_warrior", "pass1234")
             )))
             receiveServerMessage() // LoginOk
             receiveServerMessage() // RoomInfo
@@ -201,7 +201,7 @@ class IntegrationTest {
         wsClient.webSocket("/game") {
             consumeCatalogSync()
             send(Frame.Text(MessageSerializer.encodeClientMessage(
-                ClientMessage.Register("mover", "pass123", "Mover", "THIEF",
+                ClientMessage.Register("mover", "pass1234", "Mover", "THIEF",
                     allocatedStats = Stats(strength = 20, agility = 30, intellect = 22, willpower = 18, health = 20, charm = 25))
             )))
             receiveServerMessage() // RegisterOk
@@ -211,7 +211,7 @@ class IntegrationTest {
         wsClient.webSocket("/game") {
             consumeCatalogSync()
             send(Frame.Text(MessageSerializer.encodeClientMessage(
-                ClientMessage.Login("mover", "pass123")
+                ClientMessage.Login("mover", "pass1234")
             )))
             receiveServerMessage() // LoginOk
             receiveServerMessage() // RoomInfo
@@ -250,7 +250,7 @@ class IntegrationTest {
         wsClient.webSocket("/game") {
             consumeCatalogSync()
             send(Frame.Text(MessageSerializer.encodeClientMessage(
-                ClientMessage.Register("stuck", "pass123", "Stuck", "CLERIC",
+                ClientMessage.Register("stuck", "pass1234", "Stuck", "CLERIC",
                     allocatedStats = Stats(strength = 25, agility = 20, intellect = 20, willpower = 28, health = 25, charm = 22))
             )))
             receiveServerMessage() // RegisterOk
@@ -260,7 +260,7 @@ class IntegrationTest {
         wsClient.webSocket("/game") {
             consumeCatalogSync()
             send(Frame.Text(MessageSerializer.encodeClientMessage(
-                ClientMessage.Login("stuck", "pass123")
+                ClientMessage.Login("stuck", "pass1234")
             )))
             receiveServerMessage() // LoginOk
             receiveServerMessage() // RoomInfo
@@ -339,7 +339,7 @@ class IntegrationTest {
         wsClient.webSocket("/game") {
             consumeCatalogSync()
             send(Frame.Text(MessageSerializer.encodeClientMessage(
-                ClientMessage.Register("player_a", "pass123", "Alice", "WARRIOR", race = "HUMAN", gender = "female",
+                ClientMessage.Register("player_a", "pass1234", "Alice", "WARRIOR", race = "HUMAN", gender = "female",
                     allocatedStats = Stats(strength = 30, agility = 22, intellect = 18, willpower = 18, health = 30, charm = 18))
             )))
             receiveServerMessage() // RegisterOk
@@ -347,7 +347,7 @@ class IntegrationTest {
         wsClient.webSocket("/game") {
             consumeCatalogSync()
             send(Frame.Text(MessageSerializer.encodeClientMessage(
-                ClientMessage.Register("player_b", "pass123", "Bob", "THIEF", race = "ELF", gender = "male",
+                ClientMessage.Register("player_b", "pass1234", "Bob", "THIEF", race = "ELF", gender = "male",
                     allocatedStats = Stats(strength = 15, agility = 35, intellect = 27, willpower = 18, health = 15, charm = 30))
             )))
             receiveServerMessage() // RegisterOk
@@ -359,7 +359,7 @@ class IntegrationTest {
                 wsClient.webSocket("/game") {
                     consumeCatalogSync()
                     send(Frame.Text(MessageSerializer.encodeClientMessage(
-                        ClientMessage.Login("player_a", "pass123")
+                        ClientMessage.Login("player_a", "pass1234")
                     )))
                     receiveServerMessage() // LoginOk
                     receiveServerMessage() // RoomInfo
@@ -378,7 +378,7 @@ class IntegrationTest {
                 wsClient.webSocket("/game") {
                     consumeCatalogSync()
                     send(Frame.Text(MessageSerializer.encodeClientMessage(
-                        ClientMessage.Login("player_b", "pass123")
+                        ClientMessage.Login("player_b", "pass1234")
                     )))
                     receiveServerMessage() // LoginOk
                     val roomInfo = receiveServerMessage()
@@ -407,7 +407,7 @@ class IntegrationTest {
         wsClient.webSocket("/game") {
             consumeCatalogSync()
             send(Frame.Text(MessageSerializer.encodeClientMessage(
-                ClientMessage.Register("spriteuser", "pass123", "SpriteHero", "WARRIOR", race = "HUMAN", gender = "female",
+                ClientMessage.Register("spriteuser", "pass1234", "SpriteHero", "WARRIOR", race = "HUMAN", gender = "female",
                     allocatedStats = Stats(strength = 30, agility = 22, intellect = 18, willpower = 18, health = 30, charm = 18))
             )))
             receiveServerMessage() // RegisterOk
@@ -417,7 +417,7 @@ class IntegrationTest {
         wsClient.webSocket("/game") {
             consumeCatalogSync()
             send(Frame.Text(MessageSerializer.encodeClientMessage(
-                ClientMessage.Register("spriteuser2", "pass123", "Other", "MAGE", race = "ELF", gender = "male",
+                ClientMessage.Register("spriteuser2", "pass1234", "Other", "MAGE", race = "ELF", gender = "male",
                     allocatedStats = Stats(strength = 11, agility = 23, intellect = 37, willpower = 25, health = 13, charm = 25))
             )))
             receiveServerMessage() // RegisterOk
@@ -429,7 +429,7 @@ class IntegrationTest {
                 wsClient.webSocket("/game") {
                     consumeCatalogSync()
                     send(Frame.Text(MessageSerializer.encodeClientMessage(
-                        ClientMessage.Login("spriteuser", "pass123")
+                        ClientMessage.Login("spriteuser", "pass1234")
                     )))
                     receiveServerMessage() // LoginOk
                     receiveServerMessage() // RoomInfo
@@ -447,7 +447,7 @@ class IntegrationTest {
                 wsClient.webSocket("/game") {
                     consumeCatalogSync()
                     send(Frame.Text(MessageSerializer.encodeClientMessage(
-                        ClientMessage.Login("spriteuser2", "pass123")
+                        ClientMessage.Login("spriteuser2", "pass1234")
                     )))
                     receiveServerMessage() // LoginOk
                     val roomInfo = receiveServerMessage()
@@ -473,7 +473,7 @@ class IntegrationTest {
         wsClient.webSocket("/game") {
             consumeCatalogSync()
             send(Frame.Text(MessageSerializer.encodeClientMessage(
-                ClientMessage.Register("mystic_med", "pass123", "MysticTester", "MYSTIC",
+                ClientMessage.Register("mystic_med", "pass1234", "MysticTester", "MYSTIC",
                     allocatedStats = Stats(strength = 22, agility = 28, intellect = 20, willpower = 25, health = 22, charm = 18))
             )))
             val reg = receiveServerMessage()
@@ -484,7 +484,7 @@ class IntegrationTest {
         wsClient.webSocket("/game") {
             consumeCatalogSync()
             send(Frame.Text(MessageSerializer.encodeClientMessage(
-                ClientMessage.Login("mystic_med", "pass123")
+                ClientMessage.Login("mystic_med", "pass1234")
             )))
             val loginOk = receiveServerMessage()
             assertIs<ServerMessage.LoginOk>(loginOk)
@@ -518,7 +518,7 @@ class IntegrationTest {
         wsClient.webSocket("/game") {
             consumeCatalogSync()
             send(Frame.Text(MessageSerializer.encodeClientMessage(
-                ClientMessage.Register("explorer", "pass123", "Explorer", "WARRIOR",
+                ClientMessage.Register("explorer", "pass1234", "Explorer", "WARRIOR",
                     allocatedStats = Stats(strength = 30, agility = 22, intellect = 18, willpower = 18, health = 30, charm = 18))
             )))
             receiveServerMessage() // RegisterOk
@@ -528,7 +528,7 @@ class IntegrationTest {
         wsClient.webSocket("/game") {
             consumeCatalogSync()
             send(Frame.Text(MessageSerializer.encodeClientMessage(
-                ClientMessage.Login("explorer", "pass123")
+                ClientMessage.Login("explorer", "pass1234")
             )))
             receiveServerMessage() // LoginOk
             receiveServerMessage() // RoomInfo
@@ -554,7 +554,7 @@ class IntegrationTest {
         wsClient.webSocket("/game") {
             consumeCatalogSync()
             send(Frame.Text(MessageSerializer.encodeClientMessage(
-                ClientMessage.Login("explorer", "pass123")
+                ClientMessage.Login("explorer", "pass1234")
             )))
             receiveServerMessage() // LoginOk
             receiveServerMessage() // RoomInfo
@@ -576,7 +576,7 @@ class IntegrationTest {
         wsClient.webSocket("/game") {
             consumeCatalogSync()
             send(Frame.Text(MessageSerializer.encodeClientMessage(
-                ClientMessage.Register("coin_test", "pass123", "CoinTester", "WARRIOR",
+                ClientMessage.Register("coin_test", "pass1234", "CoinTester", "WARRIOR",
                     allocatedStats = Stats(strength = 30, agility = 22, intellect = 18, willpower = 18, health = 30, charm = 18))
             )))
             receiveServerMessage() // RegisterOk
@@ -585,7 +585,7 @@ class IntegrationTest {
         wsClient.webSocket("/game") {
             consumeCatalogSync()
             send(Frame.Text(MessageSerializer.encodeClientMessage(
-                ClientMessage.Login("coin_test", "pass123")
+                ClientMessage.Login("coin_test", "pass1234")
             )))
             receiveServerMessage() // LoginOk
             receiveServerMessage() // RoomInfo
@@ -614,7 +614,7 @@ class IntegrationTest {
         wsClient.webSocket("/game") {
             consumeCatalogSync()
             send(Frame.Text(MessageSerializer.encodeClientMessage(
-                ClientMessage.Register("skill_prefix", "pass123", "SkillTester", "MYSTIC",
+                ClientMessage.Register("skill_prefix", "pass1234", "SkillTester", "MYSTIC",
                     allocatedStats = Stats(strength = 22, agility = 28, intellect = 20, willpower = 25, health = 22, charm = 18))
             )))
             receiveServerMessage() // RegisterOk
@@ -623,7 +623,7 @@ class IntegrationTest {
         wsClient.webSocket("/game") {
             consumeCatalogSync()
             send(Frame.Text(MessageSerializer.encodeClientMessage(
-                ClientMessage.Login("skill_prefix", "pass123")
+                ClientMessage.Login("skill_prefix", "pass1234")
             )))
             val loginOk = receiveServerMessage()
             assertIs<ServerMessage.LoginOk>(loginOk)
@@ -654,7 +654,7 @@ class IntegrationTest {
         wsClient.webSocket("/game") {
             consumeCatalogSync()
             send(Frame.Text(MessageSerializer.encodeClientMessage(
-                ClientMessage.Register("warrior_rest", "pass123", "RestTester", "WARRIOR",
+                ClientMessage.Register("warrior_rest", "pass1234", "RestTester", "WARRIOR",
                     allocatedStats = Stats(strength = 28, agility = 22, intellect = 18, willpower = 20, health = 25, charm = 18))
             )))
             val reg = receiveServerMessage()
@@ -665,7 +665,7 @@ class IntegrationTest {
         wsClient.webSocket("/game") {
             consumeCatalogSync()
             send(Frame.Text(MessageSerializer.encodeClientMessage(
-                ClientMessage.Login("warrior_rest", "pass123")
+                ClientMessage.Login("warrior_rest", "pass1234")
             )))
             val loginOk = receiveServerMessage()
             assertIs<ServerMessage.LoginOk>(loginOk)

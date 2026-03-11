@@ -11,6 +11,13 @@ object GameConfig {
         const val MAX_MESSAGES_PER_SECOND = 10
         const val BURST_CAPACITY = 20
     }
+    object Security {
+        const val MAX_FAILED_LOGINS = 5
+        const val LOGIN_LOCKOUT_MS = 60_000L // 1 minute lockout after max failures
+        const val MAX_CONNECTIONS_PER_IP = 5
+        const val MIN_PASSWORD_LENGTH = 8
+        const val MAX_PASSWORD_LENGTH = 64
+    }
     object Combat {
         const val GRACE_TICKS = 2
         const val MIN_HIT_CHANCE = 5
@@ -156,6 +163,10 @@ object GameConfig {
     object Shutdown {
         const val DEFAULT_DELAY_SECONDS = 60
         val WARNING_AT_SECONDS = listOf(60, 30, 10, 5, 0)
+    }
+    object GroundItems {
+        const val EXPIRY_MS = 600_000L // 10 minutes
+        const val MAX_ITEMS_PER_ROOM = 50
     }
     object Trails {
         const val MAX_ENTRIES_PER_ROOM = 20

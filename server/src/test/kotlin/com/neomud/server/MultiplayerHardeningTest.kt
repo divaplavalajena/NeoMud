@@ -78,7 +78,7 @@ class MultiplayerHardeningTest {
         wsClient.webSocket("/game") {
             consumeCatalogSync()
             send(sendMsg(ClientMessage.Register(
-                "ratelimit1", "pass123", "RateHero", "WARRIOR",
+                "ratelimit1", "pass1234", "RateHero", "WARRIOR",
                 allocatedStats = Stats(30, 22, 18, 18, 30, 18)
             )))
             assertIs<ServerMessage.RegisterOk>(receiveServerMessage())
@@ -87,7 +87,7 @@ class MultiplayerHardeningTest {
         // Login and send a few commands — all should succeed
         wsClient.webSocket("/game") {
             consumeCatalogSync()
-            send(sendMsg(ClientMessage.Login("ratelimit1", "pass123")))
+            send(sendMsg(ClientMessage.Login("ratelimit1", "pass1234")))
             consumeLoginSequence()
 
             // Send 5 pings — well within burst capacity of 20
@@ -157,7 +157,7 @@ class MultiplayerHardeningTest {
             wsClient.webSocket("/game") {
                 consumeCatalogSync()
                 send(sendMsg(ClientMessage.Register(
-                    "concurrent$i", "pass123", "CPlayer$i", classes[i],
+                    "concurrent$i", "pass1234", "CPlayer$i", classes[i],
                     allocatedStats = statSets[i]
                 )))
                 val response = receiveServerMessage()
@@ -175,7 +175,7 @@ class MultiplayerHardeningTest {
                     val client = createClient { install(WebSockets) }
                     client.webSocket("/game") {
                         consumeCatalogSync()
-                        send(sendMsg(ClientMessage.Login("concurrent$i", "pass123")))
+                        send(sendMsg(ClientMessage.Login("concurrent$i", "pass1234")))
                         val loginOk = consumeLoginSequence()
                         assertEquals("CPlayer$i", loginOk.player.name)
 
@@ -210,7 +210,7 @@ class MultiplayerHardeningTest {
             wsClient.webSocket("/game") {
                 consumeCatalogSync()
                 send(sendMsg(ClientMessage.Register(
-                    "mutex$i", "pass123", "MutexPlayer$i",
+                    "mutex$i", "pass1234", "MutexPlayer$i",
                     if (i == 0) "WARRIOR" else "THIEF",
                     allocatedStats = if (i == 0) Stats(30, 22, 18, 18, 30, 18) else Stats(20, 30, 22, 18, 20, 25)
                 )))
@@ -225,7 +225,7 @@ class MultiplayerHardeningTest {
                     val client = createClient { install(WebSockets) }
                     client.webSocket("/game") {
                         consumeCatalogSync()
-                        send(sendMsg(ClientMessage.Login("mutex$i", "pass123")))
+                        send(sendMsg(ClientMessage.Login("mutex$i", "pass1234")))
                         consumeLoginSequence()
 
                         // Rapid-fire: move north, then look, then move south back
@@ -279,7 +279,7 @@ class MultiplayerHardeningTest {
             wsClient.webSocket("/game") {
                 consumeCatalogSync()
                 send(sendMsg(ClientMessage.Register(
-                    "contention$i", "pass123", "ContentionP$i",
+                    "contention$i", "pass1234", "ContentionP$i",
                     if (i == 0) "WARRIOR" else "THIEF",
                     allocatedStats = if (i == 0) Stats(30, 22, 18, 18, 30, 18) else Stats(20, 30, 22, 18, 20, 25)
                 )))
@@ -297,7 +297,7 @@ class MultiplayerHardeningTest {
                     val client = createClient { install(WebSockets) }
                     client.webSocket("/game") {
                         consumeCatalogSync()
-                        send(sendMsg(ClientMessage.Login("contention$i", "pass123")))
+                        send(sendMsg(ClientMessage.Login("contention$i", "pass1234")))
                         consumeLoginSequence()
 
                         // Rapid-fire 10 move cycles (north then south)

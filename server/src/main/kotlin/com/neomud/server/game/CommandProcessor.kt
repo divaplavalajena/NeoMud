@@ -41,6 +41,7 @@ import com.neomud.shared.protocol.ClientMessage
 import com.neomud.shared.protocol.ServerMessage
 
 import org.slf4j.LoggerFactory
+import java.util.concurrent.ConcurrentHashMap
 
 class CommandProcessor(
     private val worldGraph: WorldGraph,
@@ -68,6 +69,34 @@ class CommandProcessor(
     private val pcSpriteCatalog: PcSpriteCatalog? = null
 ) {
     private val logger = LoggerFactory.getLogger(CommandProcessor::class.java)
+
+    /** Track failed login attempts: username (lowercase) → (failCount, lastFailTimestamp) */
+    private val failedLogins = ConcurrentHashMap<String, Pair<Int, Long>>()
+
+    private fun checkLoginRateLimit(username: String): Boolean {
+        val key = username.lowercase()
+        val entry = failedLogins[key] ?: return true
+        val (count, lastFail) = entry
+        if (System.currentTimeMillis() - lastFail > GameConfig.Security.LOGIN_LOCKOUT_MS) {
+            failedLogins.remove(key)
+            return true
+        }
+        return count < GameConfig.Security.MAX_FAILED_LOGINS
+    }
+
+    private fun recordFailedLogin(username: String) {
+        val key = username.lowercase()
+        val now = System.currentTimeMillis()
+        failedLogins.compute(key) { _, existing ->
+            if (existing == null) 1 to now
+            else (existing.first + 1) to now
+        }
+    }
+
+    private fun clearFailedLogins(username: String) {
+        failedLogins.remove(username.lowercase())
+    }
+
     private val adminCommand = AdminCommand(
         sessionManager, playerRepository, npcManager, worldGraph,
         inventoryCommand, inventoryRepository, itemCatalog, classCatalog, raceCatalog, roomItemManager
@@ -216,8 +245,8 @@ class CommandProcessor(
             session.send(ServerMessage.AuthError("Username must be 3-20 alphanumeric characters or underscores."))
             return
         }
-        if (msg.password.length < 4 || msg.password.length > 64) {
-            session.send(ServerMessage.AuthError("Password must be 4-64 characters."))
+        if (msg.password.length < GameConfig.Security.MIN_PASSWORD_LENGTH || msg.password.length > GameConfig.Security.MAX_PASSWORD_LENGTH) {
+            session.send(ServerMessage.AuthError("Password must be ${GameConfig.Security.MIN_PASSWORD_LENGTH}-${GameConfig.Security.MAX_PASSWORD_LENGTH} characters."))
             return
         }
         if (!Regex("^[a-zA-Z][a-zA-Z0-9_ ]{1,19}$").matches(msg.characterName)) {
@@ -265,8 +294,13 @@ class CommandProcessor(
             return
         }
 
-        if (sessionManager.isLoggedIn(msg.username)) {
+        if (sessionManager.isUsernameLoggedIn(msg.username)) {
             session.send(ServerMessage.AuthError("Account already logged in"))
+            return
+        }
+
+        if (!checkLoginRateLimit(msg.username)) {
+            session.send(ServerMessage.AuthError("Too many failed attempts. Try again in a minute."))
             return
         }
 
@@ -274,6 +308,7 @@ class CommandProcessor(
 
         result.fold(
             onSuccess = { player ->
+                clearFailedLogins(msg.username)
                 // Auto-promote admin from env var
                 val effectivePlayer = if (msg.username.lowercase() in adminUsernames && !player.isAdmin) {
                     playerRepository.promoteAdmin(msg.username)
@@ -294,7 +329,7 @@ class CommandProcessor(
                 session.discoveredInteractables.addAll(discovery.discoveredInteractables)
                 session.visitedRooms.add(effectivePlayer.currentRoomId)
 
-                sessionManager.addSession(effectivePlayer.name, session)
+                sessionManager.addSession(effectivePlayer.name, session, username = msg.username)
                 session.combatGraceTicks = GameConfig.Combat.GRACE_TICKS
 
                 session.send(ServerMessage.LoginOk(effectivePlayer))
@@ -331,6 +366,7 @@ class CommandProcessor(
                 logger.info("Player logged in: ${effectivePlayer.name}${if (effectivePlayer.isAdmin) " [ADMIN]" else ""}")
             },
             onFailure = {
+                recordFailedLogin(msg.username)
                 session.send(ServerMessage.AuthError(it.message ?: "Login failed"))
             }
         )

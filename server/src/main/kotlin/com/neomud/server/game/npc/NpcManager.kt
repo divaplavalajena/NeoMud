@@ -84,7 +84,7 @@ class NpcManager(
     private val zoneTemplates = mutableMapOf<String, List<Pair<NpcData, String>>>()
     private val allTemplates = mutableMapOf<String, Pair<NpcData, String>>()
     private val zoneSpawnTimers = mutableMapOf<String, Int>()
-    private var nextSpawnIndex = 1
+    private var nextSpawnIndex = 1L
 
     fun loadNpcs(npcDataList: List<Pair<NpcData, String>>) {
         // Store hostile templates per zone for continuous spawning

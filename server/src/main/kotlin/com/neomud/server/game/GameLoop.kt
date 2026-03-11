@@ -639,6 +639,9 @@ class GameLoop(
 
         // 7. Prune stale movement trails
         movementTrailManager?.pruneStale()
+
+        // 8. Prune expired ground items
+        roomItemManager.pruneExpired()
     }
 
     /**

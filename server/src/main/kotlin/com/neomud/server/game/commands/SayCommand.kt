@@ -39,7 +39,7 @@ class SayCommand(
             )
         }
 
-        val sanitized = message.take(500)
+        val sanitized = message.take(500).replace(Regex("[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F\\x7F]"), "")
 
         sessionManager.broadcastToRoom(
             roomId,

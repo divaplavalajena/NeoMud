@@ -32,6 +32,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.logback.classic)
+    implementation(libs.bcrypt)
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.ktor.server.test.host)

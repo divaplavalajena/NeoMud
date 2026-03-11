@@ -14,9 +14,27 @@ import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
-import java.security.MessageDigest
+import at.favre.lib.crypto.bcrypt.BCrypt
 
 class PlayerRepository {
+
+    companion object {
+        fun pcSpriteRelativePath(race: String, gender: String, characterClass: String): String =
+            "images/players/${race.lowercase()}_${gender.lowercase()}_${characterClass.lowercase()}.webp"
+
+        /** Cost factor for bcrypt — 12 is ~250ms on modern hardware */
+        private const val BCRYPT_COST = 12
+
+        /** Detect legacy SHA-256 hashes (64 hex chars, no '$' prefix) */
+        private fun isLegacySha256(hash: String): Boolean =
+            hash.length == 64 && hash.all { it in '0'..'9' || it in 'a'..'f' }
+
+        private fun legacySha256(password: String): String {
+            val digest = java.security.MessageDigest.getInstance("SHA-256")
+            val hashBytes = digest.digest(password.toByteArray())
+            return hashBytes.joinToString("") { "%02x".format(it) }
+        }
+    }
 
     fun createPlayer(
         username: String,
@@ -145,9 +163,11 @@ class PlayerRepository {
             }.firstOrNull() ?: error("Invalid username or password")
 
             val storedHash = row[PlayersTable.passwordHash]
-            if (storedHash != hashPassword(password)) {
+            if (!verifyPassword(password, storedHash)) {
                 error("Invalid username or password")
             }
+            // Transparently upgrade legacy SHA-256 hashes to bcrypt on successful login
+            upgradeHashIfNeeded(username, password, storedHash)
 
             val stats = Stats(
                 strength = row[PlayersTable.strength],
@@ -241,14 +261,27 @@ class PlayerRepository {
         }
     }
 
-    companion object {
-        fun pcSpriteRelativePath(race: String, gender: String, characterClass: String): String =
-            "images/players/${race.lowercase()}_${gender.lowercase()}_${characterClass.lowercase()}.webp"
+    private fun hashPassword(password: String): String =
+        BCrypt.withDefaults().hashToString(BCRYPT_COST, password.toCharArray())
+
+    private fun verifyPassword(password: String, storedHash: String): Boolean {
+        return if (isLegacySha256(storedHash)) {
+            // Legacy SHA-256 hash — verify and return true to trigger migration
+            storedHash == legacySha256(password)
+        } else {
+            BCrypt.verifyer().verify(password.toCharArray(), storedHash).verified
+        }
     }
 
-    private fun hashPassword(password: String): String {
-        val digest = MessageDigest.getInstance("SHA-256")
-        val hashBytes = digest.digest(password.toByteArray())
-        return hashBytes.joinToString("") { "%02x".format(it) }
+    /** Upgrade a legacy SHA-256 hash to bcrypt in-place */
+    private fun upgradeHashIfNeeded(username: String, password: String, storedHash: String) {
+        if (isLegacySha256(storedHash)) {
+            val bcryptHash = hashPassword(password)
+            transaction {
+                PlayersTable.update({ PlayersTable.username eq username }) {
+                    it[passwordHash] = bcryptHash
+                }
+            }
+        }
     }
 }

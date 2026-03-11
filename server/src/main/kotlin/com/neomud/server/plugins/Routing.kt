@@ -1,6 +1,7 @@
 package com.neomud.server.plugins
 
 import com.neomud.server.game.CommandProcessor
+import com.neomud.server.game.GameConfig
 import com.neomud.server.persistence.repository.DiscoveryRepository
 import com.neomud.server.persistence.repository.PlayerDiscoveryData
 import com.neomud.server.persistence.repository.PlayerRepository
@@ -17,8 +18,13 @@ import io.ktor.server.routing.*
 import io.ktor.server.websocket.*
 import io.ktor.websocket.*
 import org.slf4j.LoggerFactory
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 
 private val logger = LoggerFactory.getLogger("Routing")
+
+/** Per-IP active WebSocket connection counter */
+private val connectionsPerIp = ConcurrentHashMap<String, AtomicInteger>()
 
 private val extensionToContentType = mapOf(
     "webp" to ContentType.Image.Any,
@@ -76,8 +82,19 @@ fun Application.configureRouting(
         }
 
         webSocket("/game") {
+            val remoteIp = call.request.local.remoteHost
+            val ipCounter = connectionsPerIp.computeIfAbsent(remoteIp) { AtomicInteger(0) }
+            val currentCount = ipCounter.incrementAndGet()
+
+            if (currentCount > GameConfig.Security.MAX_CONNECTIONS_PER_IP) {
+                ipCounter.decrementAndGet()
+                logger.warn("Connection limit exceeded for IP: $remoteIp ($currentCount connections)")
+                close(CloseReason(CloseReason.Codes.TRY_AGAIN_LATER, "Too many connections"))
+                return@webSocket
+            }
+
             val session = PlayerSession(this)
-            logger.info("New WebSocket connection")
+            logger.info("New WebSocket connection from $remoteIp")
 
             try {
                 // Send catalog data before auth so registration screen can populate
@@ -94,7 +111,7 @@ fun Application.configureRouting(
                             }
                             commandProcessor.process(session, message)
                         } catch (e: Exception) {
-                            logger.error("Failed to process message: $text", e)
+                            logger.error("Failed to process message (${text.length} chars): ${e.message}")
                             session.send(ServerMessage.Error("Invalid message format"))
                         }
                     }
@@ -102,6 +119,12 @@ fun Application.configureRouting(
             } catch (e: Exception) {
                 logger.info("WebSocket error: ${e.message}")
             } finally {
+                // Decrement IP connection counter
+                val counter = connectionsPerIp[remoteIp]
+                if (counter != null && counter.decrementAndGet() <= 0) {
+                    connectionsPerIp.remove(remoteIp)
+                }
+
                 val playerName = session.playerName
                 if (playerName != null) {
                     val roomId = session.currentRoomId
