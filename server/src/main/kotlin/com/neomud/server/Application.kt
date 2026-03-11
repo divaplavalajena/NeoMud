@@ -38,7 +38,164 @@ import com.neomud.server.game.GameConfig
 import kotlin.system.exitProcess
 
 private val logger = LoggerFactory.getLogger("NeoMud")
-private val PORT = GameConfig.Server.PORT
+
+/** Parsed CLI configuration, with environment variable fallbacks. */
+data class ServerConfig(
+    val port: Int = System.getenv("NEOMUD_PORT")?.toIntOrNull() ?: GameConfig.Server.PORT,
+    val worldFile: String = System.getenv("NEOMUD_WORLD") ?: "",
+    val dbPath: String = System.getenv("NEOMUD_DB") ?: "neomud.db",
+    val admins: Set<String> = System.getenv("NEOMUD_ADMINS")
+        ?.split(",")?.map { it.trim().lowercase() }?.filter { it.isNotEmpty() }?.toSet()
+        ?: emptySet()
+)
+
+fun parseArgs(args: Array<String>): ServerConfig {
+    var port: Int? = null
+    var worldFile: String? = null
+    var dbPath: String? = null
+    var admins: Set<String>? = null
+
+    var i = 0
+    while (i < args.size) {
+        when (args[i]) {
+            "--help", "-h" -> {
+                printHelp()
+                exitProcess(0)
+            }
+            "--port", "-p" -> {
+                i++
+                port = args.getOrNull(i)?.toIntOrNull()
+                if (port == null) {
+                    System.err.println("Error: --port requires a numeric value")
+                    exitProcess(1)
+                }
+            }
+            "--world", "-w" -> {
+                i++
+                worldFile = args.getOrNull(i)
+                if (worldFile == null) {
+                    System.err.println("Error: --world requires a file path")
+                    exitProcess(1)
+                }
+            }
+            "--db" -> {
+                i++
+                dbPath = args.getOrNull(i)
+                if (dbPath == null) {
+                    System.err.println("Error: --db requires a file path")
+                    exitProcess(1)
+                }
+            }
+            "--admins" -> {
+                i++
+                val value = args.getOrNull(i)
+                if (value == null) {
+                    System.err.println("Error: --admins requires a comma-separated list of usernames")
+                    exitProcess(1)
+                }
+                admins = value.split(",").map { it.trim().lowercase() }.filter { it.isNotEmpty() }.toSet()
+            }
+            else -> {
+                System.err.println("Unknown argument: ${args[i]}")
+                printHelp()
+                exitProcess(1)
+            }
+        }
+        i++
+    }
+
+    val base = ServerConfig()
+    return base.copy(
+        port = port ?: base.port,
+        worldFile = worldFile ?: base.worldFile,
+        dbPath = dbPath ?: base.dbPath,
+        admins = admins ?: base.admins
+    )
+}
+
+fun printHelp() {
+    println("""
+${NeoMudVersion.DISPLAY}
+
+Usage: java -jar neomud-server.jar [options]
+
+Options:
+  --port, -p <port>       Server port (default: ${GameConfig.Server.PORT}, env: NEOMUD_PORT)
+  --world, -w <path>      World bundle .nmd file (default: bundled world, env: NEOMUD_WORLD)
+  --db <path>             SQLite database path (default: neomud.db, env: NEOMUD_DB)
+  --admins <users>        Comma-separated admin usernames (env: NEOMUD_ADMINS)
+  --help, -h              Show this help message
+
+Examples:
+  java -jar neomud-server.jar
+  java -jar neomud-server.jar --port 9090 --admins alice,bob
+  java -jar neomud-server.jar --world my-world.nmd --db /data/neomud.db
+    """.trimIndent())
+}
+
+/**
+ * Resolve the world file path. Priority:
+ * 1. Explicit path from CLI/env (if non-empty and file exists)
+ * 2. "build/worlds/default-world.nmd" (dev mode, Gradle run)
+ * 3. Bundled classpath resource extracted to temp file (fat JAR distribution)
+ */
+fun resolveWorldFile(configPath: String): File {
+    // Explicit path provided
+    if (configPath.isNotEmpty()) {
+        val f = File(configPath)
+        if (f.exists()) return f
+        logger.warn("Specified world file not found: $configPath — trying defaults")
+    }
+
+    // Dev mode: Gradle build output
+    val devFile = File("build/worlds/default-world.nmd")
+    if (devFile.exists()) return devFile
+
+    // Fat JAR: extract bundled resource to temp file
+    val resource = Thread.currentThread().contextClassLoader.getResourceAsStream("bundled/default-world.nmd")
+    if (resource != null) {
+        val tempFile = File.createTempFile("neomud-world-", ".nmd")
+        tempFile.deleteOnExit()
+        resource.use { input ->
+            tempFile.outputStream().use { output ->
+                input.copyTo(output)
+            }
+        }
+        logger.info("Extracted bundled world to: ${tempFile.absolutePath}")
+        return tempFile
+    }
+
+    // Nothing found
+    System.err.println("""
+World bundle not found. Provide one via:
+  --world <path>     CLI argument
+  NEOMUD_WORLD       Environment variable
+
+Or run from the project directory after: ./gradlew packageWorld
+    """.trimIndent())
+    exitProcess(1)
+}
+
+fun printBanner(config: ServerConfig, worldFile: File) {
+    val banner = """
+    _   _            __  __           _
+   | \ | | ___  ___ |  \/  |_   _  __| |
+   |  \| |/ _ \/ _ \| |\/| | | | |/ _` |
+   | |\  |  __/ (_) | |  | | |_| | (_| |
+   |_| \_|\___|\___/|_|  |_|\__,_|\__,_|
+    """.trimIndent()
+    println(banner)
+    println()
+    logger.info("${NeoMudVersion.DISPLAY}")
+    logger.info("WebSocket:  ws://0.0.0.0:${config.port}/game")
+    logger.info("Health:     http://0.0.0.0:${config.port}/health")
+    logger.info("World:      ${worldFile.name} (${worldFile.length() / 1024}KB)")
+    logger.info("Database:   ${config.dbPath}")
+    if (config.admins.isNotEmpty()) {
+        logger.info("Admins:     ${config.admins.joinToString(", ")}")
+    }
+    println()
+}
 
 fun checkPortAvailable(port: Int): Boolean {
     return try {
@@ -48,19 +205,23 @@ fun checkPortAvailable(port: Int): Boolean {
     }
 }
 
-fun main() {
-    logger.info("Starting ${NeoMudVersion.DISPLAY}")
+fun main(args: Array<String>) {
+    val config = parseArgs(args)
 
-    if (!checkPortAvailable(PORT)) {
-        logger.error("Port $PORT is already in use. Is another NeoMud server running? Exiting.")
+    if (!checkPortAvailable(config.port)) {
+        logger.error("Port ${config.port} is already in use. Is another NeoMud server running? Exiting.")
         exitProcess(1)
     }
 
-    val worldFile = System.getenv("NEOMUD_WORLD")
-        ?: "build/worlds/default-world.nmd"
+    val worldFile = resolveWorldFile(config.worldFile)
+    printBanner(config, worldFile)
 
-    val server = embeddedServer(Netty, port = PORT, host = "0.0.0.0") {
-        module(worldFile = worldFile)
+    val server = embeddedServer(Netty, port = config.port, host = "0.0.0.0") {
+        module(
+            jdbcUrl = "jdbc:sqlite:${config.dbPath}",
+            worldFile = worldFile.absolutePath,
+            adminUsernamesOverride = config.admins.ifEmpty { null }
+        )
     }
 
     Runtime.getRuntime().addShutdownHook(Thread {

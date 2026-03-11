@@ -47,6 +47,21 @@ kotlin {
     jvmToolchain(21)
 }
 
+ktor {
+    fatJar {
+        archiveFileName.set("neomud-server.jar")
+    }
+}
+
+// Bundle the default world into the shadow JAR as a classpath resource
+tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar") {
+    dependsOn("packageWorld")
+    from(layout.buildDirectory.dir("worlds")) {
+        include("default-world.nmd")
+        into("bundled")
+    }
+}
+
 tasks.register<Zip>("packageWorld") {
     description = "Builds the default world bundle (.nmd) from maker source"
     group = "build"
