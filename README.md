@@ -182,12 +182,11 @@ The server ships as a self-contained fat JAR with the default world bundled insi
 
 **Prerequisites:** JDK 21+ (e.g., [Amazon Corretto](https://docs.aws.amazon.com/corretto/latest/corretto-21-ug/downloads-list.html))
 
-```bash
-# Build the fat JAR (from source checkout)
-./gradlew :server:shadowJar
+1. Download `neomud-server-vX.Y.Z.jar` from the [latest release](https://github.com/terrymaster/NeoMud/releases/latest)
+2. Run it:
 
-# Run from anywhere — no working directory requirements
-java -jar server/build/libs/neomud-server.jar
+```bash
+java -jar neomud-server-vX.Y.Z.jar
 ```
 
 The server starts on port 8080 with defaults:
@@ -328,6 +327,17 @@ On first run, it auto-imports the default world. The Maker is a standalone web a
 ./gradlew :shared:jvmTest :server:test   # Server + shared tests (537 tests)
 cd maker && npx vitest run               # Maker tests (293 tests)
 ```
+
+#### Creating a Release
+
+Tag a version and push — GitHub Actions builds the fat JAR, runs tests, and publishes a release with the artifact attached.
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+The version number bakes into the JAR automatically via `./gradlew updateVersion` (called by the workflow). Format: `NeoMud alpha 0.1.0.0`.
 
 ## AI Tooling
 
