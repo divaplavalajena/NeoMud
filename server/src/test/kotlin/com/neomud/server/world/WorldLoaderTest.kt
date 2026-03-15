@@ -333,6 +333,32 @@ class WorldLoaderTest {
     }
 
     @Test
+    fun testCellarExitsLoaded() {
+        val result = load()
+        val world = result.worldGraph
+
+        val cellar = world.getRoom("town:cellar")
+        assertNotNull(cellar, "town:cellar should exist")
+        assertEquals("town:tavern", cellar.exits[com.neomud.shared.model.Direction.UP],
+            "town:cellar should have UP exit to town:tavern")
+        assertTrue(com.neomud.shared.model.Direction.UP in cellar.lockedExits,
+            "town:cellar UP exit should be locked")
+        assertEquals(99, cellar.lockedExits[com.neomud.shared.model.Direction.UP],
+            "town:cellar UP lock difficulty should be 99")
+    }
+
+    @Test
+    fun testTownGuardHasCombatStats() {
+        val result = load()
+        val guard = result.npcDataList.find { it.first.id == "npc:town_guard" }
+        assertNotNull(guard, "Town guard should be loaded")
+        assertEquals(5, guard.first.level, "Guard should be level 5")
+        assertEquals(120, guard.first.maxHp, "Guard should have 120 HP")
+        assertEquals(10, guard.first.damage, "Guard should have 10 damage")
+        assertEquals(false, guard.first.hostile, "Guard should not be hostile")
+    }
+
+    @Test
     fun testDefaultSpawnRoom() {
         val result = load()
         assertEquals("town:temple", result.worldGraph.defaultSpawnRoom)

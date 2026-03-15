@@ -291,7 +291,11 @@ sealed class ServerMessage {
         val stat: String,
         val newValue: Int,
         val cpSpent: Int,
-        val remainingCp: Int
+        val remainingCp: Int,
+        val currentHp: Int = 0,
+        val maxHp: Int = 0,
+        val currentMp: Int = 0,
+        val maxMp: Int = 0
     ) : ServerMessage()
 
     @Serializable

@@ -300,6 +300,15 @@ class NpcManager(
     fun getLivingHostileNpcsInRoom(roomId: RoomId): List<NpcState> =
         npcs.filter { it.currentRoomId == roomId && it.hostile && it.currentHp > 0 }
 
+    /** Returns non-hostile NPCs with combat stats (guards) that are alive in the given room. */
+    fun getLivingGuardNpcsInRoom(roomId: RoomId): List<NpcState> =
+        npcs.filter { it.currentRoomId == roomId && !it.hostile && it.maxHp > 0 && it.damage > 0 && it.isAlive && it.currentHp > 0 }
+
+    /** Returns all rooms that currently contain living guard NPCs. */
+    fun getRoomsWithGuards(): Map<RoomId, List<NpcState>> =
+        npcs.filter { !it.hostile && it.maxHp > 0 && it.damage > 0 && it.isAlive && it.currentHp > 0 }
+            .groupBy { it.currentRoomId }
+
     fun getLivingNpcsInRoom(roomId: RoomId): List<NpcState> =
         npcs.filter { it.currentRoomId == roomId && it.currentHp > 0 }
 

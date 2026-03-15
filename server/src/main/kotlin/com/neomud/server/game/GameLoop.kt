@@ -382,6 +382,16 @@ class GameLoop(
                     updateMapForPlayersInRoom(event.fromRoomId)
                     updateMapForPlayersInRoom(event.toRoomId)
                 }
+                is CombatEvent.NpcKilledByNpc -> {
+                    // A guard was killed by a hostile NPC — no loot, no XP
+                    if (!npcManager.markDead(event.killedNpcId)) continue
+                    sessionManager.broadcastToRoom(
+                        event.roomId,
+                        ServerMessage.NpcDied(event.killedNpcId, event.killedNpcName, event.killerNpcName, event.roomId)
+                    )
+                    logger.info("Guard ${event.killedNpcName} was killed by ${event.killerNpcName} in ${event.roomId}")
+                }
+
                 is CombatEvent.PlayerKilled -> {
                     val session = event.playerSession
                     val playerName = session.playerName ?: continue

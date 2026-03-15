@@ -54,6 +54,15 @@ sealed class CombatEvent {
         val respawnMp: Int
     ) : CombatEvent()
 
+    /** A non-hostile NPC (guard) was killed by a hostile NPC. */
+    data class NpcKilledByNpc(
+        val killedNpcId: String,
+        val killedNpcName: String,
+        val killerNpcId: String,
+        val killerNpcName: String,
+        val roomId: RoomId
+    ) : CombatEvent()
+
     data class NpcKnockedBack(
         val npcId: String,
         val npcName: String,
@@ -105,6 +114,9 @@ class CombatManager(
     suspend fun processCombatTick(): List<CombatEvent> {
         val events = mutableListOf<CombatEvent>()
 
+        // Phase 0: Guard combat — guards attack hostile NPCs, hostiles retaliate against guards
+        val hostilesFightingGuards = resolveGuardCombat(events)
+
         // Build unified combatant list
         val combatants = mutableListOf<Combatant>()
 
@@ -125,6 +137,8 @@ class CombatManager(
 
         for ((roomId, _) in playersByRoom) {
             for (npc in npcManager.getLivingHostileNpcsInRoom(roomId)) {
+                // Skip hostiles that already fought guards this tick
+                if (npc.id in hostilesFightingGuards) continue
                 combatants.add(Combatant.NpcCombatant(npc, npc.agility, roomId))
             }
         }
@@ -601,5 +615,94 @@ class CombatManager(
         }
         // Fall back to random hostile in room
         return npcManager.getLivingHostileNpcsInRoom(roomId).randomOrNull()
+    }
+
+    /**
+     * Resolves NPC-vs-NPC guard combat. Guards (non-hostile NPCs with combat stats) attack
+     * hostile NPCs in their room, and hostile NPCs retaliate against guards instead of players.
+     *
+     * @return set of hostile NPC IDs that fought guards this tick (excluded from player combat phase)
+     */
+    private fun resolveGuardCombat(events: MutableList<CombatEvent>): Set<String> {
+        val hostilesFightingGuards = mutableSetOf<String>()
+        val guardsByRoom = npcManager.getRoomsWithGuards()
+        if (guardsByRoom.isEmpty()) return emptySet()
+
+        for ((roomId, guards) in guardsByRoom) {
+            val hostiles = npcManager.getLivingHostileNpcsInRoom(roomId)
+                .filter { it.currentHp > 0 }
+            if (hostiles.isEmpty()) continue
+
+            // Guards attack hostile NPCs (simplified: damage + variance, no hit/miss)
+            for (guard in guards) {
+                if (guard.currentHp <= 0) continue
+                // Prioritize hostiles that are attacking players, then any hostile
+                val target = hostiles.filter { it.currentHp > 0 }
+                    .sortedByDescending { it.engagedPlayerIds.size }
+                    .firstOrNull() ?: continue
+
+                val variance = maxOf(guard.damage / GameConfig.Combat.NPC_VARIANCE_DIVISOR, 1)
+                val damage = guard.damage + (1..variance).random()
+                target.currentHp -= damage
+
+                events.add(CombatEvent.Hit(
+                    attackerName = guard.name,
+                    defenderName = target.name,
+                    damage = damage,
+                    defenderHp = target.currentHp.coerceAtLeast(0),
+                    defenderMaxHp = target.maxHp,
+                    isPlayerDefender = false,
+                    roomId = roomId,
+                    defenderId = target.id
+                ))
+
+                if (target.currentHp <= 0) {
+                    events.add(CombatEvent.NpcKilled(
+                        npcId = target.id,
+                        npcName = target.name,
+                        killerName = guard.name,
+                        roomId = roomId,
+                        npcLevel = target.level,
+                        xpReward = target.xpReward,
+                        templateId = target.templateId
+                    ))
+                    logger.info("${guard.name} killed ${target.name} in $roomId")
+                }
+            }
+
+            // Hostile NPCs retaliate against guards (instead of targeting players)
+            for (hostile in hostiles.filter { it.currentHp > 0 }) {
+                val guard = guards.filter { it.currentHp > 0 }.randomOrNull() ?: continue
+                hostilesFightingGuards.add(hostile.id)
+
+                val variance = maxOf(hostile.damage / GameConfig.Combat.NPC_VARIANCE_DIVISOR, 1)
+                val damage = hostile.damage + (1..variance).random()
+                guard.currentHp -= damage
+
+                events.add(CombatEvent.Hit(
+                    attackerName = hostile.name,
+                    defenderName = guard.name,
+                    damage = damage,
+                    defenderHp = guard.currentHp.coerceAtLeast(0),
+                    defenderMaxHp = guard.maxHp,
+                    isPlayerDefender = false,
+                    roomId = roomId,
+                    defenderId = guard.id
+                ))
+
+                if (guard.currentHp <= 0) {
+                    events.add(CombatEvent.NpcKilledByNpc(
+                        killedNpcId = guard.id,
+                        killedNpcName = guard.name,
+                        killerNpcId = hostile.id,
+                        killerNpcName = hostile.name,
+                        roomId = roomId
+                    ))
+                    logger.info("${hostile.name} killed ${guard.name} in $roomId")
+                }
+            }
+        }
+
+        return hostilesFightingGuards
     }
 }

@@ -197,7 +197,11 @@ class TrainerCommand(
             stat = stat,
             newValue = result.newValue,
             cpSpent = result.totalCpSpent,
-            remainingCp = result.remainingCp
+            remainingCp = result.remainingCp,
+            currentHp = updatedPlayer.currentHp,
+            maxHp = updatedPlayer.maxHp,
+            currentMp = updatedPlayer.currentMp,
+            maxMp = updatedPlayer.maxMp
         ))
     }
 

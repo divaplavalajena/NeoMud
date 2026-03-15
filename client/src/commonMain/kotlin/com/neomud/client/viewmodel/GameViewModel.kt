@@ -623,7 +623,14 @@ class GameViewModel(
                         "charm" -> p.stats.copy(charm = message.newValue)
                         else -> p.stats
                     }
-                    p.copy(stats = newStats, unspentCp = message.remainingCp)
+                    p.copy(
+                        stats = newStats,
+                        unspentCp = message.remainingCp,
+                        currentHp = if (message.maxHp > 0) message.currentHp else p.currentHp,
+                        maxHp = if (message.maxHp > 0) message.maxHp else p.maxHp,
+                        currentMp = if (message.maxMp > 0) message.currentMp else p.currentMp,
+                        maxMp = if (message.maxMp > 0) message.maxMp else p.maxMp
+                    )
                 }
                 // Refresh trainer info after training
                 interactTrainer()

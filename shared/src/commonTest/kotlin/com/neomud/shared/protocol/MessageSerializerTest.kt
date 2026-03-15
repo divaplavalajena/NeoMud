@@ -119,6 +119,26 @@ class MessageSerializerTest {
     }
 
     @Test
+    fun testMoveOkWithUpExitRoundTrip() {
+        // Verifies Direction.UP works as a map key in Room exits
+        val room = Room(
+            "town:cellar", "Tavern Cellar", "A damp cellar.",
+            mapOf(Direction.UP to "town:tavern"), "town", 0, -1,
+            lockedExits = mapOf(Direction.UP to 99),
+            unpickableExits = setOf(Direction.UP)
+        )
+        val original = ServerMessage.MoveOk(Direction.DOWN, room, emptyList(), emptyList())
+        val json = MessageSerializer.encodeServerMessage(original)
+        assertTrue(json.contains("\"UP\""), "Serialized JSON should contain UP direction key")
+        val decoded = MessageSerializer.decodeServerMessage(json)
+        assertEquals(original, decoded)
+        val decodedRoom = (decoded as ServerMessage.MoveOk).room
+        assertEquals("town:tavern", decodedRoom.exits[Direction.UP])
+        assertEquals(99, decodedRoom.lockedExits[Direction.UP])
+        assertTrue(Direction.UP in decodedRoom.unpickableExits)
+    }
+
+    @Test
     fun testMapDataRoundTrip() {
         val rooms = listOf(
             MapRoom("town:square", "Town Square", 0, 0, mapOf(Direction.NORTH to "town:gate"), hasPlayers = true),
@@ -1017,5 +1037,36 @@ class MessageSerializerTest {
         val decoded = MessageSerializer.decodeServerMessage(json)
         assertEquals(original, decoded)
         assertTrue(json.contains("guildmaster_exit"), "JSON should contain exitSound value")
+    }
+
+    @Test
+    fun testStatTrainedWithHpMpRoundTrip() {
+        val original = ServerMessage.StatTrained(
+            stat = "willpower",
+            newValue = 33,
+            cpSpent = 5,
+            remainingCp = 5,
+            currentHp = 55,
+            maxHp = 55,
+            currentMp = 42,
+            maxMp = 42
+        )
+        val json = MessageSerializer.encodeServerMessage(original)
+        val decoded = MessageSerializer.decodeServerMessage(json)
+        assertEquals(original, decoded)
+        val msg = decoded as ServerMessage.StatTrained
+        assertEquals(55, msg.maxHp)
+        assertEquals(42, msg.maxMp)
+    }
+
+    @Test
+    fun testStatTrainedBackwardCompatible() {
+        // Old format without HP/MP fields should deserialize with defaults
+        val oldJson = """{"type":"stat_trained","stat":"strength","newValue":20,"cpSpent":2,"remainingCp":8}"""
+        val decoded = MessageSerializer.decodeServerMessage(oldJson) as ServerMessage.StatTrained
+        assertEquals("strength", decoded.stat)
+        assertEquals(20, decoded.newValue)
+        assertEquals(0, decoded.currentHp, "Default HP should be 0 for backward compatibility")
+        assertEquals(0, decoded.maxHp)
     }
 }

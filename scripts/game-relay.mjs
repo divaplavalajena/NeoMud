@@ -253,6 +253,7 @@ const handlers = {
       xp: p.currentXp || 0,
       xpToNextLevel: p.xpToNextLevel || 0,
       stats: p.stats || null,
+      unspentCp: p.unspentCp || 0,
     };
     pushEvent('system', `Logged in as ${p.name} (Lv${p.level} ${p.race || ''} ${p.characterClass})`);
     computePlayerAbilities();
@@ -510,6 +511,22 @@ const handlers = {
     pushEvent('trainer', lines.join(' '));
   },
   stat_trained(msg) {
+    if (state.player) {
+      // Update the trained stat
+      if (state.player.stats) {
+        state.player.stats[msg.stat.toLowerCase()] = msg.newValue;
+      }
+      state.player.unspentCp = msg.remainingCp;
+      // Update HP/MP if threshold bonuses changed them
+      if (msg.maxHp > 0) {
+        state.player.hp = msg.currentHp;
+        state.player.maxHp = msg.maxHp;
+      }
+      if (msg.maxMp > 0) {
+        state.player.mp = msg.currentMp;
+        state.player.maxMp = msg.maxMp;
+      }
+    }
     pushEvent('trainer', `Trained ${msg.stat} to ${msg.newValue} (${msg.remainingCp} CP remaining)`);
   },
 
