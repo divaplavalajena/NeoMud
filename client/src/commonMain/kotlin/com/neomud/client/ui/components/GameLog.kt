@@ -1,6 +1,5 @@
 package com.neomud.client.ui.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -10,9 +9,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
@@ -20,7 +21,18 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.neomud.client.ui.theme.StoneTheme
 import com.neomud.client.viewmodel.LogEntry
+
+// Warm log palette — leather-tinted dark, not code-editor blue
+private val LogBgTop = Color(0xFF12100C)     // warm near-black (leather tint)
+private val LogBgMid = Color(0xFF0D0B08)     // textPanelBg, warm
+private val LogBgBot = Color(0xFF100E0A)     // slightly lighter at bottom
+
+// Scrollbar colors matching stone palette
+private val ScrollTrack = Color(0xFF1A1510)  // frameDark — subtle track
+private val ScrollThumb = Color(0xFF5A5040)  // frameLight — visible thumb
+private val ScrollThumbAlpha = 0.7f
 
 @Composable
 fun GameLog(
@@ -35,15 +47,31 @@ fun GameLog(
         }
     }
 
-    val scrollbarTrackColor = Color(0x33FFFFFF)
-    val scrollbarThumbColor = Color(0x99FFFFFF)
     val scrollbarWidth = 4.dp
 
     LazyColumn(
         state = listState,
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFF0D1117))
+            .drawBehind {
+                // Warm vertical gradient background instead of flat blue-black
+                drawRect(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(LogBgTop, LogBgMid, LogBgBot)
+                    )
+                )
+                // Subtle inner shadow at top edge (depth cue — text scrolls "under" the frame)
+                drawRect(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            StoneTheme.innerShadow.copy(alpha = 0.6f),
+                            Color.Transparent
+                        ),
+                        startY = 0f,
+                        endY = 8.dp.toPx()
+                    )
+                )
+            }
             .padding(8.dp)
             .drawWithContent {
                 drawContent()
@@ -61,15 +89,15 @@ fun GameLog(
                     val barW = scrollbarWidth.toPx()
                     val barX = size.width - barW
 
-                    // Track
+                    // Track — warm stone dark
                     drawRect(
-                        color = scrollbarTrackColor,
+                        color = ScrollTrack,
                         topLeft = Offset(barX, 0f),
                         size = Size(barW, trackHeight)
                     )
-                    // Thumb
+                    // Thumb — stone light, semi-transparent
                     drawRect(
-                        color = scrollbarThumbColor,
+                        color = ScrollThumb.copy(alpha = ScrollThumbAlpha),
                         topLeft = Offset(barX, thumbTop),
                         size = Size(barW, thumbHeight)
                     )

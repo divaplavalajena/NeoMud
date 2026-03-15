@@ -519,6 +519,21 @@ private fun GameScreenPortrait(
                 .background(StoneTheme.panelBg)
                 .padding(horizontal = 8.dp, vertical = 4.dp)
         ) {
+            // Player status panel (compact, above d-pad — matches landscape layout)
+            val p = player
+            if (p != null && p.maxHp > 0) {
+                PlayerStatusPanel(
+                    player = p,
+                    activeEffects = activeEffects,
+                    isHidden = isHidden,
+                    isMeditating = gameViewModel.isMeditating.collectAsState().value,
+                    compact = true,
+                    onClick = { gameViewModel.toggleCharacterSheet() },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+            }
+
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -533,7 +548,7 @@ private fun GameScreenPortrait(
                     trackedDirection = trackedDirection
                 )
 
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(8.dp))
 
                 Column(modifier = Modifier.weight(1f)) {
                     ActionButtonRow(
@@ -542,7 +557,7 @@ private fun GameScreenPortrait(
                         hasHostiles = hasHostiles,
                         showInventory = showInventory,
                         showEquipment = showEquipmentState,
-                        player = player,
+                        player = null,
                         activeEffects = activeEffects,
                         isHidden = isHidden,
                         isMeditating = gameViewModel.isMeditating.collectAsState().value,
@@ -551,6 +566,8 @@ private fun GameScreenPortrait(
                         spellCatalog = spellCatalogState,
                         readiedSpellId = readiedSpellId,
                         classCatalog = classCatalog,
+                        playerCharacterClass = player?.characterClass,
+                        currentMp = player?.currentMp ?: 0,
                         skillCatalog = gameViewModel.skillCatalog.collectAsState().value
                     )
                 }
@@ -568,23 +585,25 @@ private fun GameScreenPortrait(
                     isAdmin = player?.isAdmin == true,
                     modifier = Modifier.weight(1f)
                 )
-                Spacer(modifier = Modifier.width(4.dp))
-                SpellUtilityButton(classCatalog, player?.characterClass) {
-                    gameViewModel.openSpellPicker(0)
+                Spacer(modifier = Modifier.width(6.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    SpellUtilityButton(classCatalog, player?.characterClass) {
+                        gameViewModel.openSpellPicker(0)
+                    }
+                    MapIconButton(
+                        active = showMap,
+                        onClick = { gameViewModel.toggleMap() }
+                    )
+                    InventoryIconButton(
+                        active = showInventory,
+                        onClick = { gameViewModel.toggleInventory() }
+                    )
+                    EquipmentIconButton(
+                        active = showEquipmentState,
+                        onClick = { gameViewModel.toggleEquipment() }
+                    )
+                    SettingsGearButton(onClick = { gameViewModel.toggleSettings() })
                 }
-                MapIconButton(
-                    active = showMap,
-                    onClick = { gameViewModel.toggleMap() }
-                )
-                InventoryIconButton(
-                    active = showInventory,
-                    onClick = { gameViewModel.toggleInventory() }
-                )
-                EquipmentIconButton(
-                    active = showEquipmentState,
-                    onClick = { gameViewModel.toggleEquipment() }
-                )
-                SettingsGearButton(onClick = { gameViewModel.toggleSettings() })
             }
         }
     }
@@ -789,7 +808,10 @@ private fun GameScreenLandscape(
                             skillCatalog = gameViewModel.skillCatalog.collectAsState().value
                         )
                         Spacer(modifier = Modifier.height(4.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
                             SpellUtilityButton(classCatalog, player?.characterClass) {
                                 gameViewModel.openSpellPicker(0)
                             }
