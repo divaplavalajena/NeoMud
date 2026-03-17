@@ -2,23 +2,16 @@ package com.neomud.client.audio
 
 import com.neomud.client.platform.PlatformAudioManager
 import com.neomud.client.platform.PlatformLogger
-import javafx.scene.media.AudioClip
-import javafx.scene.media.Media
-import javafx.scene.media.MediaPlayer
 import kotlinx.coroutines.*
-import java.io.File
-import java.net.URI
-import java.net.URL
 
 class DesktopAudioManager : PlatformAudioManager {
     private val tag = "DesktopAudioManager"
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
-    private var mediaPlayer: MediaPlayer? = null
-    private var currentBgmTrack: String? = null
+    private val bgmPlayer = JLayerBgmPlayer()
+    private val sfxPlayer = JLayerSfxPlayer()
 
-    // soundId string -> cached AudioClip
-    private val sfxCache = mutableMapOf<String, AudioClip>()
+    private var currentBgmTrack: String? = null
     private val sfxLoading = mutableSetOf<String>()
 
     override var masterVolume: Float = 1f
@@ -29,14 +22,6 @@ class DesktopAudioManager : PlatformAudioManager {
         private set
 
     init {
-        // Initialize JavaFX toolkit (needed for media playback outside a JavaFX Application)
-        try {
-            javafx.embed.swing.JFXPanel()
-        } catch (_: Exception) {
-            // Already initialized or unavailable
-        }
-
-        // Load persisted volume settings
         val prefs = java.util.prefs.Preferences.userNodeForPackage(DesktopAudioManager::class.java)
         masterVolume = prefs.getFloat("volume_master", 1f)
         sfxVolume = prefs.getFloat("volume_sfx", 1f)
@@ -47,10 +32,9 @@ class DesktopAudioManager : PlatformAudioManager {
         if (soundId.isBlank() || masterVolume == 0f || sfxVolume == 0f) return
 
         val cacheKey = "$category/$soundId"
-        val cached = sfxCache[cacheKey]
-        if (cached != null) {
-            val vol = (masterVolume * sfxVolume).toDouble()
-            cached.play(vol)
+        if (sfxPlayer.isCached(cacheKey)) {
+            val vol = masterVolume * sfxVolume
+            sfxPlayer.play(cacheKey, vol)
             return
         }
 
@@ -60,10 +44,10 @@ class DesktopAudioManager : PlatformAudioManager {
         scope.launch {
             try {
                 val url = "$serverBaseUrl/assets/audio/$category/$soundId.mp3"
-                val clip = AudioClip(url)
-                sfxCache[cacheKey] = clip
-                val vol = (masterVolume * sfxVolume).toDouble()
-                clip.play(vol)
+                if (sfxPlayer.loadAndCache(cacheKey, url)) {
+                    val vol = masterVolume * sfxVolume
+                    sfxPlayer.play(cacheKey, vol)
+                }
             } catch (e: Exception) {
                 PlatformLogger.w(tag, "Failed to load SFX '$category/$soundId': ${e.message}")
             } finally {
@@ -86,34 +70,12 @@ class DesktopAudioManager : PlatformAudioManager {
         stopBgm()
         currentBgmTrack = trackId
 
-        scope.launch {
-            try {
-                val media = Media(uri)
-                val mp = MediaPlayer(media)
-                mp.cycleCount = MediaPlayer.INDEFINITE
-                val vol = (masterVolume * bgmVolume).toDouble()
-                mp.volume = vol
-                mp.setOnError {
-                    PlatformLogger.w(tag, "BGM error for '$trackId': ${mp.error?.message}")
-                }
-                withContext(Dispatchers.Main) {
-                    mediaPlayer = mp
-                    mp.play()
-                }
-            } catch (e: Exception) {
-                PlatformLogger.w(tag, "Failed to load BGM '$trackId': ${e.message}")
-            }
-        }
+        val vol = masterVolume * bgmVolume
+        bgmPlayer.play(uri, vol)
     }
 
     override fun stopBgm() {
-        try {
-            mediaPlayer?.stop()
-            mediaPlayer?.dispose()
-        } catch (e: Exception) {
-            PlatformLogger.w(tag, "Error stopping BGM: ${e.message}")
-        }
-        mediaPlayer = null
+        bgmPlayer.stop()
         currentBgmTrack = null
     }
 
@@ -123,10 +85,7 @@ class DesktopAudioManager : PlatformAudioManager {
         bgmVolume = bgm.coerceIn(0f, 1f)
 
         // Update BGM volume immediately
-        try {
-            val vol = (masterVolume * bgmVolume).toDouble()
-            mediaPlayer?.volume = vol
-        } catch (_: Exception) {}
+        bgmPlayer.setVolume(masterVolume * bgmVolume)
 
         // Persist
         val prefs = java.util.prefs.Preferences.userNodeForPackage(DesktopAudioManager::class.java)
@@ -139,6 +98,6 @@ class DesktopAudioManager : PlatformAudioManager {
     override fun release() {
         scope.cancel()
         stopBgm()
-        sfxCache.clear()
+        sfxPlayer.clearCache()
     }
 }

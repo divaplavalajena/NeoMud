@@ -14,6 +14,7 @@ logback = "1.5.32"
 bcrypt = "0.10.2"
 coil = "3.4.0"
 javafx = "21.0.7"
+jlayer = "1.0.1"
 robolectric = "4.16.1"
 paparazzi = "2.0.0-alpha04"
 androidx-test-core = "1.7.0"
@@ -76,6 +77,9 @@ javafx-base = { module = "org.openjfx:javafx-base", version.ref = "javafx" }
 javafx-graphics = { module = "org.openjfx:javafx-graphics", version.ref = "javafx" }
 javafx-media = { module = "org.openjfx:javafx-media", version.ref = "javafx" }
 javafx-swing = { module = "org.openjfx:javafx-swing", version.ref = "javafx" }
+
+# JLayer (Pure Java MP3 decoder — replaces JavaFX audio on desktop)
+jlayer = { module = "javazoom:jlayer", version.ref = "jlayer" }
 
 # Security
 bcrypt = { module = "at.favre.lib:bcrypt", version.ref = "bcrypt" }

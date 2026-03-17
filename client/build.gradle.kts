@@ -79,16 +79,8 @@ kotlin {
                 // Coroutines (Swing main dispatcher for Compose Desktop)
                 implementation(libs.kotlinx.coroutines.swing)
 
-                // Audio (JavaFX Media — need platform-classified JARs)
-                val javafxPlatform = when {
-                    org.gradle.internal.os.OperatingSystem.current().isWindows -> "win"
-                    org.gradle.internal.os.OperatingSystem.current().isMacOsX -> "mac"
-                    else -> "linux"
-                }
-                val javafxVersion = libs.versions.javafx.get()
-                for (module in listOf("base", "graphics", "media", "swing")) {
-                    implementation("org.openjfx:javafx-$module:$javafxVersion:$javafxPlatform")
-                }
+                // Audio (JLayer — pure Java MP3 decoder, no native dependencies)
+                implementation(libs.jlayer)
 
                 // Logging (SLF4J/Logback — shared with server)
                 implementation(libs.logback.classic)
