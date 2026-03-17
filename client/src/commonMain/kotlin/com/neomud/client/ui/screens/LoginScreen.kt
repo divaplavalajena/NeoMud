@@ -396,10 +396,7 @@ private fun StoneActionButton(
             .then(if (enabled) Modifier.clickable(onClick = onClick) else Modifier),
         contentAlignment = Alignment.Center
     ) {
-        if (loadingContent != null) {
-            loadingContent()
-        } else {
-            Text(text, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = textColor)
-        }
+        Text(text, fontSize = 14.sp, fontWeight = FontWeight.Bold, color = textColor)
+        loadingContent?.invoke()
     }
 }
