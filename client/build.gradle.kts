@@ -219,12 +219,29 @@ tasks.register<Exec>("installIosClient") {
     description = "Build and install the iOS client on the Simulator"
     onlyIf { org.gradle.internal.os.OperatingSystem.current().isMacOsX }
     workingDir(project.rootDir.resolve("iosApp"))
-    commandLine(
-        "xcodebuild",
-        "-project", "NeoMud.xcodeproj",
-        "-scheme", "NeoMud",
-        "-configuration", "Debug",
-        "-destination", "platform=iOS Simulator,name=iPhone 17",
-        "clean", "build"
-    )
+    commandLine("bash", "-c", """
+        set -euo pipefail
+        UDID=$(xcrun simctl list devices available -j | python3 -c "
+import json, sys
+devices = json.load(sys.stdin)['devices']
+for runtime, devs in devices.items():
+    for d in devs:
+        if 'iPhone 17' in d['name']:
+            print(d['udid']); sys.exit(0)
+sys.exit(1)
+")
+        echo "Found iPhone 17 simulator: ${'$'}UDID"
+        xcrun simctl boot "${'$'}UDID" 2>/dev/null || true
+        open -a Simulator
+        xcodebuild \
+            -project NeoMud.xcodeproj \
+            -scheme NeoMud \
+            -configuration Debug \
+            -destination "id=${'$'}UDID" \
+            -derivedDataPath build \
+            clean build
+        xcrun simctl install "${'$'}UDID" build/Build/Products/Debug-iphonesimulator/NeoMud.app
+        xcrun simctl launch "${'$'}UDID" com.neomud.NeoMud
+        echo "NeoMud installed and launched on iPhone 17 simulator"
+    """.trimIndent())
 }
