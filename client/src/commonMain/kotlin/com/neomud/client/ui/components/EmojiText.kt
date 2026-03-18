@@ -7,11 +7,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
-import com.neomud.client.platform.EmojiSafeFontFamily
+import com.neomud.client.platform.rememberEmojiFontFamily
 
 /**
- * Text composable that uses EmojiSafeFontFamily for rendering.
- * On iOS this includes Apple Color Emoji so emoji characters render properly.
+ * Text composable that uses a platform-appropriate emoji font.
+ * On iOS this loads bundled NotoColorEmoji (CBDT format, Skia-compatible).
  * On Android/Desktop this is identical to regular Text (FontFamily.Default).
  *
  * Use this instead of Text() for any string containing emoji characters.
@@ -27,13 +27,14 @@ fun EmojiText(
     lineHeight: TextUnit = TextUnit.Unspecified,
     maxLines: Int = Int.MAX_VALUE
 ) {
+    val fontFamily = rememberEmojiFontFamily()
     Text(
         text = text,
         modifier = modifier,
         color = color,
         fontSize = fontSize,
         fontWeight = fontWeight,
-        fontFamily = EmojiSafeFontFamily,
+        fontFamily = fontFamily,
         textAlign = textAlign,
         lineHeight = lineHeight,
         maxLines = maxLines

@@ -1,5 +1,7 @@
 package com.neomud.client.platform
 
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.font.FontFamily
 
-actual val EmojiSafeFontFamily: FontFamily = FontFamily.Default
+@Composable
+actual fun rememberEmojiFontFamily(): FontFamily = FontFamily.Default
