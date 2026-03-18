@@ -15,6 +15,10 @@ targets:
       - NeoMud
     info:
       path: NeoMud/Info.plist
+      properties:
+        CADisableMinimumFrameDurationOnPhone: true
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: true
     settings:
       FRAMEWORK_SEARCH_PATHS:
         - "$(SRCROOT)/../client/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)"
