@@ -121,7 +121,7 @@ fun GameScreen(
     val onSetLayoutPreference = LocalSetLayoutPreference.current
 
     CompositionLocalProvider(LocalServerBaseUrl provides gameViewModel.serverBaseUrl) {
-    Box(modifier = Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing)) {
+    Box(modifier = Modifier.fillMaxSize().background(StoneTheme.panelBg).windowInsetsPadding(WindowInsets.safeDrawing)) {
         if (isLandscape) {
             GameScreenLandscape(
                 gameViewModel = gameViewModel,
