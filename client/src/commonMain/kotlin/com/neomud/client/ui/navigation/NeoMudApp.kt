@@ -1,6 +1,11 @@
 package com.neomud.client.ui.navigation
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -58,6 +63,7 @@ fun NeoMudApp(
         }
     }
 
+    Box(modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing)) {
     NavHost(navController = navController, startDestination = "login") {
         composable("login") {
             // Play intro BGM from embedded resource (no server needed)
@@ -118,4 +124,5 @@ fun NeoMudApp(
             )
         }
     }
+    } // end safe-area Box
 }
