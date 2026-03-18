@@ -80,6 +80,7 @@ Every room has hand-prompted AI-generated background art. Every NPC and item has
 
 ### Client
 - **Stone & Torchlight UI** — custom dark medieval forge aesthetic across all screens: stone-framed panels with beveled edges, corner rivets, runic inner glow, and torchlight-gold typography (no Material3 defaults)
+- **Cross-platform icons** — all UI icons (skills, spells, toolbar, status effects) use Material Icons `ImageVector` objects via a centralized `MudIcons` registry — vector-drawn by Compose on every platform, no emoji or font dependencies
 - Login/registration splash screen with embedded forge background art and cinematic intro BGM
 - Equipment paperdoll with tap-to-inspect flow (stats, description, unequip) instead of instant unequip
 - Room scene: background art + NPC sprites + item sprites + player sprites
@@ -130,7 +131,7 @@ The Maker is a full-featured web-based world editor for building and managing ga
 NeoMud/
 ├── shared/     Kotlin Multiplatform — models and protocol shared between client and server
 ├── server/     Ktor 3.x + Netty — WebSocket game server with SQLite persistence
-├── client/     Compose Multiplatform — game client (Android + Desktop)
+├── client/     Compose Multiplatform — game client (Android + Desktop + iOS)
 ├── maker/      React 18 + Express — web-based world editor and GM toolkit
 ├── scripts/    Utility scripts (background removal, game relay, etc.)
 └── .claude/    AI agents, skills, and memory for Claude Code tooling
@@ -138,7 +139,7 @@ NeoMud/
 
 **Server** runs a 1.5-second tick-based game loop. Combat actions queue on the player session and resolve each tick in initiative order: bash, kick, readied spell, then melee. NPC behaviors (wander, patrol, pursuit, attack) execute after combat. All NPC kills flow through a single handler for loot, XP, and state cleanup. The world is loaded from a `.nmd` bundle at startup — a self-contained ZIP archive, similar to DOOM's WAD files.
 
-**Client** is a Compose Multiplatform application — 89% of the code (UI components, screens, viewmodels, networking) lives in a shared `commonMain` source set, with only platform-specific glue (entry point, audio, logging) in `androidMain` and `desktopMain`. Runs on Android and Desktop (JVM) today, with iOS and Web planned. The client connects over WebSocket and renders the game as a layered scene. The protocol is type-safe sealed classes with `kotlinx.serialization` — client and server share the same Kotlin types at compile time via the shared module.
+**Client** is a Compose Multiplatform application — 89% of the code (UI components, screens, viewmodels, networking) lives in a shared `commonMain` source set, with only platform-specific glue (entry point, audio, logging) in `androidMain`, `desktopMain`, and `iosMain`. Runs on Android, Desktop (JVM), and iOS today, with Web planned. All UI icons use Material Icons (`ImageVector`) for guaranteed cross-platform rendering — no emoji, no platform font dependencies. The client connects over WebSocket and renders the game as a layered scene. The protocol is type-safe sealed classes with `kotlinx.serialization` — client and server share the same Kotlin types at compile time via the shared module.
 
 **Maker** is a separate web application for world authoring. It has its own database, its own API, and exports `.nmd` bundles that the server consumes. The zone editor renders all zones on a single shared coordinate grid, enforcing global spatial consistency.
 
@@ -149,9 +150,9 @@ NeoMud/
 | Language | Kotlin 2.3 (JVM 21) |
 | Server | Ktor 3.4 + Netty |
 | Database | SQLite + Exposed ORM |
-| Client | Compose Multiplatform (Android + Desktop, iOS/Web planned) |
+| Client | Compose Multiplatform (Android + Desktop + iOS, Web planned) |
 | Images | Coil 3 (WebP with transparency, multiplatform) |
-| Audio | Android MediaPlayer + SoundPool; Desktop JavaFX Media (via expect/actual `PlatformAudioManager`) |
+| Audio | Android MediaPlayer + SoundPool; Desktop JavaFX Media; iOS AVFoundation (via expect/actual `PlatformAudioManager`) |
 | Protocol | kotlinx.serialization over WebSocket |
 | Navigation | JetBrains Navigation Compose (multiplatform) |
 | Lifecycle | JetBrains Lifecycle ViewModel (multiplatform) |
@@ -163,10 +164,10 @@ NeoMud/
 
 | Metric | Count |
 |--------|-------|
-| Lines of code | ~45,500 (30.5k Kotlin, 15k TypeScript) |
-| Commits | 246 |
-| Tests | 830 (386 server, 151 shared, 293 maker) |
-| Assets | 462 (357 images, 105 audio) |
+| Lines of code | ~46,700 (35.8k Kotlin, 10.9k TypeScript) |
+| Commits | 321 |
+| Tests | 867 (386 server, 151 shared, 330 maker) |
+| Assets | 461 (357 images, 104 audio) |
 | Player sprites | 270 (6 races x 3 genders x 15 classes) |
 | World content | 4 zones, 25 rooms, 17 NPCs, 41 items, 23 spells, 12 skills, 15 classes, 6 races |
 
@@ -311,6 +312,16 @@ To build native installers:
 ./gradlew :client:packageDeb    # Linux .deb
 ```
 
+#### Client (iOS)
+
+Requires macOS with Xcode 15+ installed. The iOS client is built via Kotlin Multiplatform's iOS framework embedding.
+
+```bash
+./gradlew :client:linkDebugFrameworkIosSimulatorArm64   # Build the framework
+```
+
+Then open the Xcode project in `iosApp/`, select a simulator, and run. The iOS client shares 89% of its code with Android/Desktop — only the entry point, audio (`AVFoundation`), and logging are platform-specific.
+
 #### Maker (World Editor)
 
 ```bash
@@ -370,7 +381,7 @@ Agent memory in `.claude/agent-memory/` persists findings across sessions — th
 
 ### Multiplatform Clients
 - [x] Desktop (JVM) client — JavaFX audio, Ktor CIO networking, full feature parity ([#140](https://github.com/terrymaster/NeoMud/issues/140))
-- [ ] iOS client — Kotlin/Native + AVFoundation audio ([#141](https://github.com/terrymaster/NeoMud/issues/141))
+- [x] iOS client — Kotlin/Native + AVFoundation audio, Material Icons for cross-platform icon rendering ([#141](https://github.com/terrymaster/NeoMud/issues/141))
 - [ ] Web (Wasm) client — zero-install browser play ([#142](https://github.com/terrymaster/NeoMud/issues/142))
 
 ### Future Vision
