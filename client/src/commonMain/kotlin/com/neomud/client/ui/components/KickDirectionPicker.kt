@@ -8,7 +8,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import com.neomud.client.ui.components.EmojiText
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -97,10 +96,11 @@ fun KickDirectionPicker(
                         modifier = Modifier.size(ButtonSize),
                         contentAlignment = Alignment.Center
                     ) {
-                        EmojiText(
-                            text = "\uD83E\uDDB6",
-                            fontSize = 20.sp,
-                            textAlign = TextAlign.Center
+                        Icon(
+                            imageVector = MudIcons.Kick,
+                            contentDescription = "Kick",
+                            tint = EnabledColor,
+                            modifier = Modifier.size(24.dp)
                         )
                     }
                     KickDirButton("\u25B6", Direction.EAST, validDirections, lockedExits, onSelect, ButtonSize)
@@ -171,10 +171,18 @@ private fun KickDirButton(
             disabledContentColor = Color(0xFF666666)
         )
     ) {
-        EmojiText(
-            text = if (isLocked) "\uD83D\uDD12" else icon,
-            fontSize = if (size == SmallButtonSize) 14.sp else 16.sp,
-            textAlign = TextAlign.Center
-        )
+        if (isLocked) {
+            Icon(
+                imageVector = MudIcons.PickLock,
+                contentDescription = "Locked",
+                modifier = Modifier.size(if (size == SmallButtonSize) 14.dp else 16.dp)
+            )
+        } else {
+            Text(
+                text = icon,
+                fontSize = if (size == SmallButtonSize) 14.sp else 16.sp,
+                textAlign = TextAlign.Center
+            )
+        }
     }
 }

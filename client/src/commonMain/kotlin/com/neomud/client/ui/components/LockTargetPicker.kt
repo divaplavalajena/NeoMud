@@ -8,7 +8,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import com.neomud.client.ui.components.EmojiText
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -100,10 +99,11 @@ fun LockTargetPicker(
                             modifier = Modifier.size(ButtonSize),
                             contentAlignment = Alignment.Center
                         ) {
-                            EmojiText(
-                                text = "\uD83D\uDD13",
-                                fontSize = 20.sp,
-                                textAlign = TextAlign.Center
+                            Icon(
+                                imageVector = MudIcons.PickLock,
+                                contentDescription = "Pick Lock",
+                                tint = LockGold,
+                                modifier = Modifier.size(24.dp)
                             )
                         }
                         LockDirButton("\u25B6", Direction.EAST, pickableDirections, lockedExits.keys, onSelect, ButtonSize)
@@ -144,8 +144,8 @@ fun LockTargetPicker(
                                         disabledContentColor = Color(0xFF666666)
                                     )
                                 ) {
-                                    EmojiText(
-                                        text = if (pickable) "\u2B06 Up" else "\uD83D\uDD12 Up",
+                                    Text(
+                                        text = if (pickable) "\u2B06 Up" else "\u22A0 Up",
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -165,8 +165,8 @@ fun LockTargetPicker(
                                         disabledContentColor = Color(0xFF666666)
                                     )
                                 ) {
-                                    EmojiText(
-                                        text = if (pickable) "\u2B07 Down" else "\uD83D\uDD12 Down",
+                                    Text(
+                                        text = if (pickable) "\u2B07 Down" else "\u22A0 Down",
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold
                                     )
@@ -192,9 +192,11 @@ fun LockTargetPicker(
                                 .padding(vertical = 8.dp, horizontal = 4.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            EmojiText(
-                                text = feat.icon.ifEmpty { "\uD83D\uDD12" },
-                                fontSize = 16.sp
+                            Icon(
+                                imageVector = MudIcons.PickLock,
+                                contentDescription = "Locked",
+                                tint = LockGold,
+                                modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
@@ -243,10 +245,18 @@ private fun LockDirButton(
             disabledContentColor = Color(0xFF666666)
         )
     ) {
-        EmojiText(
-            text = if (!isPickable) "\uD83D\uDD12" else icon,
-            fontSize = if (size == SmallButtonSize) 14.sp else 16.sp,
-            textAlign = TextAlign.Center
-        )
+        if (!isPickable) {
+            Icon(
+                imageVector = MudIcons.PickLock,
+                contentDescription = "Locked",
+                modifier = Modifier.size(if (size == SmallButtonSize) 14.dp else 16.dp)
+            )
+        } else {
+            Text(
+                text = icon,
+                fontSize = if (size == SmallButtonSize) 14.sp else 16.sp,
+                textAlign = TextAlign.Center
+            )
+        }
     }
 }
