@@ -25,7 +25,7 @@ object MudIcons {
     val Track: ImageVector = Icons.Filled.Pets
     val PickLock: ImageVector = Icons.Filled.LockOpen
     val Rest: ImageVector = Icons.Filled.DarkMode
-    val Attack: ImageVector = Icons.Filled.SportsMma
+    val Attack: ImageVector = Icons.Filled.GpsFixed
 
     // ── Status Effects ──
     val EffectPoison: ImageVector = Icons.Filled.Science
