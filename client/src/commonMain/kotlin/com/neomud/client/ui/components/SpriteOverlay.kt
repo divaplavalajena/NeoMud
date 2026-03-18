@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
+import com.neomud.client.ui.components.EmojiText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -455,7 +456,7 @@ private fun NpcContextMenu(
                 .clickable { onAttackTarget() },
             contentAlignment = Alignment.Center
         ) {
-            Text(text = "\u2694\uFE0F", fontSize = 14.sp)
+            EmojiText(text = "\u2694\uFE0F", fontSize = 14.sp)
         }
 
         // Track button
@@ -468,7 +469,7 @@ private fun NpcContextMenu(
                     .clickable { onTrackTarget() },
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "\uD83D\uDC3E", fontSize = 14.sp)
+                EmojiText(text = "\uD83D\uDC3E", fontSize = 14.sp)
             }
         }
 
@@ -482,7 +483,7 @@ private fun NpcContextMenu(
                     .clickable { onKickTarget() },
                 contentAlignment = Alignment.Center
             ) {
-                Text(text = "\uD83E\uDDB6", fontSize = 14.sp)
+                EmojiText(text = "\uD83E\uDDB6", fontSize = 14.sp)
             }
         }
 

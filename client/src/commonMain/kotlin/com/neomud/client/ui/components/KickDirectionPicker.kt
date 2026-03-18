@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import com.neomud.client.ui.components.EmojiText
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -96,7 +97,7 @@ fun KickDirectionPicker(
                         modifier = Modifier.size(ButtonSize),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
+                        EmojiText(
                             text = "\uD83E\uDDB6",
                             fontSize = 20.sp,
                             textAlign = TextAlign.Center
@@ -170,7 +171,7 @@ private fun KickDirButton(
             disabledContentColor = Color(0xFF666666)
         )
     ) {
-        Text(
+        EmojiText(
             text = if (isLocked) "\uD83D\uDD12" else icon,
             fontSize = if (size == SmallButtonSize) 14.sp else 16.sp,
             textAlign = TextAlign.Center

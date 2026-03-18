@@ -52,6 +52,7 @@ import com.neomud.client.ui.components.KickDirectionPicker
 import com.neomud.client.ui.components.LockTargetPicker
 import com.neomud.client.ui.components.MapOverlay
 import com.neomud.client.ui.components.PlayerTooltip
+import com.neomud.client.ui.components.EmojiText
 import com.neomud.client.viewmodel.GameViewModel
 import com.neomud.shared.model.Direction
 import com.neomud.shared.model.PlayerInfo
@@ -1072,7 +1073,7 @@ private fun RoomOverlayButton(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Text(text = icon, fontSize = 14.sp, color = color)
+            EmojiText(text = icon, fontSize = 14.sp, color = color)
             Text(
                 text = label,
                 fontSize = 12.sp,
@@ -1104,7 +1105,7 @@ private fun SpellUtilityButton(
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Text(
+        EmojiText(
             text = com.neomud.client.ui.components.schoolIcon(primarySchool),
             fontSize = 16.sp,
             color = spellColor
@@ -1123,7 +1124,7 @@ private fun InventoryIconButton(active: Boolean, onClick: () -> Unit) {
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Text(
+        EmojiText(
             text = "\uD83C\uDF92",
             fontSize = 16.sp,
             color = if (active) Color(0xFFFFD700) else Color(0xFFA8A8A8)
@@ -1142,7 +1143,7 @@ private fun EquipmentIconButton(active: Boolean, onClick: () -> Unit) {
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Text(
+        EmojiText(
             text = "\uD83D\uDEE1\uFE0F",
             fontSize = 16.sp,
             color = if (active) Color(0xFFFFD700) else Color(0xFFA8A8A8)
@@ -1161,7 +1162,7 @@ private fun MapIconButton(active: Boolean, onClick: () -> Unit) {
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Text(
+        EmojiText(
             text = "\uD83D\uDDFA\uFE0F",
             fontSize = 16.sp,
             color = if (active) Color(0xFFFFD700) else Color(0xFFA8A8A8)

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
+import com.neomud.client.platform.EmojiSafeFontFamily
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,7 +49,7 @@ fun StoneButton(
                 modifier = Modifier.size(size * 0.6f)
             )
         } else {
-            Text(
+            EmojiText(
                 text = icon,
                 fontSize = (size.value * 0.5f).sp,
                 color = if (enabled) color else Color.Gray

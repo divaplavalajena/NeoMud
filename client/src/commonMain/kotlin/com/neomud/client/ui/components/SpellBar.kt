@@ -15,6 +15,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.neomud.client.ui.components.EmojiText
 import com.neomud.client.ui.theme.MudColors
 import com.neomud.shared.model.SpellDef
 import com.neomud.shared.model.TargetType
@@ -132,7 +133,7 @@ fun SpellBar(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
-                            Text(
+                            EmojiText(
                                 text = spellIcon(spell.id),
                                 fontSize = 13.sp,
                                 color = if (hasEnoughMp) borderColor else Color.Gray
@@ -146,7 +147,7 @@ fun SpellBar(
                         }
                     } else {
                         // Empty slot — show school icon if available, otherwise slot number
-                        Text(
+                        EmojiText(
                             text = schoolIcon(""),
                             fontSize = 14.sp,
                             color = Color(0xFF555555),

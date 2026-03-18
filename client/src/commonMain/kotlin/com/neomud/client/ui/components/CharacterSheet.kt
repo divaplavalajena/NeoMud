@@ -600,7 +600,7 @@ private fun ActiveEffectsSection(activeEffects: List<ActiveEffect>, isHidden: Bo
                         .background(Color(0xFF555555).copy(alpha = 0.8f))
                         .border(1.dp, AshGray, CircleShape)
                 ) {
-                    Text("\uD83D\uDC41", fontSize = 8.sp, color = Color.White)
+                    EmojiText("\uD83D\uDC41", fontSize = 8.sp, color = Color.White)
                 }
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(

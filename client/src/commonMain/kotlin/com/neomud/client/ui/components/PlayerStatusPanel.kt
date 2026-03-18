@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
+import com.neomud.client.ui.components.EmojiText
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -142,7 +143,7 @@ fun PlayerStatusPanel(
                             .background(Color(0xFF555555).copy(alpha = 0.8f))
                             .border(1.dp, Color(0xFF888888), CircleShape)
                     ) {
-                        Text(
+                        EmojiText(
                             text = "\uD83D\uDC41",
                             fontSize = 10.sp,
                             color = Color.White
@@ -158,7 +159,7 @@ fun PlayerStatusPanel(
                             .background(Color(0xFF7755CC).copy(alpha = 0.8f))
                             .border(1.dp, Color(0xFF9977EE), CircleShape)
                     ) {
-                        Text(
+                        EmojiText(
                             text = "\uD83E\uDDD8",
                             fontSize = 10.sp,
                             color = Color.White
@@ -184,7 +185,7 @@ private fun CompactEffectDot(color: Color, label: String? = null) {
             .border(1.dp, color, CircleShape)
     ) {
         if (label != null) {
-            Text(text = label, fontSize = 8.sp, color = Color.White)
+            EmojiText(text = label, fontSize = 8.sp, color = Color.White)
         }
     }
 }
@@ -213,7 +214,7 @@ private fun EffectIcon(effect: ActiveEffect) {
             .background(bgColor.copy(alpha = 0.8f))
             .border(1.dp, bgColor, CircleShape)
     ) {
-        Text(
+        EmojiText(
             text = label,
             fontSize = 10.sp,
             color = Color.White,
