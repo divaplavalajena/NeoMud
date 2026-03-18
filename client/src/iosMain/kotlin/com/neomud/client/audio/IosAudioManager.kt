@@ -3,7 +3,7 @@ package com.neomud.client.audio
 import com.neomud.client.platform.PlatformAudioManager
 import com.neomud.client.platform.PlatformLogger
 import kotlinx.coroutines.*
-import platform.AVFoundation.*
+import platform.AVFAudio.*
 import platform.Foundation.*
 
 class IosAudioManager : PlatformAudioManager {

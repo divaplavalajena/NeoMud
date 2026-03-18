@@ -1,5 +1,6 @@
 package com.neomud.client.ui.components
 
+import kotlin.time.Duration.Companion.milliseconds
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.animation.core.animateFloatAsState
@@ -303,7 +304,7 @@ private fun BagItemCell(
     val borderColor = if (isConsumable) ConsumableBorder else DefaultBorder
     val context = LocalPlatformContext.current
 
-    var lastTapTime by remember { mutableStateOf(0L) }
+    var lastTapMark by remember { mutableStateOf<kotlin.time.TimeMark?>(null) }
     var tapped by remember { mutableStateOf(false) }
     val flashAlpha by animateFloatAsState(
         targetValue = if (tapped) 0.4f else 0f,
@@ -316,9 +317,9 @@ private fun BagItemCell(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.then(
             if (isConsumable) Modifier.clickable {
-                val now = System.currentTimeMillis()
-                if (now - lastTapTime >= 500) {
-                    lastTapTime = now
+                val mark = lastTapMark
+                if (mark == null || mark.elapsedNow() >= 500.milliseconds) {
+                    lastTapMark = kotlin.time.TimeSource.Monotonic.markNow()
                     tapped = true
                     onUseItem(invItem.itemId)
                 }
