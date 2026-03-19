@@ -108,7 +108,13 @@ class VendorCommand(
             return
         }
 
-        inventoryRepository.addItem(playerName, itemId, quantity)
+        val added = inventoryRepository.addItem(playerName, itemId, quantity)
+        if (!added) {
+            // Refund coins if item couldn't be added to inventory
+            coinRepository.addCoins(playerName, totalCost)
+            session.send(ServerMessage.Error("Failed to add ${item.name} to your inventory."))
+            return
+        }
         logger.info("$playerName bought ${item.name} x$quantity for ${totalCost.displayString()}")
 
         val updatedCoins = coinRepository.getCoins(playerName)
