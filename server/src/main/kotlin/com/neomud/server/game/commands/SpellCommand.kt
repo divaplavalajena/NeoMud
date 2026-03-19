@@ -157,6 +157,16 @@ class SpellCommand(
             return null
         }
 
+        // For offensive spells, validate target BEFORE spending MP
+        val isOffensive = spell.spellType == SpellType.DAMAGE || spell.spellType == SpellType.DOT
+        if (isOffensive) {
+            val target = resolveTarget(session, targetId, roomId)
+            if (target == null) {
+                session.send(ServerMessage.SpellCastResult(false, spell.name, "No valid target.", player.currentMp))
+                return null
+            }
+        }
+
         // Deduct MP
         val newMp = player.currentMp - spell.manaCost
         session.player = player.copy(currentMp = newMp)
