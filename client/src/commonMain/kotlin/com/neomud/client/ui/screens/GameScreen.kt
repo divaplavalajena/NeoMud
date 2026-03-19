@@ -411,7 +411,7 @@ private fun GameScreenPortrait(
         ThemedFrame(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(0.35f),
+                .weight(0.30f),
             cornerAccent = true
         ) {
             // Layer 1: Full-bleed background image
@@ -517,7 +517,7 @@ private fun GameScreenPortrait(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(0.25f)
+                .weight(0.30f)
                 .background(StoneTheme.panelBg)
                 .padding(horizontal = 8.dp, vertical = 4.dp)
         ) {
