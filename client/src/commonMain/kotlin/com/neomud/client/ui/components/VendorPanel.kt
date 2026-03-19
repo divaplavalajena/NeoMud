@@ -350,44 +350,35 @@ private fun BuyItemRow(
         }
         Spacer(Modifier.width(8.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            // Line 1: Item name
+            Text(
+                text = item.name,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold,
+                color = nameColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            // Line 2: Owned count (if any)
+            if (ownedCount > 0) {
                 Text(
-                    text = item.name,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = nameColor,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false)
+                    text = "Owned: $ownedCount",
+                    fontSize = 11.sp,
+                    color = VerdantUpgrade
                 )
-                if (item.levelRequirement > 1) {
-                    Text(
-                        text = " Lv${item.levelRequirement}",
-                        fontSize = 11.sp,
-                        color = if (meetsLevel) AshGray else Color(0xFFCC4444),
-                        maxLines = 1,
-                        softWrap = false
-                    )
-                }
-                if (ownedCount > 0) {
-                    Text(
-                        text = " Owned: $ownedCount",
-                        fontSize = 11.sp,
-                        color = VerdantUpgrade,
-                        maxLines = 1,
-                        softWrap = false
-                    )
-                }
             }
-            val statsText = buildString {
-                if (item.slot.isNotEmpty()) append(item.slot.replaceFirstChar { it.uppercase() })
-                if (item.armorValue > 0) append(" | ARM ${item.armorValue}")
-                if (item.damageBonus > 0) append(" | DMG +${item.damageBonus}")
-                if (item.damageRange > 0) append(" (1-${item.damageRange})")
+            // Line 3: Level + slot/stats
+            val statsParts = mutableListOf<String>()
+            if (item.levelRequirement > 1) statsParts.add("Lv${item.levelRequirement}")
+            if (item.slot.isNotEmpty()) statsParts.add(item.slot.replaceFirstChar { it.uppercase() })
+            if (item.armorValue > 0) statsParts.add("ARM ${item.armorValue}")
+            if (item.damageBonus > 0) {
+                val dmgText = if (item.damageRange > 0) "DMG +${item.damageBonus} (1-${item.damageRange})" else "DMG +${item.damageBonus}"
+                statsParts.add(dmgText)
             }
-            if (statsText.isNotEmpty()) {
+            if (statsParts.isNotEmpty()) {
                 Text(
-                    text = statsText,
+                    text = statsParts.joinToString(" | "),
                     fontSize = 11.sp,
                     color = TorchAmber
                 )
