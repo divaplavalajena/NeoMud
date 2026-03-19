@@ -212,7 +212,8 @@ class CommandProcessor(
             }
             is ClientMessage.CastSpell -> {
                 requireAuth(session) {
-                    spellCommand.execute(session, message.spellId, message.targetId)
+                    val spellId = message.spellId.removePrefix("spell:").uppercase()
+                    spellCommand.execute(session, spellId, message.targetId)
                 }
             }
             is ClientMessage.InteractVendor -> {
@@ -374,7 +375,7 @@ class CommandProcessor(
 
     private suspend fun handleReadySpell(session: PlayerSession, msg: ClientMessage.ReadySpell) {
         val player = session.player ?: return
-        val spellId = msg.spellId
+        val spellId = msg.spellId?.removePrefix("spell:")?.uppercase()
 
         if (spellId == null) {
             session.readiedSpellId = null
