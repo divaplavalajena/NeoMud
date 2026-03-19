@@ -421,6 +421,7 @@ class GameLoop(
                     // XP penalty on death
                     val player = session.player
                     val xpPenalty = if (player != null) (player.currentXp * GameConfig.Progression.DEATH_XP_LOSS_PERCENT).toLong() else 0L
+                    val newXp = ((player?.currentXp ?: 0L) - xpPenalty).coerceAtLeast(0L)
 
                     // Respawn
                     session.currentRoomId = event.respawnRoomId
@@ -428,9 +429,20 @@ class GameLoop(
                         currentHp = event.respawnHp,
                         currentMp = event.respawnMp,
                         currentRoomId = event.respawnRoomId,
-                        currentXp = ((player?.currentXp ?: 0L) - xpPenalty).coerceAtLeast(0L)
+                        currentXp = newXp
                     )
                     session.activeEffects.clear()
+
+                    // Notify client of XP loss so it stays in sync
+                    if (xpPenalty > 0 && session.player != null) {
+                        try {
+                            session.send(ServerMessage.XpGained(
+                                amount = -xpPenalty,
+                                currentXp = newXp,
+                                xpToNextLevel = session.player!!.xpToNextLevel
+                            ))
+                        } catch (_: Exception) { }
+                    }
 
                     // Broadcast enter to spawn room
                     sessionManager.broadcastToRoom(
