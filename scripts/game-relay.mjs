@@ -532,7 +532,12 @@ const handlers = {
 
   // Vendor
   vendor_info(msg) {
-    const itemList = (msg.items || []).map(i => `${i.item?.name || i.itemId || '?'} (${formatCoinString(i.price) || 'free'})`).join(', ');
+    const itemList = (msg.items || []).map(i => {
+      const name = i.item?.name || '?';
+      const id = i.item?.id || i.itemId || '?';
+      const price = formatCoinString(i.price) || 'free';
+      return `${name} [${id}] (${price})`;
+    }).join(', ');
     pushEvent('vendor', `${msg.vendorName} sells: ${itemList}`);
   },
   buy_result(msg) {
