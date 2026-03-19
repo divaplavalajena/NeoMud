@@ -194,6 +194,7 @@ class CommandProcessor(
                         "REST" -> restCommand.execute(session)
                         "TRACK" -> trackCommand.execute(session, message.targetId)
                         "PICK_LOCK" -> pickLockCommand.execute(session, message.targetId)
+                        "SNEAK" -> sneakCommand.handleToggle(session, !session.isHidden)
                         else -> session.send(ServerMessage.SystemMessage("Unknown skill: $skillId"))
                     }
                 }
