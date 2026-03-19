@@ -167,6 +167,12 @@ class SpellCommand(
             }
         }
 
+        // For heal spells, refuse if already at full HP
+        if (spell.spellType == SpellType.HEAL && player.currentHp >= player.maxHp) {
+            session.send(ServerMessage.SpellCastResult(false, spell.name, "You are already at full health.", player.currentMp))
+            return null
+        }
+
         // Deduct MP
         val newMp = player.currentMp - spell.manaCost
         session.player = player.copy(currentMp = newMp)
