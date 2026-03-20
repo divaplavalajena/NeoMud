@@ -434,7 +434,8 @@ class CombatManager(
 
         val effStats = session.effectiveStats()
         val bonuses = equipmentService.getCombatBonuses(playerName)
-        val damage = effStats.strength / GameConfig.Combat.MELEE_STR_DIVISOR + bonuses.totalDamageBonus + (1..GameConfig.Skills.BASH_DAMAGE_RANGE).random()
+        val thresholds = ThresholdBonuses.compute(effStats)
+        val damage = effStats.strength / GameConfig.Combat.MELEE_STR_DIVISOR + bonuses.totalDamageBonus + thresholds.meleeDamageBonus + (1..GameConfig.Skills.BASH_DAMAGE_RANGE).random()
         target.currentHp -= damage
 
         val stunned = (1..100).random() <= GameConfig.Skills.BASH_STUN_CHANCE
