@@ -161,6 +161,7 @@ object GameConfig {
         const val SELL_HAGGLE_BONUS_SCALE = 10
         const val SELL_MAX_PERCENT = 99
         const val BUY_HAGGLE_MAX_DISCOUNT = 15 // max charm-based buy discount percent
+        const val MAX_BUY_QUANTITY = 99 // max items per buy transaction
     }
     object Shutdown {
         const val DEFAULT_DELAY_SECONDS = 60

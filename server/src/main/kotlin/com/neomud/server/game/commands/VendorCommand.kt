@@ -70,6 +70,10 @@ class VendorCommand(
 
     suspend fun handleBuy(session: PlayerSession, itemId: String, quantity: Int) {
         if (quantity < 1) return
+        if (quantity > GameConfig.Vendor.MAX_BUY_QUANTITY) {
+            session.send(ServerMessage.Error("You can only buy up to ${GameConfig.Vendor.MAX_BUY_QUANTITY} items at a time."))
+            return
+        }
         val roomId = session.currentRoomId ?: return
         val playerName = session.playerName ?: return
         val player = session.player ?: return

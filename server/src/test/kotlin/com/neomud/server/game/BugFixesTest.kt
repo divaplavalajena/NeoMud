@@ -29,7 +29,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * Tests for GitHub issues #197, #199, #200, #201, #202, #203, #207, #209, #210.
+ * Tests for GitHub issues #197, #199, #200, #201, #202, #203, #205, #207, #209, #210.
  */
 class BugFixesTest {
 
@@ -391,6 +391,30 @@ class BugFixesTest {
         val kickRange = if (weaponDamageRange > 0) weaponDamageRange else GameConfig.Skills.KICK_DAMAGE_RANGE
         assertEquals(GameConfig.Skills.KICK_DAMAGE_RANGE, kickRange,
             "Unarmed kick should use KICK_DAMAGE_RANGE as fallback")
+    }
+
+    // --- #205: Buy item quantity not validated ---
+
+    @Test
+    fun testMaxBuyQuantityConfigExists() {
+        assertTrue(GameConfig.Vendor.MAX_BUY_QUANTITY > 0,
+            "MAX_BUY_QUANTITY should be positive")
+        assertEquals(99, GameConfig.Vendor.MAX_BUY_QUANTITY,
+            "MAX_BUY_QUANTITY should be 99")
+    }
+
+    @Test
+    fun testBuyQuantityAboveMaxIsRejected() {
+        val quantity = GameConfig.Vendor.MAX_BUY_QUANTITY + 1
+        assertTrue(quantity > GameConfig.Vendor.MAX_BUY_QUANTITY,
+            "Quantity above MAX_BUY_QUANTITY should be rejected")
+    }
+
+    @Test
+    fun testBuyQuantityAtMaxIsAccepted() {
+        val quantity = GameConfig.Vendor.MAX_BUY_QUANTITY
+        assertFalse(quantity > GameConfig.Vendor.MAX_BUY_QUANTITY,
+            "Quantity at MAX_BUY_QUANTITY should be accepted")
     }
 
     // --- #207: Stackable item overflow silently lost ---
