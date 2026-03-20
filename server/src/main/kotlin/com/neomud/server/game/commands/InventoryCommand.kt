@@ -36,6 +36,11 @@ class InventoryCommand(
         val playerName = session.playerName ?: return
         val player = session.player ?: return
 
+        if (player.currentHp <= 0) {
+            session.send(ServerMessage.Error("You can't equip items while dead."))
+            return
+        }
+
         MeditationUtils.breakMeditation(session, "You stop meditating.")
         RestUtils.breakRest(session, "You stop resting.")
         StealthUtils.breakStealth(session, sessionManager, "Equipping gear reveals your presence!")
@@ -72,6 +77,12 @@ class InventoryCommand(
 
     suspend fun handleUnequipItem(session: PlayerSession, slot: String) {
         val playerName = session.playerName ?: return
+        val player = session.player ?: return
+
+        if (player.currentHp <= 0) {
+            session.send(ServerMessage.Error("You can't unequip items while dead."))
+            return
+        }
 
         MeditationUtils.breakMeditation(session, "You stop meditating.")
         RestUtils.breakRest(session, "You stop resting.")
@@ -89,6 +100,11 @@ class InventoryCommand(
     suspend fun handleUseItem(session: PlayerSession, itemId: String) {
         val playerName = session.playerName ?: return
         val player = session.player ?: return
+
+        if (player.currentHp <= 0) {
+            session.send(ServerMessage.Error("You can't use items while dead."))
+            return
+        }
 
         MeditationUtils.breakMeditation(session, "You stop meditating.")
         RestUtils.breakRest(session, "You stop resting.")

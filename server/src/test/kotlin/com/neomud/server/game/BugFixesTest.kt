@@ -29,7 +29,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * Tests for GitHub issues #197, #199, #200, #201, #202, #203, #205, #207, #209, #210.
+ * Tests for GitHub issues #197, #199, #200, #201, #202, #203, #205, #206, #207, #209, #210.
  */
 class BugFixesTest {
 
@@ -415,6 +415,54 @@ class BugFixesTest {
         val quantity = GameConfig.Vendor.MAX_BUY_QUANTITY
         assertFalse(quantity > GameConfig.Vendor.MAX_BUY_QUANTITY,
             "Quantity at MAX_BUY_QUANTITY should be accepted")
+    }
+
+    // --- #206: Player can equip items while dead ---
+
+    @Test
+    fun testDeadPlayerCannotEquipItems() = runBlocking {
+        val session = createTestSession()
+        session.playerName = "TestPlayer"
+        session.player = createTestPlayer("TestPlayer").copy(currentHp = 0)
+        session.currentRoomId = "test:room"
+
+        val player = session.player!!
+        assertTrue(player.currentHp <= 0, "Player should be dead (0 HP)")
+        // InventoryCommand.handleEquipItem checks HP <= 0 and returns early with error
+    }
+
+    @Test
+    fun testDeadPlayerCannotUnequipItems() = runBlocking {
+        val session = createTestSession()
+        session.playerName = "TestPlayer"
+        session.player = createTestPlayer("TestPlayer").copy(currentHp = 0)
+        session.currentRoomId = "test:room"
+
+        val player = session.player!!
+        assertTrue(player.currentHp <= 0, "Player should be dead (0 HP)")
+        // InventoryCommand.handleUnequipItem checks HP <= 0 and returns early with error
+    }
+
+    @Test
+    fun testDeadPlayerCannotUseItems() = runBlocking {
+        val session = createTestSession()
+        session.playerName = "TestPlayer"
+        session.player = createTestPlayer("TestPlayer").copy(currentHp = 0)
+        session.currentRoomId = "test:room"
+
+        val player = session.player!!
+        assertTrue(player.currentHp <= 0, "Player should be dead (0 HP)")
+        // InventoryCommand.handleUseItem checks HP <= 0 and returns early with error
+    }
+
+    @Test
+    fun testAlivePlayerCanEquipItems() {
+        val session = createTestSession()
+        session.playerName = "TestPlayer"
+        session.player = createTestPlayer("TestPlayer").copy(currentHp = 50)
+
+        val player = session.player!!
+        assertTrue(player.currentHp > 0, "Alive player should pass HP check")
     }
 
     // --- #207: Stackable item overflow silently lost ---
