@@ -502,7 +502,10 @@ class CombatManager(
         }
 
         val effStats = session.effectiveStats()
-        val damage = effStats.strength / GameConfig.Skills.KICK_STR_DIVISOR + effStats.agility / GameConfig.Skills.KICK_AGI_DIVISOR + (1..GameConfig.Skills.KICK_DAMAGE_RANGE).random()
+        val bonuses = equipmentService.getCombatBonuses(playerName)
+        val thresholds = ThresholdBonuses.compute(effStats)
+        val kickRange = if (bonuses.weaponDamageRange > 0) bonuses.weaponDamageRange else GameConfig.Skills.KICK_DAMAGE_RANGE
+        val damage = effStats.strength / GameConfig.Skills.KICK_STR_DIVISOR + effStats.agility / GameConfig.Skills.KICK_AGI_DIVISOR + bonuses.totalDamageBonus + thresholds.meleeDamageBonus + (1..kickRange).random()
         target.currentHp -= damage
 
         session.skillCooldowns["KICK"] = GameConfig.Skills.KICK_COOLDOWN_TICKS

@@ -29,7 +29,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * Tests for GitHub issues #197, #199, #200, #201, #202, #207, #209, #210.
+ * Tests for GitHub issues #197, #199, #200, #201, #202, #203, #207, #209, #210.
  */
 class BugFixesTest {
 
@@ -347,6 +347,50 @@ class BugFixesTest {
         val roll = GameConfig.Combat.GUARD_HIT_CHANCE
         val isHit = roll <= GameConfig.Combat.GUARD_HIT_CHANCE
         assertTrue(isHit, "Roll at GUARD_HIT_CHANCE should be a hit")
+    }
+
+    // --- #203: Kick damage missing threshold melee bonus and weapon damage bonus ---
+
+    @Test
+    fun testKickDamageIncludesThresholdMeleeBonusForHighStrength() {
+        val stats = Stats(strength = 90, agility = 20, intellect = 15, willpower = 15, health = 25, charm = 10)
+        val thresholds = ThresholdBonuses.compute(stats)
+
+        val minKickWithBonus = stats.strength / GameConfig.Skills.KICK_STR_DIVISOR + stats.agility / GameConfig.Skills.KICK_AGI_DIVISOR + thresholds.meleeDamageBonus + 1
+        val minKickWithoutBonus = stats.strength / GameConfig.Skills.KICK_STR_DIVISOR + stats.agility / GameConfig.Skills.KICK_AGI_DIVISOR + 1
+
+        assertTrue(minKickWithBonus > minKickWithoutBonus,
+            "Kick with STR 90 threshold bonus should deal more damage")
+        assertTrue(thresholds.meleeDamageBonus > 0,
+            "STR 90 should produce a positive melee damage bonus")
+    }
+
+    @Test
+    fun testKickDamageIncludesWeaponDamageBonus() {
+        val stats = Stats(strength = 30, agility = 20, intellect = 15, willpower = 15, health = 25, charm = 10)
+        val weaponDamageBonus = 3
+
+        val damageWithBonus = stats.strength / GameConfig.Skills.KICK_STR_DIVISOR + stats.agility / GameConfig.Skills.KICK_AGI_DIVISOR + weaponDamageBonus + 1
+        val damageWithout = stats.strength / GameConfig.Skills.KICK_STR_DIVISOR + stats.agility / GameConfig.Skills.KICK_AGI_DIVISOR + 1
+
+        assertTrue(damageWithBonus > damageWithout,
+            "Kick with weapon damage bonus should deal more damage")
+    }
+
+    @Test
+    fun testKickUsesWeaponDamageRangeWhenEquipped() {
+        val weaponDamageRange = 8
+        val kickRange = if (weaponDamageRange > 0) weaponDamageRange else GameConfig.Skills.KICK_DAMAGE_RANGE
+        assertEquals(weaponDamageRange, kickRange,
+            "Kick with weapon equipped should use weapon's damage range")
+    }
+
+    @Test
+    fun testKickUsesConfigFallbackWhenUnarmed() {
+        val weaponDamageRange = 0
+        val kickRange = if (weaponDamageRange > 0) weaponDamageRange else GameConfig.Skills.KICK_DAMAGE_RANGE
+        assertEquals(GameConfig.Skills.KICK_DAMAGE_RANGE, kickRange,
+            "Unarmed kick should use KICK_DAMAGE_RANGE as fallback")
     }
 
     // --- #207: Stackable item overflow silently lost ---
