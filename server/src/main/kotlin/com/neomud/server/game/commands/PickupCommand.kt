@@ -34,7 +34,14 @@ class PickupCommand(
             return
         }
 
-        inventoryRepository.addItem(playerName, itemId, removed)
+        val added = inventoryRepository.addItem(playerName, itemId, removed)
+        if (!added) {
+            // Could not add to inventory (stack full) — return items to ground
+            roomItemManager.addItems(roomId, listOf(com.neomud.shared.model.GroundItem(itemId, removed)))
+            val itemName = itemCatalog.getItem(itemId)?.name ?: itemId
+            session.send(ServerMessage.Error("Your inventory is full for $itemName."))
+            return
+        }
 
         val itemName = itemCatalog.getItem(itemId)?.name ?: itemId
         session.send(ServerMessage.PickupResult(itemName, removed))
