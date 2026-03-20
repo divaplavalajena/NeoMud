@@ -39,6 +39,27 @@ class DeathXpPenaltyTest {
     }
 
     @Test
+    fun level_1_players_are_exempt_from_death_penalty() {
+        val level = 1
+        val currentXp = 500L
+        // Level 1 is below DEATH_XP_PENALTY_MIN_LEVEL
+        val xpPenalty = if (level >= GameConfig.Progression.DEATH_XP_PENALTY_MIN_LEVEL) {
+            (currentXp * GameConfig.Progression.DEATH_XP_LOSS_PERCENT).toLong()
+        } else 0L
+        assertEquals(0L, xpPenalty)
+    }
+
+    @Test
+    fun level_2_players_do_get_death_penalty() {
+        val level = 2
+        val currentXp = 500L
+        val xpPenalty = if (level >= GameConfig.Progression.DEATH_XP_PENALTY_MIN_LEVEL) {
+            (currentXp * GameConfig.Progression.DEATH_XP_LOSS_PERCENT).toLong()
+        } else 0L
+        assertEquals(25L, xpPenalty)
+    }
+
+    @Test
     fun zero_xp_produces_zero_penalty() {
         val currentXp = 0L
         val penalty = (currentXp * GameConfig.Progression.DEATH_XP_LOSS_PERCENT).toLong()

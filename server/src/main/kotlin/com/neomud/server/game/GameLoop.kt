@@ -418,9 +418,11 @@ class GameLoop(
                         exclude = playerName
                     )
 
-                    // XP penalty on death
+                    // XP penalty on death (exempt at low levels for newbie protection)
                     val player = session.player
-                    val xpPenalty = if (player != null) (player.currentXp * GameConfig.Progression.DEATH_XP_LOSS_PERCENT).toLong() else 0L
+                    val xpPenalty = if (player != null && player.level >= GameConfig.Progression.DEATH_XP_PENALTY_MIN_LEVEL) {
+                        (player.currentXp * GameConfig.Progression.DEATH_XP_LOSS_PERCENT).toLong()
+                    } else 0L
                     val newXp = ((player?.currentXp ?: 0L) - xpPenalty).coerceAtLeast(0L)
 
                     // Respawn

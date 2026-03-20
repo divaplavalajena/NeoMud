@@ -82,6 +82,7 @@ object GameConfig {
         const val CP_TIER_2_LEVEL = 10
         const val CP_TIER_3_LEVEL = 20
         const val DEATH_XP_LOSS_PERCENT = 0.05
+        const val DEATH_XP_PENALTY_MIN_LEVEL = 2  // No XP penalty at level 1 (newbie protection)
     }
     object PlayerCreation {
         const val HP_HEALTH_DIVISOR = 10
