@@ -125,12 +125,15 @@ class MoveCommand(
         session.player = session.player?.copy(currentRoomId = targetRoomId)
         session.combatGraceTicks = GameConfig.Combat.GRACE_TICKS
 
-        // Cancel attack mode on move
-        if (session.attackMode) {
+        // Cancel attack mode on move — but preserve it if a spell is readied,
+        // allowing casters to enter rooms already armed for combat
+        if (session.attackMode && session.readiedSpellId == null) {
             session.attackMode = false
             session.selectedTargetId = null
             session.send(ServerMessage.AttackModeUpdate(false))
         }
+        // Always clear the selected target — auto-targeting will pick a new one
+        session.selectedTargetId = null
 
         // Record departure for tick-based NPC pursuit processing.
         // Pursuit engagement is deferred to the game tick so NPCs evaluate
