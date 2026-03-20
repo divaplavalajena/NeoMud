@@ -366,7 +366,7 @@ class SpellCommand(
         val resolvedId = targetId ?: session.selectedTargetId
         return if (resolvedId != null) {
             val npc = npcManager.getNpcState(resolvedId)
-            if (npc != null && npc.currentRoomId == roomId && npc.isAlive) npc else null
+            if (npc != null && npc.currentRoomId == roomId && npc.isAlive && npc.hostile) npc else null
         } else {
             npcManager.getLivingHostileNpcsInRoom(roomId).firstOrNull()
         }
