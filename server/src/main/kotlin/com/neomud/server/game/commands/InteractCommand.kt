@@ -1,11 +1,16 @@
 package com.neomud.server.game.commands
 
 import com.neomud.server.game.EffectApplicator
+import com.neomud.server.game.GameConfig
 import com.neomud.server.game.MapRoomFilter
+import com.neomud.server.game.MeditationUtils
+import com.neomud.server.game.RestUtils
 import com.neomud.server.game.RoomFilter
+import com.neomud.server.game.StealthUtils
 import com.neomud.server.game.inventory.LootService
 import com.neomud.server.game.inventory.RoomItemManager
 import com.neomud.server.game.npc.NpcManager
+import com.neomud.server.persistence.repository.PlayerRepository
 import com.neomud.server.session.PlayerSession
 import com.neomud.server.session.SessionManager
 import com.neomud.server.world.LootTableCatalog
@@ -23,7 +28,8 @@ class InteractCommand(
     private val npcManager: NpcManager,
     private val roomItemManager: RoomItemManager,
     private val lootService: LootService,
-    private val lootTableCatalog: LootTableCatalog
+    private val lootTableCatalog: LootTableCatalog,
+    private val playerRepository: PlayerRepository? = null
 ) {
     private val logger = LoggerFactory.getLogger(InteractCommand::class.java)
 
@@ -31,6 +37,11 @@ class InteractCommand(
         val roomId = session.currentRoomId ?: return
         val player = session.player ?: return
         val playerName = session.playerName ?: return
+
+        // Interacting breaks meditation, rest, and stealth
+        MeditationUtils.breakMeditation(session, "You stop meditating.")
+        RestUtils.breakRest(session, "You stop resting.")
+        StealthUtils.breakStealth(session, sessionManager, "Interacting reveals your presence!")
 
         // Find the interactable definition
         val defs = worldGraph.getInteractableDefs(roomId)
@@ -252,6 +263,18 @@ class InteractCommand(
         // Update session
         session.currentRoomId = targetRoomId
         session.player = session.player?.copy(currentRoomId = targetRoomId)
+        session.visitedRooms.add(targetRoomId)
+        session.combatGraceTicks = GameConfig.Combat.GRACE_TICKS
+
+        // Persist position
+        val playerState = session.player
+        if (playerState != null) {
+            try {
+                playerRepository?.savePlayerState(playerState)
+            } catch (_: Exception) {
+                // Fire-and-forget
+            }
+        }
 
         // Cancel attack mode
         if (session.attackMode) {

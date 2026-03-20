@@ -118,7 +118,7 @@ class CommandProcessor(
     private val trackCommand = TrackCommand()
     private val pickLockCommand = PickLockCommand(worldGraph, sessionManager, npcManager)
     private val dropCommand = DropCommand(roomItemManager, inventoryRepository, coinRepository, itemCatalog, sessionManager)
-    private val interactCommand = InteractCommand(worldGraph, sessionManager, npcManager, roomItemManager, lootService, lootTableCatalog)
+    private val interactCommand = InteractCommand(worldGraph, sessionManager, npcManager, roomItemManager, lootService, lootTableCatalog, playerRepository)
 
     suspend fun sendCatalogSync(session: PlayerSession) {
         session.send(ServerMessage.ClassCatalogSync(classCatalog.getAllClasses()))
