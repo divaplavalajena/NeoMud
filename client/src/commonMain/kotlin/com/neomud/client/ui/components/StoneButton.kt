@@ -1,11 +1,11 @@
 package com.neomud.client.ui.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -15,15 +15,16 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.neomud.client.ui.theme.StoneTheme
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun StoneButton(
-    icon: ImageVector,
+    icon: DrawableResource,
     color: Color,
     size: Dp = 36.dp,
     isActive: Boolean = false,
@@ -45,14 +46,13 @@ fun StoneButton(
             AsyncImage(
                 model = overrideIconUrl,
                 contentDescription = null,
-                modifier = Modifier.size(size * 0.6f)
+                modifier = Modifier.size(size * 0.78f)
             )
         } else {
-            Icon(
-                imageVector = icon,
+            Image(
+                painter = painterResource(icon),
                 contentDescription = null,
-                tint = if (enabled) color else Color.Gray,
-                modifier = Modifier.size(size * 0.55f)
+                modifier = Modifier.size(size * 0.78f)
             )
         }
     }

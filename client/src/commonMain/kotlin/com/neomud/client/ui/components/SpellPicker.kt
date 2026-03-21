@@ -1,5 +1,6 @@
 package com.neomud.client.ui.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -12,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -19,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import com.neomud.client.ui.theme.MudColors
 import com.neomud.shared.model.CharacterClassDef
 import com.neomud.shared.model.SpellDef
+import org.jetbrains.compose.resources.painterResource
 
 private fun schoolDisplayName(school: String): String = school.replaceFirstChar { it.uppercase() }
 
@@ -136,11 +139,12 @@ private fun SpellRow(
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Spell icon
-        Icon(
-            imageVector = MudIcons.spellIcon(spell.id),
+        Image(
+            painter = painterResource(MudIcons.spellIcon(spell.id)),
             contentDescription = spell.name,
-            tint = schoolColor(school),
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier
+                .size(24.dp)
+                .alpha(if (enabled) 1f else 0.4f)
         )
 
         Spacer(modifier = Modifier.width(8.dp))

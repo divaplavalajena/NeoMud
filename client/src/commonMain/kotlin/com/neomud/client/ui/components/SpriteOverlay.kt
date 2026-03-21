@@ -1,6 +1,7 @@
 package com.neomud.client.ui.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -8,7 +9,6 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -36,6 +36,7 @@ import com.neomud.shared.model.Npc
 import com.neomud.shared.model.PlayerInfo
 import com.neomud.shared.model.SpellDef
 import com.neomud.shared.model.TargetType
+import org.jetbrains.compose.resources.painterResource
 
 private val SelectedGlow = Color(0xFFFF3333)
 
@@ -456,11 +457,10 @@ private fun NpcContextMenu(
                 .clickable { onAttackTarget() },
             contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = MudIcons.Attack,
+            Image(
+                painter = painterResource(MudIcons.Attack),
                 contentDescription = "Attack",
-                tint = Color.White,
-                modifier = Modifier.size(16.dp)
+                modifier = Modifier.size(20.dp)
             )
         }
 
@@ -474,11 +474,10 @@ private fun NpcContextMenu(
                     .clickable { onTrackTarget() },
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = MudIcons.TrackNpc,
+                Image(
+                    painter = painterResource(MudIcons.TrackNpc),
                     contentDescription = "Track",
-                    tint = Color.White,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }
@@ -493,11 +492,10 @@ private fun NpcContextMenu(
                     .clickable { onKickTarget() },
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = MudIcons.KickNpc,
+                Image(
+                    painter = painterResource(MudIcons.KickNpc),
                     contentDescription = "Kick",
-                    tint = Color.White,
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }

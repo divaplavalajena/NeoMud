@@ -1,5 +1,6 @@
 package com.neomud.client.ui.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -17,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neomud.shared.model.Direction
 import com.neomud.shared.model.RoomInteractable
+import org.jetbrains.compose.resources.painterResource
 
 private val LockGold = Color(0xFFCCAA33)
 private val EnabledColor = Color(0xFFCCAA33)
@@ -99,11 +101,10 @@ fun LockTargetPicker(
                             modifier = Modifier.size(ButtonSize),
                             contentAlignment = Alignment.Center
                         ) {
-                            Icon(
-                                imageVector = MudIcons.PickLock,
+                            Image(
+                                painter = painterResource(MudIcons.PickLock),
                                 contentDescription = "Pick Lock",
-                                tint = LockGold,
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(32.dp)
                             )
                         }
                         LockDirButton("\u25B6", Direction.EAST, pickableDirections, lockedExits.keys, onSelect, ButtonSize)
@@ -192,11 +193,10 @@ fun LockTargetPicker(
                                 .padding(vertical = 8.dp, horizontal = 4.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = MudIcons.PickLock,
+                            Image(
+                                painter = painterResource(MudIcons.PickLock),
                                 contentDescription = "Locked",
-                                tint = LockGold,
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(22.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
@@ -246,10 +246,10 @@ private fun LockDirButton(
         )
     ) {
         if (!isPickable) {
-            Icon(
-                imageVector = MudIcons.PickLock,
+            Image(
+                painter = painterResource(MudIcons.PickLock),
                 contentDescription = "Locked",
-                modifier = Modifier.size(if (size == SmallButtonSize) 14.dp else 16.dp)
+                modifier = Modifier.size(if (size == SmallButtonSize) 20.dp else 22.dp)
             )
         } else {
             Text(

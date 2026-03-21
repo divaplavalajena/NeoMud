@@ -1,105 +1,106 @@
 package com.neomud.client.ui.components
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.MenuBook
-import androidx.compose.material.icons.filled.*
-import androidx.compose.ui.graphics.vector.ImageVector
+import neomud.client.generated.resources.Res
+import neomud.client.generated.resources.*
+import org.jetbrains.compose.resources.DrawableResource
 
 /**
  * Centralized icon registry for the MUD client.
- * All UI icons are Material Icons ImageVectors — guaranteed cross-platform.
+ * All UI icons are generated sprite WebPs stored as DrawableResources.
  */
 object MudIcons {
 
     // ── Toolbar ──
-    val Inventory: ImageVector = Icons.Filled.Inventory2
-    val Equipment: ImageVector = Icons.Filled.Shield
-    val Map: ImageVector = Icons.Filled.Map
-    val Settings: ImageVector = Icons.Filled.Settings
+    val Inventory: DrawableResource = Res.drawable.icon_inventory
+    val Equipment: DrawableResource = Res.drawable.icon_equipment
+    val Map: DrawableResource = Res.drawable.icon_map
+    val Settings: DrawableResource = Res.drawable.icon_settings
 
     // ── Skills ──
-    val Bash: ImageVector = Icons.Filled.SportsMma
-    val Kick: ImageVector = Icons.Filled.DoNotStep
-    val Sneak: ImageVector = Icons.Filled.VisibilityOff
-    val Meditate: ImageVector = Icons.Filled.SelfImprovement
-    val Track: ImageVector = Icons.Filled.Pets
-    val PickLock: ImageVector = Icons.Filled.LockOpen
-    val Rest: ImageVector = Icons.Filled.DarkMode
-    val Attack: ImageVector = Icons.Filled.GpsFixed
+    val Bash: DrawableResource = Res.drawable.icon_bash
+    val Kick: DrawableResource = Res.drawable.icon_kick
+    val Sneak: DrawableResource = Res.drawable.icon_sneak
+    val Meditate: DrawableResource = Res.drawable.icon_meditate
+    val Track: DrawableResource = Res.drawable.icon_track
+    val PickLock: DrawableResource = Res.drawable.icon_picklock
+    val Rest: DrawableResource = Res.drawable.icon_rest
+    val Attack: DrawableResource = Res.drawable.icon_attack
 
     // ── Status Effects ──
-    val EffectPoison: ImageVector = Icons.Filled.Science
-    val EffectHealOverTime: ImageVector = Icons.Filled.Favorite
-    val EffectBuffStrength: ImageVector = Icons.Filled.Hardware
-    val EffectBuffAgility: ImageVector = Icons.Filled.FlashOn
-    val EffectBuffIntellect: ImageVector = Icons.AutoMirrored.Filled.MenuBook
-    val EffectBuffWillpower: ImageVector = Icons.Filled.Psychology
-    val EffectHaste: ImageVector = Icons.Filled.Speed
-    val EffectDamage: ImageVector = Icons.Filled.Whatshot
-    val EffectManaRegen: ImageVector = Icons.Filled.WaterDrop
-    val EffectManaDrain: ImageVector = Icons.Filled.InvertColors
+    val EffectPoison: DrawableResource = Res.drawable.icon_effect_poison
+    val EffectHealOverTime: DrawableResource = Res.drawable.icon_effect_heal_over_time
+    val EffectBuffStrength: DrawableResource = Res.drawable.icon_effect_buff_strength
+    val EffectBuffAgility: DrawableResource = Res.drawable.icon_effect_buff_agility
+    val EffectBuffIntellect: DrawableResource = Res.drawable.icon_effect_buff_intellect
+    val EffectBuffWillpower: DrawableResource = Res.drawable.icon_effect_buff_willpower
+    val EffectHaste: DrawableResource = Res.drawable.icon_effect_haste
+    val EffectDamage: DrawableResource = Res.drawable.icon_effect_damage
+    val EffectManaRegen: DrawableResource = Res.drawable.icon_effect_mana_regen
+    val EffectManaDrain: DrawableResource = Res.drawable.icon_effect_mana_drain
+    val EffectBuffDamage: DrawableResource = Res.drawable.icon_buff_damage
+    val EffectBuffMaxHp: DrawableResource = Res.drawable.icon_buff_max_hp
 
-    // ── State Indicators ──
-    val Hidden: ImageVector = Icons.Filled.VisibilityOff
-    val Meditating: ImageVector = Icons.Filled.SelfImprovement
+    // ── State Indicators (aliases) ──
+    val Hidden: DrawableResource = Res.drawable.icon_sneak
+    val Meditating: DrawableResource = Res.drawable.icon_meditate
 
     // ── Room NPCs ──
-    val Vendor: ImageVector = Icons.Filled.AttachMoney
-    val Trainer: ImageVector = Icons.AutoMirrored.Filled.MenuBook
-    val Crafter: ImageVector = Icons.Filled.Hardware
+    val Vendor: DrawableResource = Res.drawable.icon_vendor
+    val Trainer: DrawableResource = Res.drawable.icon_trainer
+    val Crafter: DrawableResource = Res.drawable.icon_crafter
 
     // ── Room Overlay / Interactables ──
-    val ExitOpen: ImageVector = Icons.Filled.LockOpen
-    val TreasureDrop: ImageVector = Icons.Filled.WorkspacePremium
-    val MonsterSpawn: ImageVector = Icons.Filled.Warning
-    val RoomEffect: ImageVector = Icons.Filled.AutoAwesome
-    val Teleport: ImageVector = Icons.Filled.Cyclone
-    val InteractDefault: ImageVector = Icons.Filled.Settings
+    val ExitOpen: DrawableResource = Res.drawable.icon_exit_open
+    val TreasureDrop: DrawableResource = Res.drawable.icon_treasure_drop
+    val MonsterSpawn: DrawableResource = Res.drawable.icon_monster_spawn
+    val RoomEffect: DrawableResource = Res.drawable.icon_room_effect
+    val Teleport: DrawableResource = Res.drawable.icon_teleport
+    val InteractDefault: DrawableResource = Res.drawable.icon_interact
 
-    // ── NPC Context Menu ──
-    val TrackNpc: ImageVector = Icons.Filled.Pets
-    val KickNpc: ImageVector = Icons.Filled.DoNotStep
+    // ── NPC Context Menu (aliases) ──
+    val TrackNpc: DrawableResource = Res.drawable.icon_track
+    val KickNpc: DrawableResource = Res.drawable.icon_kick
 
     // ── Spell Schools ──
-    val SchoolMage: ImageVector = Icons.Filled.AutoAwesome
-    val SchoolPriest: ImageVector = Icons.Filled.Brightness7
-    val SchoolDruid: ImageVector = Icons.Filled.Grass
-    val SchoolKai: ImageVector = Icons.Filled.Whatshot
-    val SchoolBard: ImageVector = Icons.Filled.MusicNote
-    val SchoolDefault: ImageVector = Icons.Filled.Star
+    val SchoolMage: DrawableResource = Res.drawable.icon_school_mage
+    val SchoolPriest: DrawableResource = Res.drawable.icon_school_priest
+    val SchoolDruid: DrawableResource = Res.drawable.icon_school_druid
+    val SchoolKai: DrawableResource = Res.drawable.icon_school_kai
+    val SchoolBard: DrawableResource = Res.drawable.icon_school_bard
+    val SchoolDefault: DrawableResource = Res.drawable.icon_school_default
 
     // ── Per-Spell Icons ──
     // Mage
-    val SpellMagicMissile: ImageVector = Icons.Filled.AutoAwesome
-    val SpellArcaneShield: ImageVector = Icons.Filled.Shield
-    val SpellFrostBolt: ImageVector = Icons.Filled.AcUnit
-    val SpellFireball: ImageVector = Icons.Filled.Whatshot
+    val SpellMagicMissile: DrawableResource = Res.drawable.icon_spell_magic_missile
+    val SpellArcaneShield: DrawableResource = Res.drawable.icon_spell_arcane_shield
+    val SpellFrostBolt: DrawableResource = Res.drawable.icon_spell_frost_bolt
+    val SpellFireball: DrawableResource = Res.drawable.icon_spell_fireball
     // Priest
-    val SpellSmite: ImageVector = Icons.Filled.WbSunny
-    val SpellHolySmite: ImageVector = Icons.Filled.LightMode
-    val SpellMinorHeal: ImageVector = Icons.Filled.Favorite
-    val SpellBlessing: ImageVector = Icons.Filled.FrontHand
-    val SpellCureWounds: ImageVector = Icons.Filled.VolunteerActivism
-    val SpellDivineLight: ImageVector = Icons.Filled.Brightness7
+    val SpellSmite: DrawableResource = Res.drawable.icon_spell_smite
+    val SpellHolySmite: DrawableResource = Res.drawable.icon_spell_holy_smite
+    val SpellMinorHeal: DrawableResource = Res.drawable.icon_spell_minor_heal
+    val SpellBlessing: DrawableResource = Res.drawable.icon_spell_blessing
+    val SpellCureWounds: DrawableResource = Res.drawable.icon_spell_cure_wounds
+    val SpellDivineLight: DrawableResource = Res.drawable.icon_spell_divine_light
     // Druid
-    val SpellThornStrike: ImageVector = Icons.Filled.Park
-    val SpellHealingTouch: ImageVector = Icons.Filled.Grass
-    val SpellPoisonCloud: ImageVector = Icons.Filled.Science
-    val SpellNaturesWrath: ImageVector = Icons.Filled.FlashOn
+    val SpellThornStrike: DrawableResource = Res.drawable.icon_spell_thorn_strike
+    val SpellHealingTouch: DrawableResource = Res.drawable.icon_spell_healing_touch
+    val SpellPoisonCloud: DrawableResource = Res.drawable.icon_spell_poison_cloud
+    val SpellNaturesWrath: DrawableResource = Res.drawable.icon_spell_natures_wrath
     // Kai
-    val SpellInnerFire: ImageVector = Icons.Filled.Whatshot
-    val SpellChiStrike: ImageVector = Icons.Filled.SportsMma
-    val SpellKiBlast: ImageVector = Icons.Filled.Flare
-    val SpellDiamondBody: ImageVector = Icons.Filled.Diamond
+    val SpellInnerFire: DrawableResource = Res.drawable.icon_spell_inner_fire
+    val SpellChiStrike: DrawableResource = Res.drawable.icon_spell_chi_strike
+    val SpellKiBlast: DrawableResource = Res.drawable.icon_spell_ki_blast
+    val SpellDiamondBody: DrawableResource = Res.drawable.icon_spell_diamond_body
     // Bard
-    val SpellCuttingWords: ImageVector = Icons.Filled.RecordVoiceOver
-    val SpellInspire: ImageVector = Icons.Filled.EmojiEvents
-    val SpellSoothingSong: ImageVector = Icons.Filled.GraphicEq
-    val SpellDiscord: ImageVector = Icons.Filled.MusicOff
-    val SpellRallyingCry: ImageVector = Icons.Filled.Campaign
+    val SpellCuttingWords: DrawableResource = Res.drawable.icon_spell_cutting_words
+    val SpellInspire: DrawableResource = Res.drawable.icon_spell_inspire
+    val SpellSoothingSong: DrawableResource = Res.drawable.icon_spell_soothing_song
+    val SpellDiscord: DrawableResource = Res.drawable.icon_spell_discord
+    val SpellRallyingCry: DrawableResource = Res.drawable.icon_spell_rallying_cry
 
     /** Map skill IDs to their icons */
-    fun skillIcon(skillId: String): ImageVector = when (skillId) {
+    fun skillIcon(skillId: String): DrawableResource = when (skillId) {
         "BASH" -> Bash
         "KICK" -> Kick
         "SNEAK" -> Sneak
@@ -111,7 +112,7 @@ object MudIcons {
     }
 
     /** Map spell IDs to their unique icons */
-    fun spellIcon(spellId: String): ImageVector = when (spellId) {
+    fun spellIcon(spellId: String): DrawableResource = when (spellId) {
         "MAGIC_MISSILE" -> SpellMagicMissile
         "ARCANE_SHIELD" -> SpellArcaneShield
         "FROST_BOLT" -> SpellFrostBolt
@@ -139,7 +140,7 @@ object MudIcons {
     }
 
     /** Map spell school to its icon */
-    fun schoolIcon(school: String): ImageVector = when (school) {
+    fun schoolIcon(school: String): DrawableResource = when (school) {
         "mage" -> SchoolMage
         "priest" -> SchoolPriest
         "druid" -> SchoolDruid

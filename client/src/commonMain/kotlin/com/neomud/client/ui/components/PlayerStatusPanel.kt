@@ -1,11 +1,11 @@
 package com.neomud.client.ui.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -13,12 +13,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neomud.shared.model.ActiveEffect
 import com.neomud.shared.model.EffectType
 import com.neomud.shared.model.Player
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun PlayerStatusPanel(
@@ -149,7 +150,7 @@ fun PlayerStatusPanel(
 }
 
 @Composable
-private fun CompactEffectDot(color: Color, icon: ImageVector) {
+private fun CompactEffectDot(color: Color, icon: DrawableResource) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -158,17 +159,16 @@ private fun CompactEffectDot(color: Color, icon: ImageVector) {
             .background(color.copy(alpha = 0.8f))
             .border(1.dp, color, CircleShape)
     ) {
-        Icon(
-            imageVector = icon,
+        Image(
+            painter = painterResource(icon),
             contentDescription = null,
-            tint = Color.White,
-            modifier = Modifier.size(9.dp)
+            modifier = Modifier.size(11.dp)
         )
     }
 }
 
 @Composable
-private fun EffectDot(bgColor: Color, borderColor: Color, icon: ImageVector) {
+private fun EffectDot(bgColor: Color, borderColor: Color, icon: DrawableResource) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -177,16 +177,15 @@ private fun EffectDot(bgColor: Color, borderColor: Color, icon: ImageVector) {
             .background(bgColor.copy(alpha = 0.8f))
             .border(1.dp, borderColor, CircleShape)
     ) {
-        Icon(
-            imageVector = icon,
+        Image(
+            painter = painterResource(icon),
             contentDescription = null,
-            tint = Color.White,
-            modifier = Modifier.size(12.dp)
+            modifier = Modifier.size(14.dp)
         )
     }
 }
 
-private fun effectStyle(type: EffectType): Pair<Color, ImageVector> = when (type) {
+private fun effectStyle(type: EffectType): Pair<Color, DrawableResource> = when (type) {
     EffectType.POISON -> Color(0xFF4CAF50) to MudIcons.EffectPoison
     EffectType.HEAL_OVER_TIME -> Color(0xFFE91E63) to MudIcons.EffectHealOverTime
     EffectType.BUFF_STRENGTH -> Color(0xFFF44336) to MudIcons.EffectBuffStrength
@@ -197,8 +196,8 @@ private fun effectStyle(type: EffectType): Pair<Color, ImageVector> = when (type
     EffectType.DAMAGE -> Color(0xFFFF5722) to MudIcons.EffectDamage
     EffectType.MANA_REGEN -> Color(0xFF3F51B5) to MudIcons.EffectManaRegen
     EffectType.MANA_DRAIN -> Color(0xFF7B1FA2) to MudIcons.EffectManaDrain
-    EffectType.BUFF_DAMAGE -> Color(0xFFFF6F00) to MudIcons.EffectBuffStrength
-    EffectType.BUFF_MAX_HP -> Color(0xFF43A047) to MudIcons.EffectHealOverTime
+    EffectType.BUFF_DAMAGE -> Color(0xFFFF6F00) to MudIcons.EffectBuffDamage
+    EffectType.BUFF_MAX_HP -> Color(0xFF43A047) to MudIcons.EffectBuffMaxHp
 }
 
 @Composable
@@ -212,11 +211,10 @@ private fun EffectIcon(effect: ActiveEffect) {
             .background(bgColor.copy(alpha = 0.8f))
             .border(1.dp, bgColor, CircleShape)
     ) {
-        Icon(
-            imageVector = icon,
+        Image(
+            painter = painterResource(icon),
             contentDescription = effect.type.name,
-            tint = Color.White,
-            modifier = Modifier.size(12.dp)
+            modifier = Modifier.size(14.dp)
         )
     }
 }

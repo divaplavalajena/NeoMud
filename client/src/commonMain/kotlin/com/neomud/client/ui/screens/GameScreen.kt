@@ -16,7 +16,9 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.graphics.vector.ImageVector
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
+import androidx.compose.foundation.Image
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -918,7 +920,7 @@ private fun GameScreenLandscape(
 
 /** Skill icon/color mapping for action buttons */
 private data class SkillButtonInfo(
-    val icon: ImageVector,
+    val icon: DrawableResource,
     val activeColor: Color
 )
 
@@ -934,7 +936,7 @@ private val SKILL_BUTTON_MAP = mapOf(
 
 @Composable
 private fun ActionButton(
-    icon: ImageVector,
+    icon: DrawableResource,
     color: Color,
     isActive: Boolean = false,
     enabled: Boolean = true,
@@ -1081,7 +1083,7 @@ private fun ActionButtonRow(
     } // end Column
 }
 
-private fun interactableStyle(feat: RoomInteractable): Pair<ImageVector, Color> {
+private fun interactableStyle(feat: RoomInteractable): Pair<DrawableResource, Color> {
     return when (feat.actionType) {
         "EXIT_OPEN"      -> MudIcons.ExitOpen to Color(0xFFFFAA00)
         "TREASURE_DROP"  -> MudIcons.TreasureDrop to Color(0xFFFFD700)
@@ -1094,7 +1096,7 @@ private fun interactableStyle(feat: RoomInteractable): Pair<ImageVector, Color> 
 
 @Composable
 private fun RoomOverlayButton(
-    icon: ImageVector,
+    icon: DrawableResource,
     label: String,
     color: Color,
     onClick: () -> Unit
@@ -1111,11 +1113,10 @@ private fun RoomOverlayButton(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp)
         ) {
-            Icon(
-                imageVector = icon,
+            Image(
+                painter = painterResource(icon),
                 contentDescription = label,
-                tint = color,
-                modifier = Modifier.size(16.dp)
+                modifier = Modifier.size(18.dp)
             )
             Text(
                 text = label,
@@ -1148,11 +1149,10 @@ private fun SpellUtilityButton(
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Icon(
-            imageVector = MudIcons.schoolIcon(primarySchool),
+        Image(
+            painter = painterResource(MudIcons.schoolIcon(primarySchool)),
             contentDescription = "Spells",
-            tint = spellColor,
-            modifier = Modifier.size(18.dp)
+            modifier = Modifier.size(22.dp)
         )
     }
 }
@@ -1168,11 +1168,10 @@ private fun InventoryIconButton(active: Boolean, onClick: () -> Unit) {
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Icon(
-            imageVector = MudIcons.Inventory,
+        Image(
+            painter = painterResource(MudIcons.Inventory),
             contentDescription = "Inventory",
-            tint = if (active) Color(0xFFFFD700) else Color(0xFFA8A8A8),
-            modifier = Modifier.size(18.dp)
+            modifier = Modifier.size(22.dp)
         )
     }
 }
@@ -1188,11 +1187,10 @@ private fun EquipmentIconButton(active: Boolean, onClick: () -> Unit) {
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Icon(
-            imageVector = MudIcons.Equipment,
+        Image(
+            painter = painterResource(MudIcons.Equipment),
             contentDescription = "Equipment",
-            tint = if (active) Color(0xFFFFD700) else Color(0xFFA8A8A8),
-            modifier = Modifier.size(18.dp)
+            modifier = Modifier.size(22.dp)
         )
     }
 }
@@ -1208,11 +1206,10 @@ private fun MapIconButton(active: Boolean, onClick: () -> Unit) {
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Icon(
-            imageVector = MudIcons.Map,
+        Image(
+            painter = painterResource(MudIcons.Map),
             contentDescription = "Map",
-            tint = if (active) Color(0xFFFFD700) else Color(0xFFA8A8A8),
-            modifier = Modifier.size(18.dp)
+            modifier = Modifier.size(22.dp)
         )
     }
 }
@@ -1228,11 +1225,10 @@ private fun SettingsGearButton(onClick: () -> Unit) {
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center
     ) {
-        Icon(
-            imageVector = MudIcons.Settings,
+        Image(
+            painter = painterResource(MudIcons.Settings),
             contentDescription = "Settings",
-            tint = Color(0xFFA8A8A8),
-            modifier = Modifier.size(18.dp)
+            modifier = Modifier.size(22.dp)
         )
     }
 }

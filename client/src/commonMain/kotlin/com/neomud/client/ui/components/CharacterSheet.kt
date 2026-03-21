@@ -9,6 +9,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.Image
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -33,6 +34,7 @@ import coil3.request.CachePolicy
 import coil3.request.crossfade
 import com.neomud.client.ui.theme.StoneTheme
 import com.neomud.shared.model.*
+import org.jetbrains.compose.resources.painterResource
 
 // ─────────────────────────────────────────────
 // Palette — shared medieval aesthetic
@@ -600,11 +602,10 @@ private fun ActiveEffectsSection(activeEffects: List<ActiveEffect>, isHidden: Bo
                         .background(Color(0xFF555555).copy(alpha = 0.8f))
                         .border(1.dp, AshGray, CircleShape)
                 ) {
-                    Icon(
-                        imageVector = MudIcons.Hidden,
+                    Image(
+                        painter = painterResource(MudIcons.Hidden),
                         contentDescription = "Hidden",
-                        tint = Color.White,
-                        modifier = Modifier.size(10.dp)
+                        modifier = Modifier.size(12.dp)
                     )
                 }
                 Spacer(modifier = Modifier.width(6.dp))

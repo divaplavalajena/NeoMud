@@ -2,6 +2,7 @@ package com.neomud.client.ui.components
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -9,12 +10,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neomud.client.ui.theme.MudColors
 import com.neomud.shared.model.SpellDef
+import org.jetbrains.compose.resources.painterResource
 
 fun schoolColor(school: String): Color = when (school) {
     "mage" -> Color(0xFF5599FF)
@@ -86,11 +89,12 @@ fun SpellBar(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
-                            Icon(
-                                imageVector = MudIcons.spellIcon(spell.id),
+                            Image(
+                                painter = painterResource(MudIcons.spellIcon(spell.id)),
                                 contentDescription = spell.name,
-                                tint = if (hasEnoughMp) borderColor else Color.Gray,
-                                modifier = Modifier.size(16.dp)
+                                modifier = Modifier
+                                    .size(22.dp)
+                                    .alpha(if (hasEnoughMp) 1f else 0.4f)
                             )
                             Text(
                                 text = "${spell.manaCost}",
@@ -101,11 +105,12 @@ fun SpellBar(
                         }
                     } else {
                         // Empty slot — show school icon
-                        Icon(
-                            imageVector = MudIcons.SchoolDefault,
+                        Image(
+                            painter = painterResource(MudIcons.SchoolDefault),
                             contentDescription = "Empty spell slot",
-                            tint = Color(0xFF555555),
-                            modifier = Modifier.size(18.dp)
+                            modifier = Modifier
+                                .size(24.dp)
+                                .alpha(0.35f)
                         )
                     }
                 }

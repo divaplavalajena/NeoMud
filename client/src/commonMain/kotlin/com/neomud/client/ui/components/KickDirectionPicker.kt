@@ -1,5 +1,6 @@
 package com.neomud.client.ui.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -16,6 +17,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.neomud.shared.model.Direction
+import org.jetbrains.compose.resources.painterResource
 
 private val EnabledColor = Color(0xFFFF5533)
 private val DisabledColor = Color(0xFF444444)
@@ -96,11 +98,10 @@ fun KickDirectionPicker(
                         modifier = Modifier.size(ButtonSize),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            imageVector = MudIcons.Kick,
+                        Image(
+                            painter = painterResource(MudIcons.Kick),
                             contentDescription = "Kick",
-                            tint = EnabledColor,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(32.dp)
                         )
                     }
                     KickDirButton("\u25B6", Direction.EAST, validDirections, lockedExits, onSelect, ButtonSize)
@@ -172,10 +173,10 @@ private fun KickDirButton(
         )
     ) {
         if (isLocked) {
-            Icon(
-                imageVector = MudIcons.PickLock,
+            Image(
+                painter = painterResource(MudIcons.PickLock),
                 contentDescription = "Locked",
-                modifier = Modifier.size(if (size == SmallButtonSize) 14.dp else 16.dp)
+                modifier = Modifier.size(if (size == SmallButtonSize) 20.dp else 22.dp)
             )
         } else {
             Text(
