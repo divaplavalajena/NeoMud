@@ -46,6 +46,7 @@ object MudIcons {
     // ── Room NPCs ──
     val Vendor: ImageVector = Icons.Filled.AttachMoney
     val Trainer: ImageVector = Icons.AutoMirrored.Filled.MenuBook
+    val Crafter: ImageVector = Icons.Filled.Hardware
 
     // ── Room Overlay / Interactables ──
     val ExitOpen: ImageVector = Icons.Filled.LockOpen

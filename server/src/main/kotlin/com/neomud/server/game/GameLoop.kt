@@ -267,6 +267,7 @@ class GameLoop(
         }
 
         // 1c. Resolve non-combat pending skills
+        val scrollKills = mutableListOf<CombatEvent.NpcKilled>()
         for (session in sessionManager.getAllAuthenticatedSessions()) {
             when (val skill = session.pendingSkill) {
                 is PendingSkill.Meditate -> {
@@ -283,7 +284,7 @@ class GameLoop(
                 }
                 is PendingSkill.UseItem -> {
                     session.pendingSkill = null
-                    resolveUseItem(session, skill.itemId)
+                    resolveUseItem(session, skill.itemId, scrollKills)
                 }
                 is PendingSkill.CastSpell -> {
                     session.pendingSkill = null
@@ -481,6 +482,11 @@ class GameLoop(
             }
         }
 
+        // 2b. Process scroll/consumable NPC kills (from resolveUseItem targetDamage)
+        for (kill in scrollKills) {
+            handleNpcKillEvent(kill)
+        }
+
         // 3. Tick down skill cooldowns
         for (session in sessionManager.getAllAuthenticatedSessions()) {
             val iter = session.skillCooldowns.iterator()
@@ -564,6 +570,8 @@ class GameLoop(
                         com.neomud.shared.model.EffectType.BUFF_INTELLECT -> "intellect"
                         com.neomud.shared.model.EffectType.BUFF_WILLPOWER -> "willpower"
                         com.neomud.shared.model.EffectType.HASTE -> "haste"
+                        com.neomud.shared.model.EffectType.BUFF_DAMAGE -> "damage"
+                        com.neomud.shared.model.EffectType.BUFF_MAX_HP -> "maximum HP"
                         else -> null
                     }
                     val message = if (statName != null) {
@@ -592,6 +600,17 @@ class GameLoop(
                 try {
                     session.send(ServerMessage.SystemMessage("${effect.name} has worn off."))
                 } catch (_: Exception) { /* session closing */ }
+            }
+
+            // When BUFF_MAX_HP expires, cap currentHp to new effective max
+            if (expired.any { it.type == EffectType.BUFF_MAX_HP }) {
+                val p = session.player
+                if (p != null) {
+                    val effectiveMax = session.effectiveMaxHp()
+                    if (p.currentHp > effectiveMax) {
+                        session.player = p.copy(currentHp = effectiveMax)
+                    }
+                }
             }
 
             // Send updated active effects list to client
@@ -870,7 +889,7 @@ class GameLoop(
         checkHiddenExits(session, roomId, check)
     }
 
-    private suspend fun resolveUseItem(session: PlayerSession, itemId: String) {
+    private suspend fun resolveUseItem(session: PlayerSession, itemId: String, pendingNpcKills: MutableList<CombatEvent.NpcKilled> = mutableListOf()) {
         val playerName = session.playerName ?: return
         val player = session.player ?: return
 
@@ -896,6 +915,46 @@ class GameLoop(
         session.player = result.updatedPlayer
         session.activeEffects.addAll(result.newEffects)
 
+        // Handle cure_dot — remove POISON and DAMAGE effects
+        if (result.cureDot) {
+            session.activeEffects.removeAll { it.type in setOf(EffectType.POISON, EffectType.DAMAGE) }
+        }
+
+        // Handle targetDamage — apply instant damage to combat target
+        if (result.targetDamage > 0) {
+            val targetId = session.selectedTargetId
+            val npc = if (targetId != null) npcManager.getNpcState(targetId) else null
+            val roomId = session.currentRoomId
+            if (npc != null && roomId != null && npc.currentRoomId == roomId && npc.currentHp > 0) {
+                npc.currentHp -= result.targetDamage
+                sessionManager.broadcastToRoom(roomId, ServerMessage.SpellEffect(
+                    casterName = playerName,
+                    targetName = npc.name,
+                    spellName = item.name,
+                    effectAmount = result.targetDamage,
+                    targetNewHp = npc.currentHp.coerceAtLeast(0),
+                    targetMaxHp = npc.maxHp,
+                    targetId = npc.id
+                ))
+                if (npc.currentHp <= 0) {
+                    pendingNpcKills.add(CombatEvent.NpcKilled(
+                        npcId = npc.id,
+                        npcName = npc.name,
+                        killerName = playerName,
+                        roomId = roomId,
+                        npcLevel = npc.level,
+                        xpReward = npc.xpReward,
+                        templateId = npc.templateId
+                    ))
+                }
+            } else {
+                // No valid target — refund the item
+                inventoryRepository.addItem(playerName, itemId, 1)
+                try { session.send(ServerMessage.Error("You have no target for that scroll.")) } catch (_: Exception) {}
+                return
+            }
+        }
+
         val message = result.messages.joinToString(" ")
         try {
             session.send(ServerMessage.ItemUsed(
@@ -904,7 +963,7 @@ class GameLoop(
                 newHp = result.updatedPlayer.currentHp,
                 newMp = result.updatedPlayer.currentMp
             ))
-            if (result.newEffects.isNotEmpty()) {
+            if (result.newEffects.isNotEmpty() || result.cureDot) {
                 session.send(ServerMessage.ActiveEffectsUpdate(session.activeEffects.toList()))
             }
             sendInventoryUpdateForSession(session)

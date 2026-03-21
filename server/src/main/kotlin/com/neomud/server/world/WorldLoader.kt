@@ -21,6 +21,7 @@ object WorldLoader {
         val raceCatalog: RaceCatalog,
         val spellCatalog: SpellCatalog,
         val pcSpriteCatalog: PcSpriteCatalog,
+        val recipeCatalog: RecipeCatalog,
         val zoneSpawnConfigs: Map<String, SpawnConfig>,
         val roomMaxHostileNpcs: Map<String, Int>,
         val manifest: WorldManifest? = null
@@ -44,6 +45,7 @@ object WorldLoader {
         val raceCatalog = RaceCatalog.load(source)
         val spellCatalog = SpellCatalog.load(source)
         val pcSpriteCatalog = PcSpriteCatalog.load(source)
+        val recipeCatalog = RecipeCatalog.load(source)
         val worldGraph = WorldGraph()
         val allNpcData = mutableListOf<Pair<NpcData, String>>()
         val zoneSpawnConfigs = mutableMapOf<String, SpawnConfig>()
@@ -180,6 +182,9 @@ object WorldLoader {
             if (npcData.behaviorType == "vendor" && npcData.vendorItems.isEmpty()) {
                 logger.warn("Vendor NPC '${npcData.id}' has empty vendorItems")
             }
+            if (npcData.behaviorType == "crafter" && npcData.crafterRecipes.isEmpty()) {
+                logger.warn("Crafter NPC '${npcData.id}' has empty crafterRecipes")
+            }
             if (npcData.behaviorType == "patrol" && npcData.patrolRoute.isEmpty()) {
                 logger.warn("Patrol NPC '${npcData.id}' has empty patrolRoute")
             }
@@ -244,6 +249,26 @@ object WorldLoader {
             for (lootEntry in entry.items) {
                 if (itemCatalog.getItem(lootEntry.itemId) == null) {
                     logger.warn("Loot table '$npcId' references unknown item '${lootEntry.itemId}'")
+                }
+            }
+        }
+
+        // Recipe validation
+        for (recipe in recipeCatalog.getAllRecipes()) {
+            if (itemCatalog.getItem(recipe.outputItemId) == null) {
+                logger.warn("Recipe '${recipe.id}' output item '${recipe.outputItemId}' not found in item catalog")
+            }
+            for (mat in recipe.materials) {
+                if (itemCatalog.getItem(mat.itemId) == null) {
+                    logger.warn("Recipe '${recipe.id}' material '${mat.itemId}' not found in item catalog")
+                }
+            }
+        }
+        // NPC crafter recipe validation
+        for ((npcData, _) in allNpcData) {
+            for (recipeId in npcData.crafterRecipes) {
+                if (recipeCatalog.getRecipe(recipeId) == null) {
+                    logger.warn("Crafter NPC '${npcData.id}' references unknown recipe '$recipeId'")
                 }
             }
         }
@@ -344,6 +369,6 @@ object WorldLoader {
             }
         }
 
-        return LoadResult(worldGraph, allNpcData, classCatalog, itemCatalog, lootTableCatalog, skillCatalog, raceCatalog, spellCatalog, pcSpriteCatalog, zoneSpawnConfigs, roomMaxHostileNpcs, manifest)
+        return LoadResult(worldGraph, allNpcData, classCatalog, itemCatalog, lootTableCatalog, skillCatalog, raceCatalog, spellCatalog, pcSpriteCatalog, recipeCatalog, zoneSpawnConfigs, roomMaxHostileNpcs, manifest)
     }
 }

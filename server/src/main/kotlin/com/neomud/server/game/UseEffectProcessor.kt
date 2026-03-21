@@ -23,7 +23,9 @@ object UseEffectProcessor {
     data class Result(
         val updatedPlayer: Player,
         val newEffects: List<ActiveEffect>,
-        val messages: List<String>
+        val messages: List<String>,
+        val cureDot: Boolean = false,
+        val targetDamage: Int = 0
     )
 
     fun process(effectString: String, player: Player, itemName: String): Result? {
@@ -33,6 +35,8 @@ object UseEffectProcessor {
         val messages = mutableListOf<String>()
         val newEffects = mutableListOf<ActiveEffect>()
         var anyApplied = false
+        var cureDot = false
+        var targetDamage = 0
 
         for (token in effectString.split(',').map { it.trim() }) {
             val parts = token.split(':')
@@ -79,10 +83,45 @@ object UseEffectProcessor {
                     messages.add("You use the $itemName. You feel your $stat surge!")
                     anyApplied = true
                 }
+                "damage" -> {
+                    val amount = parts.getOrNull(1)?.toIntOrNull() ?: continue
+                    targetDamage += amount
+                    messages.add("You unleash the $itemName!")
+                    anyApplied = true
+                }
+                "buff_damage" -> {
+                    val magnitude = parts.getOrNull(1)?.toIntOrNull() ?: continue
+                    val ticks = parts.getOrNull(2)?.toIntOrNull() ?: continue
+                    newEffects.add(ActiveEffect(
+                        name = "$itemName (damage)",
+                        type = EffectType.BUFF_DAMAGE,
+                        remainingTicks = ticks,
+                        magnitude = magnitude
+                    ))
+                    messages.add("You use the $itemName. Your attacks surge with power!")
+                    anyApplied = true
+                }
+                "buff_max_hp" -> {
+                    val magnitude = parts.getOrNull(1)?.toIntOrNull() ?: continue
+                    val ticks = parts.getOrNull(2)?.toIntOrNull() ?: continue
+                    newEffects.add(ActiveEffect(
+                        name = "$itemName (max HP)",
+                        type = EffectType.BUFF_MAX_HP,
+                        remainingTicks = ticks,
+                        magnitude = magnitude
+                    ))
+                    messages.add("You use the $itemName. You feel hardier!")
+                    anyApplied = true
+                }
+                "cure_dot" -> {
+                    cureDot = true
+                    messages.add("You use the $itemName. The poison is purged from your body!")
+                    anyApplied = true
+                }
             }
         }
 
-        return if (anyApplied) Result(current, newEffects, messages) else null
+        return if (anyApplied) Result(current, newEffects, messages, cureDot, targetDamage) else null
     }
 
     private val STAT_TO_EFFECT_TYPE = mapOf(

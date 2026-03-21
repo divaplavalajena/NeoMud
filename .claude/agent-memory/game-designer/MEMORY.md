@@ -40,7 +40,7 @@
 ## Equipment Tiers (CURRENT weapon stats)
 - L1: Iron Sword (+8/8), Rustic Dagger (+5/6), Wooden Staff (+3/6), Short Bow (+6/7)
 - L3: Steel Longsword (+12/10), Chain armor set (3-7), Iron accessories (2-4)
-- L5: Enchanted Robes (4 armor, +2 dmg), Mystic Staff (+8/8)
+- L5: Enchanted Robes (4 armor, +2 dmg), Mystic Staff (+10/10)
 - L6: Plate set (4-12), Steel Greatsword (+16/12), Tower Shield (6)
 
 ## Implemented Changes (confirmed in code, Mar 2026)
@@ -64,4 +64,13 @@
 - No L4-5 equipment tier exists
 - Blacksmith doesn't sell dagger/staff/bow
 - Cutting Words basePower (8) below other T1 damage spells (10-13)
-- Crafting materials drop but no crafting system exists
+- Crafting materials drop but no crafting system exists -- **design filed as issue #214**
+- No loot_tables.json file exists; loot is embedded in zone NPC definitions
+
+## Economy Analysis (Mar 2026)
+- Forest farming: ~30 kills/hr, ~186c/hr from mats, ~45c/hr coins
+- Marsh farming: ~20 kills/hr, ~372c/hr from mats, ~60c/hr coins
+- Gorge farming: ~15 kills/hr, ~450c/hr from mats, ~75c/hr coins
+- Vendor sell rate: 50-99% of item value (Charm + Haggle dependent), typical 60-75%
+- Critical gap: no L4-5 equipment tier between chain (L3) and plate (L6)
+- Mystic Staff corrected to +10/10 (was +8/8 in older memory)

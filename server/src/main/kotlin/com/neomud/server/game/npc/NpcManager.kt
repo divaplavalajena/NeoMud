@@ -34,6 +34,7 @@ data class NpcState(
     val startRoomId: RoomId = "",
     val templateId: String = "",
     val vendorItems: List<String> = emptyList(),
+    val crafterRecipes: List<String> = emptyList(),
     val accuracy: Int = 0,
     val defense: Int = 0,
     val evasion: Int = 0,
@@ -129,6 +130,7 @@ class NpcManager(
             startRoomId = data.startRoomId,
             templateId = data.id,
             vendorItems = data.vendorItems,
+            crafterRecipes = data.crafterRecipes,
             accuracy = data.accuracy,
             defense = data.defense,
             evasion = data.evasion,
@@ -333,6 +335,9 @@ class NpcManager(
 
     fun getVendorInRoom(roomId: RoomId): NpcState? =
         npcs.find { it.currentRoomId == roomId && it.behaviorType == "vendor" && it.isAlive }
+
+    fun getCrafterInRoom(roomId: RoomId): NpcState? =
+        npcs.find { it.currentRoomId == roomId && it.behaviorType == "crafter" && it.isAlive }
 
     fun spawnAdminNpc(templateId: String, roomId: RoomId): NpcState? {
         val (data, zoneId) = allTemplates[templateId] ?: return null

@@ -18,6 +18,7 @@ import com.neomud.server.game.commands.SneakCommand
 import com.neomud.server.game.commands.SpellCommand
 import com.neomud.server.game.commands.TrackCommand
 import com.neomud.server.game.commands.TrainerCommand
+import com.neomud.server.game.commands.CraftCommand
 import com.neomud.server.game.commands.VendorCommand
 import com.neomud.server.game.inventory.LootService
 import com.neomud.server.game.inventory.RoomItemManager
@@ -64,6 +65,7 @@ class CommandProcessor(
     private val inventoryRepository: InventoryRepository,
     private val coinRepository: CoinRepository,
     private val discoveryRepository: DiscoveryRepository,
+    private val craftCommand: CraftCommand? = null,
     private val adminUsernames: Set<String> = emptySet(),
     private val movementTrailManager: MovementTrailManager? = null,
     private val pcSpriteCatalog: PcSpriteCatalog? = null
@@ -231,6 +233,12 @@ class CommandProcessor(
             }
             is ClientMessage.ReadySpell -> {
                 requireAuth(session) { handleReadySpell(session, message) }
+            }
+            is ClientMessage.InteractCrafter -> {
+                requireAuth(session) { craftCommand?.handleInteract(session) ?: session.send(ServerMessage.SystemMessage("Crafting is not available.")) }
+            }
+            is ClientMessage.CraftItem -> {
+                requireAuth(session) { craftCommand?.handleCraft(session, message.recipeId) ?: session.send(ServerMessage.SystemMessage("Crafting is not available.")) }
             }
             else -> {} // Register, Login, Ping already handled in process()
         }

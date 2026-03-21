@@ -1,0 +1,290 @@
+{
+  "recipes": [
+    {
+      "id": "recipe:antivenom_vial",
+      "name": "Antivenom Vial",
+      "description": "A vial that cures poison effects.",
+      "category": "consumable",
+      "materials": [
+        { "itemId": "item:spider_fang", "quantity": 2 }
+      ],
+      "cost": { "silver": 1 },
+      "outputItemId": "item:antivenom_vial",
+      "outputQuantity": 3,
+      "levelRequirement": 1
+    },
+    {
+      "id": "recipe:fortifying_tonic",
+      "name": "Fortifying Tonic",
+      "description": "A tonic that temporarily increases maximum HP.",
+      "category": "consumable",
+      "materials": [
+        { "itemId": "item:marsh_hide", "quantity": 1 },
+        { "itemId": "item:wolf_pelt", "quantity": 1 }
+      ],
+      "cost": { "silver": 2 },
+      "outputItemId": "item:fortifying_tonic",
+      "outputQuantity": 2,
+      "levelRequirement": 2
+    },
+    {
+      "id": "recipe:wraith_draught",
+      "name": "Wraith Draught",
+      "description": "A draught that temporarily increases damage.",
+      "category": "consumable",
+      "materials": [
+        { "itemId": "item:wraith_essence", "quantity": 2 }
+      ],
+      "cost": { "silver": 3 },
+      "outputItemId": "item:wraith_draught",
+      "outputQuantity": 2,
+      "levelRequirement": 3
+    },
+    {
+      "id": "recipe:obsidian_flask",
+      "name": "Obsidian Flask",
+      "description": "A powerful healing potion sealed in volcanic glass.",
+      "category": "consumable",
+      "materials": [
+        { "itemId": "item:obsidian_shard", "quantity": 1 },
+        { "itemId": "item:marsh_hide", "quantity": 1 }
+      ],
+      "cost": { "silver": 5 },
+      "outputItemId": "item:obsidian_flask",
+      "outputQuantity": 2,
+      "levelRequirement": 4
+    },
+    {
+      "id": "recipe:venom_fang_dagger",
+      "name": "Venom Fang Dagger",
+      "description": "A dagger crafted from spider fangs.",
+      "category": "weapon",
+      "materials": [
+        { "itemId": "item:spider_fang", "quantity": 3 },
+        { "itemId": "item:wolf_pelt", "quantity": 1 }
+      ],
+      "cost": { "silver": 3 },
+      "outputItemId": "item:venom_fang_dagger",
+      "levelRequirement": 3
+    },
+    {
+      "id": "recipe:wolfbone_bow",
+      "name": "Wolfbone Bow",
+      "description": "A bow shaped from wolf bones.",
+      "category": "weapon",
+      "materials": [
+        { "itemId": "item:wolf_pelt", "quantity": 3 },
+        { "itemId": "item:spider_fang", "quantity": 2 }
+      ],
+      "cost": { "silver": 4 },
+      "outputItemId": "item:wolfbone_bow",
+      "levelRequirement": 3
+    },
+    {
+      "id": "recipe:marsh_reed_staff",
+      "name": "Marsh Reed Staff",
+      "description": "A staff woven from ironwood marsh reeds.",
+      "category": "weapon",
+      "materials": [
+        { "itemId": "item:marsh_hide", "quantity": 3 },
+        { "itemId": "item:spider_fang", "quantity": 2 }
+      ],
+      "cost": { "silver": 4 },
+      "outputItemId": "item:marsh_reed_staff",
+      "levelRequirement": 3
+    },
+    {
+      "id": "recipe:obsidian_edge",
+      "name": "Obsidian Edge",
+      "description": "A greatsword with a volcanic glass blade.",
+      "category": "weapon",
+      "materials": [
+        { "itemId": "item:obsidian_shard", "quantity": 4 },
+        { "itemId": "item:marsh_hide", "quantity": 2 }
+      ],
+      "cost": { "gold": 1 },
+      "outputItemId": "item:obsidian_edge",
+      "levelRequirement": 6
+    },
+    {
+      "id": "recipe:wraith_touched_blade",
+      "name": "Wraith-Touched Blade",
+      "description": "A longsword infused with wraith essence.",
+      "category": "weapon",
+      "materials": [
+        { "itemId": "item:wraith_essence", "quantity": 4 },
+        { "itemId": "item:obsidian_shard", "quantity": 2 }
+      ],
+      "cost": { "gold": 1, "silver": 5 },
+      "outputItemId": "item:wraith_touched_blade",
+      "levelRequirement": 7
+    },
+    {
+      "id": "recipe:wolf_pelt_cloak",
+      "name": "Wolf Pelt Cloak",
+      "description": "A cloak sewn from wolf pelts.",
+      "category": "armor",
+      "materials": [
+        { "itemId": "item:wolf_pelt", "quantity": 3 }
+      ],
+      "cost": { "silver": 2 },
+      "outputItemId": "item:wolf_pelt_cloak",
+      "levelRequirement": 2
+    },
+    {
+      "id": "recipe:spider_silk_gloves",
+      "name": "Spider Silk Gloves",
+      "description": "Gloves woven from spider silk.",
+      "category": "armor",
+      "materials": [
+        { "itemId": "item:spider_fang", "quantity": 3 }
+      ],
+      "cost": { "silver": 2 },
+      "outputItemId": "item:spider_silk_gloves",
+      "levelRequirement": 2
+    },
+    {
+      "id": "recipe:marsh_hide_vest",
+      "name": "Marsh Hide Vest",
+      "description": "A vest of tanned marsh hide.",
+      "category": "armor",
+      "materials": [
+        { "itemId": "item:marsh_hide", "quantity": 3 },
+        { "itemId": "item:spider_fang", "quantity": 1 }
+      ],
+      "cost": { "silver": 3 },
+      "outputItemId": "item:marsh_hide_vest",
+      "levelRequirement": 3
+    },
+    {
+      "id": "recipe:marsh_hide_leggings",
+      "name": "Marsh Hide Leggings",
+      "description": "Leggings crafted from marsh hide.",
+      "category": "armor",
+      "materials": [
+        { "itemId": "item:marsh_hide", "quantity": 3 }
+      ],
+      "cost": { "silver": 2, "copper": 50 },
+      "outputItemId": "item:marsh_hide_leggings",
+      "levelRequirement": 3
+    },
+    {
+      "id": "recipe:marsh_hide_boots",
+      "name": "Marsh Hide Boots",
+      "description": "Boots of marsh hide.",
+      "category": "armor",
+      "materials": [
+        { "itemId": "item:marsh_hide", "quantity": 2 }
+      ],
+      "cost": { "silver": 2 },
+      "outputItemId": "item:marsh_hide_boots",
+      "levelRequirement": 3
+    },
+    {
+      "id": "recipe:wraith_woven_hood",
+      "name": "Wraith-Woven Hood",
+      "description": "A hood woven with wraith essence.",
+      "category": "armor",
+      "materials": [
+        { "itemId": "item:wraith_essence", "quantity": 3 },
+        { "itemId": "item:spider_fang", "quantity": 2 }
+      ],
+      "cost": { "silver": 5 },
+      "outputItemId": "item:wraith_woven_hood",
+      "levelRequirement": 5
+    },
+    {
+      "id": "recipe:obsidian_buckler",
+      "name": "Obsidian Buckler",
+      "description": "A buckler forged from volcanic glass.",
+      "category": "armor",
+      "materials": [
+        { "itemId": "item:obsidian_shard", "quantity": 3 },
+        { "itemId": "item:marsh_hide", "quantity": 1 }
+      ],
+      "cost": { "silver": 5 },
+      "outputItemId": "item:obsidian_buckler",
+      "levelRequirement": 5
+    },
+    {
+      "id": "recipe:fang_pendant",
+      "name": "Fang Pendant",
+      "description": "A pendant strung with wolf and spider fangs.",
+      "category": "accessory",
+      "materials": [
+        { "itemId": "item:wolf_pelt", "quantity": 1 },
+        { "itemId": "item:spider_fang", "quantity": 1 }
+      ],
+      "cost": { "silver": 1, "copper": 50 },
+      "outputItemId": "item:fang_pendant",
+      "levelRequirement": 2
+    },
+    {
+      "id": "recipe:wolf_fang_ring",
+      "name": "Wolf Fang Ring",
+      "description": "A ring carved from a wolf fang.",
+      "category": "accessory",
+      "materials": [
+        { "itemId": "item:wolf_pelt", "quantity": 2 }
+      ],
+      "cost": { "silver": 2 },
+      "outputItemId": "item:wolf_fang_ring",
+      "levelRequirement": 3
+    },
+    {
+      "id": "recipe:wraith_sigil_amulet",
+      "name": "Wraith Sigil Amulet",
+      "description": "An amulet inscribed with wraith sigils.",
+      "category": "accessory",
+      "materials": [
+        { "itemId": "item:wraith_essence", "quantity": 3 },
+        { "itemId": "item:obsidian_shard", "quantity": 1 }
+      ],
+      "cost": { "silver": 7 },
+      "outputItemId": "item:wraith_sigil_amulet",
+      "levelRequirement": 6
+    },
+    {
+      "id": "recipe:scroll_of_venom",
+      "name": "Scroll of Venom",
+      "description": "A scroll that deals instant venom damage.",
+      "category": "scroll",
+      "materials": [
+        { "itemId": "item:spider_fang", "quantity": 2 },
+        { "itemId": "item:wraith_essence", "quantity": 1 }
+      ],
+      "cost": { "silver": 3 },
+      "outputItemId": "item:scroll_of_venom",
+      "outputQuantity": 2,
+      "levelRequirement": 3
+    },
+    {
+      "id": "recipe:scroll_of_healing_crafted",
+      "name": "Scroll of Healing",
+      "description": "A scroll that restores health.",
+      "category": "scroll",
+      "materials": [
+        { "itemId": "item:spider_fang", "quantity": 1 },
+        { "itemId": "item:wolf_pelt", "quantity": 1 }
+      ],
+      "cost": { "silver": 2 },
+      "outputItemId": "item:scroll_of_healing",
+      "outputQuantity": 2,
+      "levelRequirement": 2
+    },
+    {
+      "id": "recipe:scroll_of_flame_shield",
+      "name": "Scroll of Flame Shield",
+      "description": "A scroll that temporarily increases maximum HP.",
+      "category": "scroll",
+      "materials": [
+        { "itemId": "item:obsidian_shard", "quantity": 2 },
+        { "itemId": "item:wraith_essence", "quantity": 1 }
+      ],
+      "cost": { "silver": 4 },
+      "outputItemId": "item:scroll_of_flame_shield",
+      "outputQuantity": 2,
+      "levelRequirement": 4
+    }
+  ]
+}

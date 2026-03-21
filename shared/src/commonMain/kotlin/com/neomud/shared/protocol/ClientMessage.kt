@@ -131,4 +131,12 @@ sealed class ClientMessage {
     @Serializable
     @SerialName("ready_spell")
     data class ReadySpell(val spellId: String? = null) : ClientMessage()
+
+    @Serializable
+    @SerialName("interact_crafter")
+    data object InteractCrafter : ClientMessage()
+
+    @Serializable
+    @SerialName("craft_item")
+    data class CraftItem(val recipeId: String) : ClientMessage()
 }

@@ -197,6 +197,8 @@ private fun effectStyle(type: EffectType): Pair<Color, ImageVector> = when (type
     EffectType.DAMAGE -> Color(0xFFFF5722) to MudIcons.EffectDamage
     EffectType.MANA_REGEN -> Color(0xFF3F51B5) to MudIcons.EffectManaRegen
     EffectType.MANA_DRAIN -> Color(0xFF7B1FA2) to MudIcons.EffectManaDrain
+    EffectType.BUFF_DAMAGE -> Color(0xFFFF6F00) to MudIcons.EffectBuffStrength
+    EffectType.BUFF_MAX_HP -> Color(0xFF43A047) to MudIcons.EffectHealOverTime
 }
 
 @Composable

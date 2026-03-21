@@ -50,16 +50,16 @@ class SpellCatalogTest {
         assertTrue(mageSpells.all { it.school == "mage" })
 
         val priestSpells = catalog.getSpellsForSchool("priest")
-        assertEquals(6, priestSpells.size)
+        assertEquals(7, priestSpells.size)
 
         val druidSpells = catalog.getSpellsForSchool("druid")
         assertEquals(4, druidSpells.size)
 
         val kaiSpells = catalog.getSpellsForSchool("kai")
-        assertEquals(4, kaiSpells.size)
+        assertEquals(5, kaiSpells.size)
 
         val bardSpells = catalog.getSpellsForSchool("bard")
-        assertEquals(5, bardSpells.size)
+        assertEquals(6, bardSpells.size)
     }
 
     @Test

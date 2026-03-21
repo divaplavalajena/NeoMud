@@ -47,6 +47,7 @@ import com.neomud.client.ui.components.SettingsPanel
 import com.neomud.client.ui.components.SpellBar
 import com.neomud.client.ui.components.SpellPicker
 import com.neomud.client.ui.components.SpriteOverlay
+import com.neomud.client.ui.components.CraftingPanel
 import com.neomud.client.ui.components.TrainerPanel
 import com.neomud.client.ui.components.VendorPanel
 import com.neomud.client.ui.components.KickDirectionPicker
@@ -89,6 +90,8 @@ fun GameScreen(
     val trainerInfo by gameViewModel.trainerInfo.collectAsState()
     val showVendor by gameViewModel.showVendor.collectAsState()
     val vendorInfo by gameViewModel.vendorInfo.collectAsState()
+    val showCrafting by gameViewModel.showCrafting.collectAsState()
+    val crafterInfo by gameViewModel.crafterInfo.collectAsState()
     val spellCatalogState by gameViewModel.spellCatalog.collectAsState()
     val spellSlots by gameViewModel.spellSlots.collectAsState()
     val readiedSpellId by gameViewModel.readiedSpellId.collectAsState()
@@ -118,6 +121,7 @@ fun GameScreen(
     val canLevelUp = player?.let { it.currentXp >= it.xpToNextLevel && it.level < 30 } == true
     val showTrainerButton = hasTrainer && (canLevelUp || (player?.unspentCp ?: 0) > 0)
     val hasVendor = roomEntities.any { it.behaviorType == "vendor" }
+    val hasCrafter = roomEntities.any { it.behaviorType == "crafter" }
 
     val isLandscape = LocalIsLandscape.current
     val onSetLayoutPreference = LocalSetLayoutPreference.current
@@ -131,6 +135,7 @@ fun GameScreen(
                 hasHostiles = hasHostiles,
                 showTrainerButton = showTrainerButton,
                 showVendorButton = hasVendor,
+                showCrafterButton = hasCrafter,
                 sayText = sayText,
                 onSayTextChange = { sayText = it },
                 roomPlayers = roomPlayers,
@@ -144,6 +149,7 @@ fun GameScreen(
                 hasHostiles = hasHostiles,
                 showTrainerButton = showTrainerButton,
                 showVendorButton = hasVendor,
+                showCrafterButton = hasCrafter,
                 sayText = sayText,
                 onSayTextChange = { sayText = it },
                 roomPlayers = roomPlayers,
@@ -236,6 +242,20 @@ fun GameScreen(
                     onBuy = { itemId -> gameViewModel.buyItem(itemId) },
                     onSell = { itemId -> gameViewModel.sellItem(itemId) },
                     onClose = { gameViewModel.dismissVendor() }
+                )
+            }
+        }
+
+        // Crafting overlay
+        if (showCrafting) {
+            val info = crafterInfo
+            if (info != null) {
+                CraftingPanel(
+                    crafterInfo = info,
+                    playerLevel = player?.level ?: 1,
+                    itemCatalog = itemCatalog,
+                    onCraft = { recipeId -> gameViewModel.craftItem(recipeId) },
+                    onClose = { gameViewModel.dismissCrafter() }
                 )
             }
         }
@@ -373,6 +393,7 @@ private fun GameScreenPortrait(
     hasHostiles: Boolean,
     showTrainerButton: Boolean,
     showVendorButton: Boolean,
+    showCrafterButton: Boolean,
     sayText: String,
     onSayTextChange: (String) -> Unit,
     roomPlayers: List<PlayerInfo> = emptyList(),
@@ -461,9 +482,9 @@ private fun GameScreenPortrait(
                 )
             }
 
-            // Layer 3: Trainer/Vendor/Interactable overlays (bottom-left of room view)
+            // Layer 3: Trainer/Vendor/Crafter/Interactable overlays (bottom-left of room view)
             val interactables = roomInfo?.room?.interactables ?: emptyList()
-            if (showTrainerButton || showVendorButton || interactables.isNotEmpty()) {
+            if (showTrainerButton || showVendorButton || showCrafterButton || interactables.isNotEmpty()) {
                 Column(
                     modifier = Modifier
                         .align(Alignment.BottomStart)
@@ -484,6 +505,14 @@ private fun GameScreenPortrait(
                             label = "Shop",
                             color = Color(0xFFCC8833),
                             onClick = { gameViewModel.interactVendor() }
+                        )
+                    }
+                    if (showCrafterButton) {
+                        RoomOverlayButton(
+                            icon = MudIcons.Crafter,
+                            label = "Craft",
+                            color = Color(0xFFAA6B3A),
+                            onClick = { gameViewModel.interactCrafter() }
                         )
                     }
                     for (feat in interactables) {
@@ -618,6 +647,7 @@ private fun GameScreenLandscape(
     hasHostiles: Boolean,
     showTrainerButton: Boolean,
     showVendorButton: Boolean,
+    showCrafterButton: Boolean,
     sayText: String,
     onSayTextChange: (String) -> Unit,
     roomPlayers: List<PlayerInfo> = emptyList(),
@@ -710,9 +740,9 @@ private fun GameScreenLandscape(
                     )
                 }
 
-                // Layer 3: Trainer/Vendor/Interactable overlays (bottom-left of room view)
+                // Layer 3: Trainer/Vendor/Crafter/Interactable overlays (bottom-left of room view)
                 val interactables = roomInfo?.room?.interactables ?: emptyList()
-                if (showTrainerButton || showVendorButton || interactables.isNotEmpty()) {
+                if (showTrainerButton || showVendorButton || showCrafterButton || interactables.isNotEmpty()) {
                     Column(
                         modifier = Modifier
                             .align(Alignment.BottomStart)
@@ -733,6 +763,14 @@ private fun GameScreenLandscape(
                                 label = "Shop",
                                 color = Color(0xFFCC8833),
                                 onClick = { gameViewModel.interactVendor() }
+                            )
+                        }
+                        if (showCrafterButton) {
+                            RoomOverlayButton(
+                                icon = MudIcons.Crafter,
+                                label = "Craft",
+                                color = Color(0xFFAA6B3A),
+                                onClick = { gameViewModel.interactCrafter() }
                             )
                         }
                         for (feat in interactables) {

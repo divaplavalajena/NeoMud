@@ -14,7 +14,9 @@ enum class EffectType {
     @SerialName("BUFF_WILLPOWER") BUFF_WILLPOWER,
     @SerialName("DAMAGE") DAMAGE,
     @SerialName("MANA_REGEN") MANA_REGEN,
-    @SerialName("MANA_DRAIN") MANA_DRAIN
+    @SerialName("MANA_DRAIN") MANA_DRAIN,
+    @SerialName("BUFF_DAMAGE") BUFF_DAMAGE,
+    @SerialName("BUFF_MAX_HP") BUFF_MAX_HP
 }
 
 @Serializable
