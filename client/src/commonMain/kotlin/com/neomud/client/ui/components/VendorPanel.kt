@@ -367,21 +367,38 @@ private fun BuyItemRow(
                     color = VerdantUpgrade
                 )
             }
-            // Line 3: Level + slot/stats
+            // Line 3: Level badge + slot/stats
             val statsParts = mutableListOf<String>()
-            if (item.levelRequirement > 1) statsParts.add("Lv${item.levelRequirement}")
             if (item.slot.isNotEmpty()) statsParts.add(item.slot.replaceFirstChar { it.uppercase() })
             if (item.armorValue > 0) statsParts.add("ARM ${item.armorValue}")
             if (item.damageBonus > 0) {
                 val dmgText = if (item.damageRange > 0) "DMG +${item.damageBonus} (1-${item.damageRange})" else "DMG +${item.damageBonus}"
                 statsParts.add(dmgText)
             }
-            if (statsParts.isNotEmpty()) {
-                Text(
-                    text = statsParts.joinToString(" | "),
-                    fontSize = 11.sp,
-                    color = TorchAmber
-                )
+            if (item.levelRequirement > 1 || statsParts.isNotEmpty()) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (item.levelRequirement > 1) {
+                        Text(
+                            text = "Lv${item.levelRequirement}",
+                            fontSize = 11.sp,
+                            color = if (meetsLevel) AshGray else Color(0xFFCC4444)
+                        )
+                        if (statsParts.isNotEmpty()) {
+                            Text(
+                                text = " | ",
+                                fontSize = 11.sp,
+                                color = TorchAmber
+                            )
+                        }
+                    }
+                    if (statsParts.isNotEmpty()) {
+                        Text(
+                            text = statsParts.joinToString(" | "),
+                            fontSize = 11.sp,
+                            color = TorchAmber
+                        )
+                    }
+                }
             }
         }
 
