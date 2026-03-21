@@ -229,7 +229,7 @@ class InteractCommand(
             session.send(ServerMessage.ActiveEffectsUpdate(session.activeEffects.toList()))
         } else {
             // Instant effect
-            val result = EffectApplicator.applyEffect(effectType, value, message, player)
+            val result = EffectApplicator.applyEffect(effectType, value, message, player, effectiveMaxHp = session.effectiveMaxHp())
             if (result != null) {
                 session.player = player.copy(currentHp = result.newHp, currentMp = result.newMp)
                 session.send(ServerMessage.EffectTick(effectType, result.message, result.newHp, newMp = result.newMp))

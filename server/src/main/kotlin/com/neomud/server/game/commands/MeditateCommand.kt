@@ -8,6 +8,7 @@ import com.neomud.shared.protocol.ServerMessage
 class MeditateCommand {
     suspend fun execute(session: PlayerSession) {
         val player = session.player ?: return
+        if (player.currentHp <= 0) return
 
         // If already meditating, cancel immediately (no tick needed)
         if (session.isMeditating) {

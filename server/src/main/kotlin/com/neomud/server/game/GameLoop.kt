@@ -556,7 +556,7 @@ class GameLoop(
             for (effect in effects) {
                 val player = session.player ?: continue
 
-                val result = EffectApplicator.applyEffect(effect.type.name, effect.magnitude, "", player)
+                val result = EffectApplicator.applyEffect(effect.type.name, effect.magnitude, "", player, effectiveMaxHp = session.effectiveMaxHp())
                 if (result != null) {
                     session.player = player.copy(currentHp = result.newHp, currentMp = result.newMp)
                     try {
@@ -690,7 +690,7 @@ class GameLoop(
             val room = worldGraph.getRoom(roomId) ?: continue
             for (effect in room.effects) {
                 val p = session.player ?: continue
-                val result = EffectApplicator.applyEffect(effect.type, effect.value, effect.message, p) ?: continue
+                val result = EffectApplicator.applyEffect(effect.type, effect.value, effect.message, p, effectiveMaxHp = session.effectiveMaxHp()) ?: continue
                 session.player = p.copy(currentHp = result.newHp, currentMp = result.newMp)
                 val effectName = effect.type.lowercase().replaceFirstChar { it.uppercase() } + " Aura"
                 try {
@@ -808,7 +808,7 @@ class GameLoop(
         val result = SkillCheck.check(skillDef, effStats, player.level)
 
         if (!result.success) {
-            try { session.send(ServerMessage.RestUpdate(false, "You fail to settle into a restful state. (roll: ${result.roll})")) } catch (_: Exception) {}
+            try { session.send(ServerMessage.RestUpdate(false, "You fail to settle into a restful state.")) } catch (_: Exception) {}
             return
         }
 
@@ -816,7 +816,7 @@ class GameLoop(
         MeditationUtils.breakMeditation(session, "You stop meditating to rest.")
 
         session.isResting = true
-        try { session.send(ServerMessage.RestUpdate(true, "You settle into a restful state. (roll: ${result.roll})")) } catch (_: Exception) {}
+        try { session.send(ServerMessage.RestUpdate(true, "You settle into a restful state.")) } catch (_: Exception) {}
     }
 
     private suspend fun resolveMeditate(session: PlayerSession) {
@@ -839,12 +839,12 @@ class GameLoop(
         val result = SkillCheck.check(skillDef, effStats, player.level)
 
         if (!result.success) {
-            try { session.send(ServerMessage.MeditateUpdate(false, "You fail to focus your mind. (roll: ${result.roll})")) } catch (_: Exception) {}
+            try { session.send(ServerMessage.MeditateUpdate(false, "You fail to focus your mind.")) } catch (_: Exception) {}
             return
         }
 
         session.isMeditating = true
-        try { session.send(ServerMessage.MeditateUpdate(true, "You enter a meditative state. (roll: ${result.roll})")) } catch (_: Exception) {}
+        try { session.send(ServerMessage.MeditateUpdate(true, "You enter a meditative state.")) } catch (_: Exception) {}
     }
 
     private suspend fun resolveTrack(session: PlayerSession, targetId: String?) {
@@ -899,7 +899,7 @@ class GameLoop(
             return
         }
 
-        val result = UseEffectProcessor.process(item.useEffect, player, item.name)
+        val result = UseEffectProcessor.process(item.useEffect, player, item.name, effectiveMaxHp = session.effectiveMaxHp())
         if (result == null) {
             try { session.send(ServerMessage.Error("${item.name} has no usable effect.")) } catch (_: Exception) {}
             return
@@ -1127,7 +1127,7 @@ class GameLoop(
         session.skillCooldowns["SNEAK"] = sneakSkill?.cooldownTicks ?: 2
 
         if (check < difficulty) {
-            try { session.send(ServerMessage.StealthUpdate(false, "You fail to find cover! (roll: $roll)")) } catch (_: Exception) {}
+            try { session.send(ServerMessage.StealthUpdate(false, "You fail to find cover!")) } catch (_: Exception) {}
             return
         }
 

@@ -8,6 +8,7 @@ import com.neomud.shared.protocol.ServerMessage
 class RestCommand {
     suspend fun execute(session: PlayerSession) {
         val player = session.player ?: return
+        if (player.currentHp <= 0) return
 
         // If already resting, cancel immediately (no tick needed)
         if (session.isResting) {
@@ -21,7 +22,7 @@ class RestCommand {
             return
         }
 
-        if (player.currentHp >= player.maxHp) {
+        if (player.currentHp >= session.effectiveMaxHp()) {
             session.send(ServerMessage.SystemMessage("Your health is already full."))
             return
         }

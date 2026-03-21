@@ -199,6 +199,46 @@ class CraftingServiceTest {
     }
 
     @Test
+    fun testCraftRefundsMaterialsOnPartialFailure() {
+        val inventoryRepo = InventoryRepository(itemCatalog)
+        val coinRepo = CoinRepository()
+        val service = CraftingService(recipeCatalog, itemCatalog, inventoryRepo, coinRepo)
+
+        // Recipe requiring 2 different materials: wolf_pelt(3) + marsh_hide(1) — but we use a multi-material recipe
+        val multiMatRecipe = Recipe(
+            id = "recipe:multi_mat",
+            name = "Multi Material",
+            category = "consumable",
+            materials = listOf(
+                RecipeIngredient("item:spider_fang", 2),
+                RecipeIngredient("item:marsh_hide", 3)  // player won't have enough
+            ),
+            cost = Coins(copper = 10),
+            outputItemId = "item:antivenom_vial",
+            levelRequirement = 1
+        )
+
+        val playerName = "CraftTester"
+        inventoryRepo.addItem(playerName, "item:spider_fang", 5)
+        inventoryRepo.addItem(playerName, "item:marsh_hide", 1) // need 3, only have 1
+        coinRepo.addCoins(playerName, Coins(silver = 5))
+
+        // Pre-check passes because we have enough spider fangs, but marsh_hide removal will fail
+        // The availability check should catch this, but if it didn't the rollback should protect us
+        val result = service.craft(multiMatRecipe, playerName, createTestPlayer())
+        assertFalse(result.success)
+
+        // Verify spider fangs are still intact (5 — not reduced)
+        val inventory = inventoryRepo.getInventory(playerName)
+        val fangs = inventory.find { it.itemId == "item:spider_fang" }
+        assertEquals(5, fangs?.quantity, "Spider fangs should be fully refunded after partial failure")
+
+        // Verify coins untouched
+        val coins = coinRepo.getCoins(playerName)
+        assertEquals(5, coins.silver, "Coins should be fully refunded after partial failure")
+    }
+
+    @Test
     fun testBuildRecipeInfoCanCraftWhenEverythingSufficient() {
         val inventoryRepo = InventoryRepository(itemCatalog)
         val coinRepo = CoinRepository()

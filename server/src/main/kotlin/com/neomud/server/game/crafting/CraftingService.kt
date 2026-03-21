@@ -82,14 +82,20 @@ class CraftingService(
             return CraftOutcome(false, "", "You can't afford the crafting fee of ${recipe.cost.displayString()}.")
         }
 
-        // Deduct materials
+        // Deduct materials — track consumed for rollback on partial failure
+        val consumed = mutableListOf<RecipeIngredient>()
         for (mat in recipe.materials) {
             val removed = inventoryRepository.removeItem(playerName, mat.itemId, mat.quantity)
             if (!removed) {
-                // Refund coins on failure
+                // Refund previously consumed materials
+                for (prev in consumed) {
+                    inventoryRepository.addItem(playerName, prev.itemId, prev.quantity)
+                }
+                // Refund coins
                 coinRepository.addCoins(playerName, recipe.cost)
                 return CraftOutcome(false, "", "Failed to consume materials for ${recipe.name}.")
             }
+            consumed.add(mat)
         }
 
         // Add output item
@@ -97,7 +103,10 @@ class CraftingService(
         val itemName = outputItem?.name ?: recipe.outputItemId
         val added = inventoryRepository.addItem(playerName, recipe.outputItemId, recipe.outputQuantity)
         if (!added) {
-            // Refund coins (materials are lost — this shouldn't happen in practice)
+            // Refund all consumed materials and coins
+            for (prev in consumed) {
+                inventoryRepository.addItem(playerName, prev.itemId, prev.quantity)
+            }
             coinRepository.addCoins(playerName, recipe.cost)
             return CraftOutcome(false, "", "Failed to add $itemName to your inventory.")
         }

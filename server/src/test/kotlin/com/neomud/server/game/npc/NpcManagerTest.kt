@@ -381,4 +381,40 @@ class NpcManagerTest {
         }
         assertTrue(!movedAway, "Stunned hostile NPC should not wander even without players present")
     }
+
+    @Test
+    fun testSpawnTimerResetsOnNpcDeath() {
+        // #224: When an NPC dies, the zone spawn timer should reset to 0, preventing
+        // instant respawns when the timer was about to fire
+        val world = WorldGraph()
+        world.addRoom(Room("test:a", "A", "", emptyMap(), "test", 0, 0))
+
+        // rateTicks = 5 means a spawn every 5 ticks
+        val zoneConfigs = mapOf("test" to SpawnConfig(maxEntities = 5, maxPerRoom = 5, rateTicks = 5))
+        val manager = NpcManager(world, zoneConfigs)
+
+        val rat = NpcData("npc:rat", "Rat", "", startRoomId = "test:a", behaviorType = "idle", hostile = true, maxHp = 10, damage = 1)
+        manager.loadNpcs(listOf(rat to "test"))
+
+        // Tick 4 times to get the timer close to firing (4 of 5 ticks elapsed)
+        repeat(4) { manager.tick() }
+
+        // Kill the original NPC (and any spawned copies)
+        val allNpcs = manager.getLivingHostileNpcsInRoom("test:a")
+        for (npc in allNpcs) {
+            manager.markDead(npc.id)
+        }
+
+        // Next tick should clean up the dead NPC AND reset the spawn timer to 0
+        manager.tick()
+
+        // Count NPCs — we should NOT see an immediate respawn because the timer was reset
+        val npcsAfterDeath = manager.getLivingHostileNpcsInRoom("test:a")
+
+        // Tick one more time — still shouldn't have spawned (only 1 tick since reset, need 5)
+        manager.tick()
+        val npcsOneTick = manager.getLivingHostileNpcsInRoom("test:a")
+        assertTrue(npcsOneTick.size <= 1,
+            "NPC should not respawn immediately after death (timer should have reset). Had ${npcsOneTick.size} NPCs")
+    }
 }

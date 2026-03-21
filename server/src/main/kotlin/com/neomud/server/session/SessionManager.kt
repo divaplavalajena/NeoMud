@@ -11,11 +11,20 @@ class SessionManager {
     /** Maps login username (lowercase) → character name for duplicate login detection */
     private val usernameToCharacter = ConcurrentHashMap<String, String>()
 
-    fun addSession(playerName: String, session: PlayerSession, username: String? = null) {
-        sessions[playerName] = session
+    /**
+     * Adds a session for the given player. If [username] is provided, atomically checks
+     * that the username is not already logged in. Returns false if the username is already
+     * mapped to another session (duplicate login race).
+     */
+    fun addSession(playerName: String, session: PlayerSession, username: String? = null): Boolean {
         if (username != null) {
-            usernameToCharacter[username.lowercase()] = playerName
+            val prev = usernameToCharacter.putIfAbsent(username.lowercase(), playerName)
+            if (prev != null && prev != playerName) {
+                return false // Another session already claimed this username
+            }
         }
+        sessions[playerName] = session
+        return true
     }
 
     fun removeSession(playerName: String) {

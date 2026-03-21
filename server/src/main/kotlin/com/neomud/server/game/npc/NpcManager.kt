@@ -220,7 +220,12 @@ class NpcManager(
             }
         }
 
-        // 2. Clean up dead NPCs (remove from list)
+        // 2. Clean up dead NPCs (remove from list) — reset zone spawn timers to
+        //    prevent instant respawns when the spawn timer was about to fire
+        val deadNpcs = npcs.filter { !it.isAlive }
+        for (dead in deadNpcs) {
+            zoneSpawnTimers[dead.zoneId] = 0
+        }
         npcs.removeAll { !it.isAlive }
 
         // 3. Zone spawn timers — spawn new NPC copies up to maxEntities

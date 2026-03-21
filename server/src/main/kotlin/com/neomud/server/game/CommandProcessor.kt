@@ -113,8 +113,8 @@ class CommandProcessor(
     private val sayCommand = SayCommand(sessionManager, adminCommand)
     private val attackCommand = AttackCommand(npcManager, worldGraph)
     private val sneakCommand = SneakCommand(sessionManager, npcManager, skillCatalog, classCatalog)
-    private val bashCommand = BashCommand(npcManager)
-    private val kickCommand = KickCommand(npcManager, worldGraph)
+    private val bashCommand = BashCommand(npcManager, sessionManager)
+    private val kickCommand = KickCommand(npcManager, worldGraph, sessionManager)
     private val meditateCommand = MeditateCommand()
     private val restCommand = RestCommand()
     private val trackCommand = TrackCommand()
@@ -142,6 +142,17 @@ class CommandProcessor(
     }
 
     private suspend fun processLocked(session: PlayerSession, message: ClientMessage) {
+        // Block state-mutating commands while dead (allow Look, Say, and ViewInventory)
+        val player = session.player
+        if (player != null && player.currentHp <= 0
+            && message !is ClientMessage.Look
+            && message !is ClientMessage.Say
+            && message !is ClientMessage.ViewInventory
+        ) {
+            session.send(ServerMessage.Error("You can't do that while dead."))
+            return
+        }
+
         when (message) {
             is ClientMessage.Move -> {
                 requireAuth(session) { moveCommand.execute(session, message.direction) }
@@ -339,7 +350,11 @@ class CommandProcessor(
                 session.discoveredInteractables.addAll(discovery.discoveredInteractables)
                 session.visitedRooms.add(effectivePlayer.currentRoomId)
 
-                sessionManager.addSession(effectivePlayer.name, session, username = msg.username)
+                val added = sessionManager.addSession(effectivePlayer.name, session, username = msg.username)
+                if (!added) {
+                    session.send(ServerMessage.AuthError("Account already logged in"))
+                    return
+                }
                 session.combatGraceTicks = GameConfig.Combat.GRACE_TICKS
 
                 session.send(ServerMessage.LoginOk(effectivePlayer))

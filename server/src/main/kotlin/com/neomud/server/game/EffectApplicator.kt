@@ -6,11 +6,11 @@ data class EffectResult(val newHp: Int, val newMp: Int, val message: String)
 
 object EffectApplicator {
 
-    fun applyEffect(type: String, magnitude: Int, customMessage: String, player: Player): EffectResult? {
+    fun applyEffect(type: String, magnitude: Int, customMessage: String, player: Player, effectiveMaxHp: Int = player.maxHp): EffectResult? {
         return when (type) {
             "HEAL", "HEAL_OVER_TIME" -> {
-                if (player.currentHp >= player.maxHp) return null
-                val healed = minOf(magnitude, player.maxHp - player.currentHp)
+                if (player.currentHp >= effectiveMaxHp) return null
+                val healed = minOf(magnitude, effectiveMaxHp - player.currentHp)
                 val newHp = player.currentHp + healed
                 val msg = customMessage.ifEmpty { "A healing aura soothes your wounds. (+$healed HP)" }
                 EffectResult(newHp, player.currentMp, msg)

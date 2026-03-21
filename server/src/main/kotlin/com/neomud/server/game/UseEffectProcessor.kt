@@ -28,7 +28,7 @@ object UseEffectProcessor {
         val targetDamage: Int = 0
     )
 
-    fun process(effectString: String, player: Player, itemName: String): Result? {
+    fun process(effectString: String, player: Player, itemName: String, effectiveMaxHp: Int = player.maxHp): Result? {
         if (effectString.isBlank()) return null
 
         var current = player
@@ -45,7 +45,7 @@ object UseEffectProcessor {
             when (effectType) {
                 "heal" -> {
                     val amount = parts.getOrNull(1)?.toIntOrNull() ?: continue
-                    val newHp = (current.currentHp + amount).coerceAtMost(current.maxHp)
+                    val newHp = (current.currentHp + amount).coerceAtMost(effectiveMaxHp)
                     current = current.copy(currentHp = newHp)
                     messages.add("You use the $itemName and recover $amount HP.")
                     anyApplied = true

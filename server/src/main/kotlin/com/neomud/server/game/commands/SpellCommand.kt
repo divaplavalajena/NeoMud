@@ -86,6 +86,7 @@ class SpellCommand(
      */
     suspend fun execute(session: PlayerSession, spellId: String, targetId: String?) {
         val player = session.player ?: return
+        if (player.currentHp <= 0) return
 
         // Casting a spell breaks meditation, rest, and stealth
         MeditationUtils.breakMeditation(session, "You stop meditating.")
@@ -167,8 +168,8 @@ class SpellCommand(
             }
         }
 
-        // For heal spells, refuse if already at full HP
-        if (spell.spellType == SpellType.HEAL && player.currentHp >= player.maxHp) {
+        // For heal spells, refuse if already at full HP (including buffs)
+        if (spell.spellType == SpellType.HEAL && player.currentHp >= session.effectiveMaxHp()) {
             session.send(ServerMessage.SpellCastResult(false, spell.name, "You are already at full health.", player.currentMp))
             return null
         }
@@ -298,7 +299,8 @@ class SpellCommand(
 
     private suspend fun handleHeal(session: PlayerSession, spell: SpellDef, power: Int, playerName: String) {
         val player = session.player!!
-        val newHp = (player.currentHp + power).coerceAtMost(player.maxHp)
+        val effectiveMax = session.effectiveMaxHp()
+        val newHp = (player.currentHp + power).coerceAtMost(effectiveMax)
         val healed = newHp - player.currentHp
         session.player = player.copy(currentHp = newHp)
 

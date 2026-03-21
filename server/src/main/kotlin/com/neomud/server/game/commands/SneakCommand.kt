@@ -23,6 +23,7 @@ class SneakCommand(
         val roomId = session.currentRoomId ?: return
         val playerName = session.playerName ?: return
         val player = session.player ?: return
+        if (player.currentHp <= 0) return
 
         if (!enabled) {
             // Unsneak
