@@ -119,7 +119,7 @@
       "levelRequired": 1,
       "schoolLevel": 1,
       "primaryStat": "willpower",
-      "basePower": 10,
+      "basePower": 5,
       "targetType": "SELF",
       "castMessage": "channels a minor heal",
       "castSound": "heal_cast"
@@ -153,7 +153,7 @@
       "levelRequired": 3,
       "schoolLevel": 2,
       "primaryStat": "willpower",
-      "basePower": 18,
+      "basePower": 10,
       "targetType": "SELF",
       "castMessage": "channels cure wounds",
       "castSound": "heal_cast"
@@ -169,7 +169,7 @@
       "levelRequired": 5,
       "schoolLevel": 3,
       "primaryStat": "willpower",
-      "basePower": 30,
+      "basePower": 18,
       "targetType": "SELF",
       "castMessage": "calls upon divine light",
       "castSound": "divine_light_cast"
@@ -203,7 +203,7 @@
       "levelRequired": 2,
       "schoolLevel": 2,
       "primaryStat": "willpower",
-      "basePower": 14,
+      "basePower": 8,
       "targetType": "SELF",
       "castMessage": "channels healing touch",
       "castSound": "heal_cast"

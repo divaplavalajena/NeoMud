@@ -48,7 +48,7 @@ class ItemCatalogTest {
         assertEquals("Health Potion", potion.name)
         assertEquals("consumable", potion.type)
         assertTrue(potion.stackable)
-        assertEquals("heal:25", potion.useEffect)
+        assertEquals("heal:15", potion.useEffect)
     }
 
     @Test
@@ -93,7 +93,7 @@ class ItemCatalogTest {
         val hp = catalog.getItem("item:greater_health_potion")
         assertNotNull(hp)
         assertEquals("consumable", hp.type)
-        assertEquals("heal:60", hp.useEffect)
+        assertEquals("heal:45", hp.useEffect)
         assertTrue(hp.stackable)
 
         val mp = catalog.getItem("item:greater_mana_potion")
@@ -113,7 +113,7 @@ class ItemCatalogTest {
 
         val healing = catalog.getItem("item:scroll_of_healing")
         assertNotNull(healing)
-        assertEquals("heal:40", healing.useEffect)
+        assertEquals("heal:35", healing.useEffect)
     }
 
     @Test
@@ -122,12 +122,12 @@ class ItemCatalogTest {
         val ale = catalog.getItem("item:ale")
         assertNotNull(ale)
         assertEquals("consumable", ale.type)
-        assertEquals("heal:10", ale.useEffect)
+        assertEquals("heal:5", ale.useEffect)
         assertTrue(ale.stackable)
 
         val bread = catalog.getItem("item:bread_loaf")
         assertNotNull(bread)
-        assertEquals("heal:15", bread.useEffect)
+        assertEquals("heal:8", bread.useEffect)
     }
 
     @Test

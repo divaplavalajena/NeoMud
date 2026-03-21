@@ -110,4 +110,52 @@ class BalanceChangesTest {
     fun `Parry max chance is 30 percent`() {
         assertEquals(0.30, GameConfig.Combat.PARRY_MAX_CHANCE)
     }
+
+    // --- #227: Heal spell basePower reductions ---
+
+    @Test
+    fun `Minor Heal basePower reduced to 5`() {
+        val spell = spellCatalog.getSpell("MINOR_HEAL")
+        assertNotNull(spell)
+        assertEquals(5, spell.basePower, "Minor Heal basePower should be 5 (reduced from 10)")
+    }
+
+    @Test
+    fun `Cure Wounds basePower reduced to 10`() {
+        val spell = spellCatalog.getSpell("CURE_WOUNDS")
+        assertNotNull(spell)
+        assertEquals(10, spell.basePower, "Cure Wounds basePower should be 10 (reduced from 18)")
+    }
+
+    @Test
+    fun `Divine Light basePower reduced to 18`() {
+        val spell = spellCatalog.getSpell("DIVINE_LIGHT")
+        assertNotNull(spell)
+        assertEquals(18, spell.basePower, "Divine Light basePower should be 18 (reduced from 30)")
+    }
+
+    @Test
+    fun `Healing Touch basePower reduced to 8`() {
+        val spell = spellCatalog.getSpell("HEALING_TOUCH")
+        assertNotNull(spell)
+        assertEquals(8, spell.basePower, "Healing Touch basePower should be 8 (reduced from 14)")
+    }
+
+    // --- #228: Consumable heal reductions ---
+
+    @Test
+    fun `Health Potion heals for 15`() {
+        val itemCatalog = ItemCatalog.load(defaultWorldSource())
+        val potion = itemCatalog.getItem("item:health_potion")
+        assertNotNull(potion)
+        assertEquals("heal:15", potion.useEffect, "Health Potion should heal for 15 (reduced from 25)")
+    }
+
+    @Test
+    fun `Ale heals for 5`() {
+        val itemCatalog = ItemCatalog.load(defaultWorldSource())
+        val ale = itemCatalog.getItem("item:ale")
+        assertNotNull(ale)
+        assertEquals("heal:5", ale.useEffect, "Ale should heal for 5 (reduced from 10)")
+    }
 }

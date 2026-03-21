@@ -104,6 +104,8 @@ object GameConfig {
         const val SPELL_POWER_STAT_DIVISOR = 2
         const val SPELL_POWER_LEVEL_DIVISOR = 1
         const val SPELL_POWER_DICE_SIZE = 8
+        /** Heal/HoT spells use a smaller stat divisor for tighter scaling at low levels */
+        const val HEAL_STAT_DIVISOR = 4
         const val DOT_INITIAL_DAMAGE_DIVISOR = 2
         const val PICK_LOCK_COOLDOWN_TICKS = 3
         const val PICK_LOCK_DICE_SIZE = 20

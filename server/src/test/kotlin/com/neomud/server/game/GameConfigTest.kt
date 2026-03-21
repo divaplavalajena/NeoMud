@@ -39,6 +39,13 @@ class GameConfigTest {
     }
 
     @Test
+    fun testHealStatDivisorLargerThanDamage() {
+        // Heal spells should scale more slowly than damage spells (larger divisor = less stat contribution)
+        assertTrue(GameConfig.Skills.HEAL_STAT_DIVISOR > GameConfig.Skills.SPELL_POWER_STAT_DIVISOR,
+            "HEAL_STAT_DIVISOR should be larger than SPELL_POWER_STAT_DIVISOR for tighter heal scaling")
+    }
+
+    @Test
     fun testNpcConstants() {
         assertTrue(GameConfig.Npc.WANDER_MOVE_TICKS > 0)
         assertTrue(GameConfig.Npc.PATROL_MOVE_TICKS > 0)

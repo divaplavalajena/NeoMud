@@ -66,7 +66,9 @@ class SpellCommand(
             "agility" -> effStats.agility
             else -> effStats.intellect
         }
-        val power = spell.basePower + statValue / GameConfig.Skills.SPELL_POWER_STAT_DIVISOR + player.level / GameConfig.Skills.SPELL_POWER_LEVEL_DIVISOR + (1..GameConfig.Skills.SPELL_POWER_DICE_SIZE).random()
+        val isHealType = spell.spellType == SpellType.HEAL || spell.spellType == SpellType.HOT
+        val statDivisor = if (isHealType) GameConfig.Skills.HEAL_STAT_DIVISOR else GameConfig.Skills.SPELL_POWER_STAT_DIVISOR
+        val power = spell.basePower + statValue / statDivisor + player.level / GameConfig.Skills.SPELL_POWER_LEVEL_DIVISOR + (1..GameConfig.Skills.SPELL_POWER_DICE_SIZE).random()
 
         when (spell.spellType) {
             SpellType.DAMAGE -> handleDamage(session, spell, power, targetId, roomId, playerName)
@@ -193,7 +195,9 @@ class SpellCommand(
             "agility" -> effStats.agility
             else -> effStats.intellect
         }
-        val power = spell.basePower + statValue / GameConfig.Skills.SPELL_POWER_STAT_DIVISOR + player.level / GameConfig.Skills.SPELL_POWER_LEVEL_DIVISOR + (1..GameConfig.Skills.SPELL_POWER_DICE_SIZE).random()
+        val isHealType = spell.spellType == SpellType.HEAL || spell.spellType == SpellType.HOT
+        val statDivisor = if (isHealType) GameConfig.Skills.HEAL_STAT_DIVISOR else GameConfig.Skills.SPELL_POWER_STAT_DIVISOR
+        val power = spell.basePower + statValue / statDivisor + player.level / GameConfig.Skills.SPELL_POWER_LEVEL_DIVISOR + (1..GameConfig.Skills.SPELL_POWER_DICE_SIZE).random()
 
         val target = when (spell.spellType) {
             SpellType.DAMAGE -> handleDamage(session, spell, power, targetId, roomId, playerName)
