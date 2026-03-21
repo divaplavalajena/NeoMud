@@ -1,20 +1,31 @@
 package com.neomud.server.game.commands
 
+import com.neomud.server.game.MeditationUtils
+import com.neomud.server.game.RestUtils
+import com.neomud.server.game.StealthUtils
 import com.neomud.server.game.npc.NpcManager
 import com.neomud.server.session.PendingSkill
 import com.neomud.server.session.PlayerSession
+import com.neomud.server.session.SessionManager
 import com.neomud.server.world.WorldGraph
 import com.neomud.shared.model.Direction
 import com.neomud.shared.protocol.ServerMessage
 
 class KickCommand(
     private val npcManager: NpcManager,
-    private val worldGraph: WorldGraph
+    private val worldGraph: WorldGraph,
+    private val sessionManager: SessionManager
 ) {
     suspend fun execute(session: PlayerSession, targetId: String?) {
         val roomId = session.currentRoomId ?: return
         session.playerName ?: return
-        session.player ?: return
+        val player = session.player ?: return
+        if (player.currentHp <= 0) return
+
+        // Aggressive action breaks meditation, rest, and stealth
+        MeditationUtils.breakMeditation(session, "You stop meditating.")
+        RestUtils.breakRest(session, "You stop resting.")
+        StealthUtils.breakStealth(session, sessionManager, "You step out of the shadows to kick!")
 
         val cooldown = session.skillCooldowns["KICK"]
         if (cooldown != null && cooldown > 0) {

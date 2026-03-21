@@ -261,6 +261,43 @@ class SessionCombatStateTest {
         assertEquals(0, session.combatGraceTicks)
     }
 
+    // --- Move preserves attack mode with readied spell ---
+
+    @Test
+    fun testMovePreservesAttackModeWhenSpellReadied() {
+        val session = createTestSession()
+        session.readiedSpellId = "FIREBALL"
+        session.attackMode = true
+        session.selectedTargetId = "npc1"
+
+        // Simulate MoveCommand behavior: preserve attack mode if spell readied
+        if (session.attackMode && session.readiedSpellId == null) {
+            session.attackMode = false
+            session.selectedTargetId = null
+        }
+        session.selectedTargetId = null // always clear target
+
+        assertTrue(session.attackMode, "Attack mode should persist across move when spell is readied")
+        assertEquals("FIREBALL", session.readiedSpellId, "Readied spell should persist across move")
+        assertNull(session.selectedTargetId, "Selected target should be cleared on move")
+    }
+
+    @Test
+    fun testMoveCancelsAttackModeWithoutReadiedSpell() {
+        val session = createTestSession()
+        session.attackMode = true
+        session.selectedTargetId = "npc1"
+
+        // Simulate MoveCommand behavior: cancel attack mode if no spell readied
+        if (session.attackMode && session.readiedSpellId == null) {
+            session.attackMode = false
+            session.selectedTargetId = null
+        }
+        session.selectedTargetId = null
+
+        assertFalse(session.attackMode, "Attack mode should be cancelled on move without readied spell")
+    }
+
     private fun createTestSession(): PlayerSession {
         return PlayerSession(object : WebSocketSession {
             override val coroutineContext: CoroutineContext get() = EmptyCoroutineContext

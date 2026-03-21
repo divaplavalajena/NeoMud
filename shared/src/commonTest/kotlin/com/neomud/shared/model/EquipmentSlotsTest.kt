@@ -7,8 +7,8 @@ import kotlin.test.assertTrue
 class EquipmentSlotsTest {
 
     @Test
-    fun testDefaultSlotsContainsAllNineSlots() {
-        assertEquals(9, EquipmentSlots.DEFAULT_SLOTS.size)
+    fun testDefaultSlotsContainsAllTenSlots() {
+        assertEquals(10, EquipmentSlots.DEFAULT_SLOTS.size)
     }
 
     @Test
@@ -32,8 +32,18 @@ class EquipmentSlotsTest {
     }
 
     @Test
+    fun testDefaultSlotsContainsBack() {
+        assertTrue(EquipmentSlots.BACK in EquipmentSlots.DEFAULT_SLOTS, "DEFAULT_SLOTS should contain back")
+    }
+
+    @Test
+    fun testBackConstantValue() {
+        assertEquals("back", EquipmentSlots.BACK)
+    }
+
+    @Test
     fun testDefaultSlotsContainsAllOriginalSlots() {
-        val expected = setOf("head", "neck", "chest", "legs", "feet", "hands", "ring", "weapon", "shield")
+        val expected = setOf("head", "neck", "chest", "legs", "feet", "hands", "ring", "back", "weapon", "shield")
         assertEquals(expected, EquipmentSlots.DEFAULT_SLOTS.toSet())
     }
 }

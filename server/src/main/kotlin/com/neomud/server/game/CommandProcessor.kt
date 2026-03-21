@@ -18,6 +18,7 @@ import com.neomud.server.game.commands.SneakCommand
 import com.neomud.server.game.commands.SpellCommand
 import com.neomud.server.game.commands.TrackCommand
 import com.neomud.server.game.commands.TrainerCommand
+import com.neomud.server.game.commands.CraftCommand
 import com.neomud.server.game.commands.VendorCommand
 import com.neomud.server.game.inventory.LootService
 import com.neomud.server.game.inventory.RoomItemManager
@@ -64,6 +65,7 @@ class CommandProcessor(
     private val inventoryRepository: InventoryRepository,
     private val coinRepository: CoinRepository,
     private val discoveryRepository: DiscoveryRepository,
+    private val craftCommand: CraftCommand? = null,
     private val adminUsernames: Set<String> = emptySet(),
     private val movementTrailManager: MovementTrailManager? = null,
     private val pcSpriteCatalog: PcSpriteCatalog? = null
@@ -111,14 +113,14 @@ class CommandProcessor(
     private val sayCommand = SayCommand(sessionManager, adminCommand)
     private val attackCommand = AttackCommand(npcManager, worldGraph)
     private val sneakCommand = SneakCommand(sessionManager, npcManager, skillCatalog, classCatalog)
-    private val bashCommand = BashCommand(npcManager)
-    private val kickCommand = KickCommand(npcManager, worldGraph)
+    private val bashCommand = BashCommand(npcManager, sessionManager)
+    private val kickCommand = KickCommand(npcManager, worldGraph, sessionManager)
     private val meditateCommand = MeditateCommand()
     private val restCommand = RestCommand()
     private val trackCommand = TrackCommand()
     private val pickLockCommand = PickLockCommand(worldGraph, sessionManager, npcManager)
     private val dropCommand = DropCommand(roomItemManager, inventoryRepository, coinRepository, itemCatalog, sessionManager)
-    private val interactCommand = InteractCommand(worldGraph, sessionManager, npcManager, roomItemManager, lootService, lootTableCatalog)
+    private val interactCommand = InteractCommand(worldGraph, sessionManager, npcManager, roomItemManager, lootService, lootTableCatalog, playerRepository)
 
     suspend fun sendCatalogSync(session: PlayerSession) {
         session.send(ServerMessage.ClassCatalogSync(classCatalog.getAllClasses()))
@@ -140,6 +142,17 @@ class CommandProcessor(
     }
 
     private suspend fun processLocked(session: PlayerSession, message: ClientMessage) {
+        // Block state-mutating commands while dead (allow Look, Say, and ViewInventory)
+        val player = session.player
+        if (player != null && player.currentHp <= 0
+            && message !is ClientMessage.Look
+            && message !is ClientMessage.Say
+            && message !is ClientMessage.ViewInventory
+        ) {
+            session.send(ServerMessage.Error("You can't do that while dead."))
+            return
+        }
+
         when (message) {
             is ClientMessage.Move -> {
                 requireAuth(session) { moveCommand.execute(session, message.direction) }
@@ -194,6 +207,7 @@ class CommandProcessor(
                         "REST" -> restCommand.execute(session)
                         "TRACK" -> trackCommand.execute(session, message.targetId)
                         "PICK_LOCK" -> pickLockCommand.execute(session, message.targetId)
+                        "SNEAK" -> sneakCommand.handleToggle(session, !session.isHidden)
                         else -> session.send(ServerMessage.SystemMessage("Unknown skill: $skillId"))
                     }
                 }
@@ -212,7 +226,8 @@ class CommandProcessor(
             }
             is ClientMessage.CastSpell -> {
                 requireAuth(session) {
-                    spellCommand.execute(session, message.spellId, message.targetId)
+                    val spellId = message.spellId.removePrefix("spell:").uppercase()
+                    spellCommand.execute(session, spellId, message.targetId)
                 }
             }
             is ClientMessage.InteractVendor -> {
@@ -229,6 +244,12 @@ class CommandProcessor(
             }
             is ClientMessage.ReadySpell -> {
                 requireAuth(session) { handleReadySpell(session, message) }
+            }
+            is ClientMessage.InteractCrafter -> {
+                requireAuth(session) { craftCommand?.handleInteract(session) ?: session.send(ServerMessage.SystemMessage("Crafting is not available.")) }
+            }
+            is ClientMessage.CraftItem -> {
+                requireAuth(session) { craftCommand?.handleCraft(session, message.recipeId) ?: session.send(ServerMessage.SystemMessage("Crafting is not available.")) }
             }
             else -> {} // Register, Login, Ping already handled in process()
         }
@@ -329,7 +350,11 @@ class CommandProcessor(
                 session.discoveredInteractables.addAll(discovery.discoveredInteractables)
                 session.visitedRooms.add(effectivePlayer.currentRoomId)
 
-                sessionManager.addSession(effectivePlayer.name, session, username = msg.username)
+                val added = sessionManager.addSession(effectivePlayer.name, session, username = msg.username)
+                if (!added) {
+                    session.send(ServerMessage.AuthError("Account already logged in"))
+                    return
+                }
                 session.combatGraceTicks = GameConfig.Combat.GRACE_TICKS
 
                 session.send(ServerMessage.LoginOk(effectivePlayer))
@@ -374,7 +399,7 @@ class CommandProcessor(
 
     private suspend fun handleReadySpell(session: PlayerSession, msg: ClientMessage.ReadySpell) {
         val player = session.player ?: return
-        val spellId = msg.spellId
+        val spellId = msg.spellId?.removePrefix("spell:")?.uppercase()
 
         if (spellId == null) {
             session.readiedSpellId = null

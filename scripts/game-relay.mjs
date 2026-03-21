@@ -477,7 +477,10 @@ const handlers = {
       state.player.xp = msg.currentXp;
       state.player.xpToNextLevel = msg.xpToNextLevel;
     }
-    pushEvent('xp', `Gained ${msg.amount} XP (${msg.currentXp}/${msg.xpToNextLevel})`);
+    const xpText = msg.amount >= 0
+      ? `Gained ${msg.amount} XP (${msg.currentXp}/${msg.xpToNextLevel})`
+      : `Lost ${-msg.amount} XP (${msg.currentXp}/${msg.xpToNextLevel})`;
+    pushEvent('xp', xpText);
   },
   level_up(msg) {
     if (state.player) {
@@ -532,7 +535,12 @@ const handlers = {
 
   // Vendor
   vendor_info(msg) {
-    const itemList = (msg.items || []).map(i => `${i.item?.name || i.itemId || '?'} (${formatCoinString(i.price) || 'free'})`).join(', ');
+    const itemList = (msg.items || []).map(i => {
+      const name = i.item?.name || '?';
+      const id = i.item?.id || i.itemId || '?';
+      const price = formatCoinString(i.price) || 'free';
+      return `${name} [${id}] (${price})`;
+    }).join(', ');
     pushEvent('vendor', `${msg.vendorName} sells: ${itemList}`);
   },
   buy_result(msg) {

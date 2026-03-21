@@ -123,6 +123,13 @@ class GameViewModel(
     private val _showVendor = MutableStateFlow(false)
     val showVendor: StateFlow<Boolean> = _showVendor
 
+    // Crafting
+    private val _crafterInfo = MutableStateFlow<ServerMessage.CraftingMenu?>(null)
+    val crafterInfo: StateFlow<ServerMessage.CraftingMenu?> = _crafterInfo
+
+    private val _showCrafting = MutableStateFlow(false)
+    val showCrafting: StateFlow<Boolean> = _showCrafting
+
     // Visited rooms (fog-of-war)
     private val _visitedRooms = MutableStateFlow<Set<RoomId>>(emptySet())
     val visitedRooms: StateFlow<Set<RoomId>> = _visitedRooms
@@ -577,7 +584,12 @@ class GameViewModel(
                 if (_showVendor.value) interactVendor()
             }
             is ServerMessage.XpGained -> {
-                addLog("+${message.amount} XP (${message.currentXp}/${message.xpToNextLevel})", MudColors.xp)
+                val logText = if (message.amount >= 0) {
+                    "+${message.amount} XP (${message.currentXp}/${message.xpToNextLevel})"
+                } else {
+                    "Lost ${-message.amount} XP (${message.currentXp}/${message.xpToNextLevel})"
+                }
+                addLog(logText, MudColors.xp)
                 _player.value = _player.value?.copy(
                     currentXp = message.currentXp,
                     xpToNextLevel = message.xpToNextLevel
@@ -637,6 +649,21 @@ class GameViewModel(
             }
             is ServerMessage.ServerShutdown -> {
                 addLog(message.message, MudColors.error)
+            }
+            is ServerMessage.CraftingMenu -> {
+                if (!_showCrafting.value) sfx(message.interactSound, "npcs")
+                _crafterInfo.value = message
+                _showCrafting.value = true
+            }
+            is ServerMessage.CraftResult -> {
+                val color = if (message.success) MudColors.loot else MudColors.error
+                if (message.success) sfx("craft_success", "general")
+                addLog(message.message, color)
+                _playerCoins.value = message.updatedCoins
+                _inventory.value = message.updatedInventory
+                _equipment.value = message.equipment
+                // Refresh crafting menu if panel is open
+                if (_showCrafting.value) interactCrafter()
             }
         }
     }
@@ -851,6 +878,24 @@ class GameViewModel(
         _vendorInfo.value?.exitSound?.let { if (it.isNotBlank()) sfx(it, "npcs") }
         _showVendor.value = false
         _vendorInfo.value = null
+    }
+
+    fun interactCrafter() {
+        viewModelScope.launch {
+            wsClient.send(ClientMessage.InteractCrafter)
+        }
+    }
+
+    fun craftItem(recipeId: String) {
+        viewModelScope.launch {
+            wsClient.send(ClientMessage.CraftItem(recipeId))
+        }
+    }
+
+    fun dismissCrafter() {
+        _crafterInfo.value?.exitSound?.let { if (it.isNotBlank()) sfx(it, "npcs") }
+        _showCrafting.value = false
+        _crafterInfo.value = null
     }
 
     fun interactFeature(featureId: String) {

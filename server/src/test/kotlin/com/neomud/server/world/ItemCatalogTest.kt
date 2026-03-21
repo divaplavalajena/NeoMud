@@ -82,8 +82,8 @@ class ItemCatalogTest {
         assertNotNull(staff)
         assertEquals("Mystic Staff", staff.name)
         assertEquals("weapon", staff.type)
-        assertEquals(8, staff.damageBonus)
-        assertEquals(8, staff.damageRange)
+        assertEquals(10, staff.damageBonus)
+        assertEquals(10, staff.damageRange)
         assertEquals(5, staff.levelRequirement)
     }
 
@@ -168,10 +168,60 @@ class ItemCatalogTest {
     }
 
     @Test
+    fun testLookupCraftedConsumable() {
+        val catalog = load()
+        val vial = catalog.getItem("item:antivenom_vial")
+        assertNotNull(vial)
+        assertEquals("Antivenom Vial", vial.name)
+        assertEquals("consumable", vial.type)
+        assertEquals("cure_dot", vial.useEffect)
+        assertTrue(vial.stackable)
+
+        val tonic = catalog.getItem("item:fortifying_tonic")
+        assertNotNull(tonic)
+        assertEquals("buff_max_hp:20:20", tonic.useEffect)
+
+        val draught = catalog.getItem("item:wraith_draught")
+        assertNotNull(draught)
+        assertEquals("buff_damage:3:20", draught.useEffect)
+    }
+
+    @Test
+    fun testLookupCraftedWeapon() {
+        val catalog = load()
+        val edge = catalog.getItem("item:obsidian_edge")
+        assertNotNull(edge)
+        assertEquals("weapon", edge.type)
+        assertEquals("weapon", edge.slot)
+        assertEquals(14, edge.damageBonus)
+        assertEquals(11, edge.damageRange)
+        assertEquals(6, edge.levelRequirement)
+    }
+
+    @Test
+    fun testLookupCraftedArmor() {
+        val catalog = load()
+        val cloak = catalog.getItem("item:wolf_pelt_cloak")
+        assertNotNull(cloak)
+        assertEquals("armor", cloak.type)
+        assertEquals("back", cloak.slot)
+        assertEquals(2, cloak.armorValue)
+    }
+
+    @Test
+    fun testLookupCraftedScroll() {
+        val catalog = load()
+        val venom = catalog.getItem("item:scroll_of_venom")
+        assertNotNull(venom)
+        assertEquals("consumable", venom.type)
+        assertEquals("damage:40", venom.useEffect)
+    }
+
+    @Test
     fun testGetAllItems() {
         val catalog = load()
         val all = catalog.getAllItems()
-        assertTrue(all.size >= 38)
+        assertTrue(all.size >= 58, "Should have at least 58 items (38 base + 20 crafted), got ${all.size}")
         val ids = all.map { it.id }.toSet()
         assertTrue("item:iron_sword" in ids)
         assertTrue("item:health_potion" in ids)
@@ -179,5 +229,8 @@ class ItemCatalogTest {
         assertTrue("item:mystic_staff" in ids)
         assertTrue("item:amulet_of_warding" in ids)
         assertTrue("item:scroll_of_fireball" in ids)
+        assertTrue("item:antivenom_vial" in ids)
+        assertTrue("item:obsidian_edge" in ids)
+        assertTrue("item:wolf_pelt_cloak" in ids)
     }
 }

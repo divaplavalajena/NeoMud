@@ -267,6 +267,7 @@ class GameLoop(
         }
 
         // 1c. Resolve non-combat pending skills
+        val scrollKills = mutableListOf<CombatEvent.NpcKilled>()
         for (session in sessionManager.getAllAuthenticatedSessions()) {
             when (val skill = session.pendingSkill) {
                 is PendingSkill.Meditate -> {
@@ -283,7 +284,7 @@ class GameLoop(
                 }
                 is PendingSkill.UseItem -> {
                     session.pendingSkill = null
-                    resolveUseItem(session, skill.itemId)
+                    resolveUseItem(session, skill.itemId, scrollKills)
                 }
                 is PendingSkill.CastSpell -> {
                     session.pendingSkill = null
@@ -418,9 +419,12 @@ class GameLoop(
                         exclude = playerName
                     )
 
-                    // XP penalty on death
+                    // XP penalty on death (exempt at low levels for newbie protection)
                     val player = session.player
-                    val xpPenalty = if (player != null) (player.currentXp * GameConfig.Progression.DEATH_XP_LOSS_PERCENT).toLong() else 0L
+                    val xpPenalty = if (player != null && player.level >= GameConfig.Progression.DEATH_XP_PENALTY_MIN_LEVEL) {
+                        (player.currentXp * GameConfig.Progression.DEATH_XP_LOSS_PERCENT).toLong()
+                    } else 0L
+                    val newXp = ((player?.currentXp ?: 0L) - xpPenalty).coerceAtLeast(0L)
 
                     // Respawn
                     session.currentRoomId = event.respawnRoomId
@@ -428,9 +432,20 @@ class GameLoop(
                         currentHp = event.respawnHp,
                         currentMp = event.respawnMp,
                         currentRoomId = event.respawnRoomId,
-                        currentXp = ((player?.currentXp ?: 0L) - xpPenalty).coerceAtLeast(0L)
+                        currentXp = newXp
                     )
                     session.activeEffects.clear()
+
+                    // Notify client of XP loss so it stays in sync
+                    if (xpPenalty > 0 && session.player != null) {
+                        try {
+                            session.send(ServerMessage.XpGained(
+                                amount = -xpPenalty,
+                                currentXp = newXp,
+                                xpToNextLevel = session.player!!.xpToNextLevel
+                            ))
+                        } catch (_: Exception) { }
+                    }
 
                     // Broadcast enter to spawn room
                     sessionManager.broadcastToRoom(
@@ -465,6 +480,11 @@ class GameLoop(
                     }
                 }
             }
+        }
+
+        // 2b. Process scroll/consumable NPC kills (from resolveUseItem targetDamage)
+        for (kill in scrollKills) {
+            handleNpcKillEvent(kill)
         }
 
         // 3. Tick down skill cooldowns
@@ -536,15 +556,29 @@ class GameLoop(
             for (effect in effects) {
                 val player = session.player ?: continue
 
-                val result = EffectApplicator.applyEffect(effect.type.name, effect.magnitude, "", player)
+                val result = EffectApplicator.applyEffect(effect.type.name, effect.magnitude, "", player, effectiveMaxHp = session.effectiveMaxHp())
                 if (result != null) {
                     session.player = player.copy(currentHp = result.newHp, currentMp = result.newMp)
                     try {
                         session.send(ServerMessage.EffectTick(effect.name, result.message, result.newHp, newMp = result.newMp))
                     } catch (_: Exception) { /* session closing */ }
                 } else {
-                    // Stat buff effects or no-op effects
-                    val message = "${effect.name} continues to affect you."
+                    // Stat buff effects — show what stat is boosted
+                    val statName = when (effect.type) {
+                        com.neomud.shared.model.EffectType.BUFF_STRENGTH -> "strength"
+                        com.neomud.shared.model.EffectType.BUFF_AGILITY -> "agility"
+                        com.neomud.shared.model.EffectType.BUFF_INTELLECT -> "intellect"
+                        com.neomud.shared.model.EffectType.BUFF_WILLPOWER -> "willpower"
+                        com.neomud.shared.model.EffectType.HASTE -> "haste"
+                        com.neomud.shared.model.EffectType.BUFF_DAMAGE -> "damage"
+                        com.neomud.shared.model.EffectType.BUFF_MAX_HP -> "maximum HP"
+                        else -> null
+                    }
+                    val message = if (statName != null) {
+                        "${effect.name} boosts your $statName by ${effect.magnitude}. (${effect.remainingTicks - 1} ticks remaining)"
+                    } else {
+                        "${effect.name} continues to affect you."
+                    }
                     try {
                         session.send(ServerMessage.EffectTick(effect.name, message, player.currentHp))
                     } catch (_: Exception) { /* session closing */ }
@@ -560,6 +594,24 @@ class GameLoop(
             }
 
             session.activeEffects.removeAll(expired)
+
+            // Notify player about expired effects
+            for (effect in expired) {
+                try {
+                    session.send(ServerMessage.SystemMessage("${effect.name} has worn off."))
+                } catch (_: Exception) { /* session closing */ }
+            }
+
+            // When BUFF_MAX_HP expires, cap currentHp to new effective max
+            if (expired.any { it.type == EffectType.BUFF_MAX_HP }) {
+                val p = session.player
+                if (p != null) {
+                    val effectiveMax = session.effectiveMaxHp()
+                    if (p.currentHp > effectiveMax) {
+                        session.player = p.copy(currentHp = effectiveMax)
+                    }
+                }
+            }
 
             // Send updated active effects list to client
             try {
@@ -638,7 +690,7 @@ class GameLoop(
             val room = worldGraph.getRoom(roomId) ?: continue
             for (effect in room.effects) {
                 val p = session.player ?: continue
-                val result = EffectApplicator.applyEffect(effect.type, effect.value, effect.message, p) ?: continue
+                val result = EffectApplicator.applyEffect(effect.type, effect.value, effect.message, p, effectiveMaxHp = session.effectiveMaxHp()) ?: continue
                 session.player = p.copy(currentHp = result.newHp, currentMp = result.newMp)
                 val effectName = effect.type.lowercase().replaceFirstChar { it.uppercase() } + " Aura"
                 try {
@@ -756,7 +808,7 @@ class GameLoop(
         val result = SkillCheck.check(skillDef, effStats, player.level)
 
         if (!result.success) {
-            try { session.send(ServerMessage.RestUpdate(false, "You fail to settle into a restful state. (roll: ${result.roll})")) } catch (_: Exception) {}
+            try { session.send(ServerMessage.RestUpdate(false, "You fail to settle into a restful state.")) } catch (_: Exception) {}
             return
         }
 
@@ -764,7 +816,7 @@ class GameLoop(
         MeditationUtils.breakMeditation(session, "You stop meditating to rest.")
 
         session.isResting = true
-        try { session.send(ServerMessage.RestUpdate(true, "You settle into a restful state. (roll: ${result.roll})")) } catch (_: Exception) {}
+        try { session.send(ServerMessage.RestUpdate(true, "You settle into a restful state.")) } catch (_: Exception) {}
     }
 
     private suspend fun resolveMeditate(session: PlayerSession) {
@@ -787,12 +839,12 @@ class GameLoop(
         val result = SkillCheck.check(skillDef, effStats, player.level)
 
         if (!result.success) {
-            try { session.send(ServerMessage.MeditateUpdate(false, "You fail to focus your mind. (roll: ${result.roll})")) } catch (_: Exception) {}
+            try { session.send(ServerMessage.MeditateUpdate(false, "You fail to focus your mind.")) } catch (_: Exception) {}
             return
         }
 
         session.isMeditating = true
-        try { session.send(ServerMessage.MeditateUpdate(true, "You enter a meditative state. (roll: ${result.roll})")) } catch (_: Exception) {}
+        try { session.send(ServerMessage.MeditateUpdate(true, "You enter a meditative state.")) } catch (_: Exception) {}
     }
 
     private suspend fun resolveTrack(session: PlayerSession, targetId: String?) {
@@ -837,7 +889,7 @@ class GameLoop(
         checkHiddenExits(session, roomId, check)
     }
 
-    private suspend fun resolveUseItem(session: PlayerSession, itemId: String) {
+    private suspend fun resolveUseItem(session: PlayerSession, itemId: String, pendingNpcKills: MutableList<CombatEvent.NpcKilled> = mutableListOf()) {
         val playerName = session.playerName ?: return
         val player = session.player ?: return
 
@@ -847,7 +899,7 @@ class GameLoop(
             return
         }
 
-        val result = UseEffectProcessor.process(item.useEffect, player, item.name)
+        val result = UseEffectProcessor.process(item.useEffect, player, item.name, effectiveMaxHp = session.effectiveMaxHp())
         if (result == null) {
             try { session.send(ServerMessage.Error("${item.name} has no usable effect.")) } catch (_: Exception) {}
             return
@@ -863,6 +915,46 @@ class GameLoop(
         session.player = result.updatedPlayer
         session.activeEffects.addAll(result.newEffects)
 
+        // Handle cure_dot — remove POISON and DAMAGE effects
+        if (result.cureDot) {
+            session.activeEffects.removeAll { it.type in setOf(EffectType.POISON, EffectType.DAMAGE) }
+        }
+
+        // Handle targetDamage — apply instant damage to combat target
+        if (result.targetDamage > 0) {
+            val targetId = session.selectedTargetId
+            val npc = if (targetId != null) npcManager.getNpcState(targetId) else null
+            val roomId = session.currentRoomId
+            if (npc != null && roomId != null && npc.currentRoomId == roomId && npc.currentHp > 0) {
+                npc.currentHp -= result.targetDamage
+                sessionManager.broadcastToRoom(roomId, ServerMessage.SpellEffect(
+                    casterName = playerName,
+                    targetName = npc.name,
+                    spellName = item.name,
+                    effectAmount = result.targetDamage,
+                    targetNewHp = npc.currentHp.coerceAtLeast(0),
+                    targetMaxHp = npc.maxHp,
+                    targetId = npc.id
+                ))
+                if (npc.currentHp <= 0) {
+                    pendingNpcKills.add(CombatEvent.NpcKilled(
+                        npcId = npc.id,
+                        npcName = npc.name,
+                        killerName = playerName,
+                        roomId = roomId,
+                        npcLevel = npc.level,
+                        xpReward = npc.xpReward,
+                        templateId = npc.templateId
+                    ))
+                }
+            } else {
+                // No valid target — refund the item
+                inventoryRepository.addItem(playerName, itemId, 1)
+                try { session.send(ServerMessage.Error("You have no target for that scroll.")) } catch (_: Exception) {}
+                return
+            }
+        }
+
         val message = result.messages.joinToString(" ")
         try {
             session.send(ServerMessage.ItemUsed(
@@ -871,7 +963,7 @@ class GameLoop(
                 newHp = result.updatedPlayer.currentHp,
                 newMp = result.updatedPlayer.currentMp
             ))
-            if (result.newEffects.isNotEmpty()) {
+            if (result.newEffects.isNotEmpty() || result.cureDot) {
                 session.send(ServerMessage.ActiveEffectsUpdate(session.activeEffects.toList()))
             }
             sendInventoryUpdateForSession(session)
@@ -1035,7 +1127,7 @@ class GameLoop(
         session.skillCooldowns["SNEAK"] = sneakSkill?.cooldownTicks ?: 2
 
         if (check < difficulty) {
-            try { session.send(ServerMessage.StealthUpdate(false, "You fail to find cover! (roll: $roll)")) } catch (_: Exception) {}
+            try { session.send(ServerMessage.StealthUpdate(false, "You fail to find cover!")) } catch (_: Exception) {}
             return
         }
 

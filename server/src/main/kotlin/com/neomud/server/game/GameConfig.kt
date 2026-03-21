@@ -41,6 +41,7 @@ object GameConfig {
         const val CRIT_DAMAGE_MULTIPLIER = 1.5
         const val BACKSTAB_DAMAGE_MULTIPLIER = 3
         const val NPC_VARIANCE_DIVISOR = 3
+        const val GUARD_HIT_CHANCE = 85 // Guards are strong but not infallible (out of 100)
     }
     object Thresholds {
         // STR thresholds
@@ -82,6 +83,7 @@ object GameConfig {
         const val CP_TIER_2_LEVEL = 10
         const val CP_TIER_3_LEVEL = 20
         const val DEATH_XP_LOSS_PERCENT = 0.05
+        const val DEATH_XP_PENALTY_MIN_LEVEL = 2  // No XP penalty at level 1 (newbie protection)
     }
     object PlayerCreation {
         const val HP_HEALTH_DIVISOR = 10
@@ -159,6 +161,7 @@ object GameConfig {
         const val SELL_HAGGLE_BONUS_SCALE = 10
         const val SELL_MAX_PERCENT = 99
         const val BUY_HAGGLE_MAX_DISCOUNT = 15 // max charm-based buy discount percent
+        const val MAX_BUY_QUANTITY = 99 // max items per buy transaction
     }
     object Shutdown {
         const val DEFAULT_DELAY_SECONDS = 60

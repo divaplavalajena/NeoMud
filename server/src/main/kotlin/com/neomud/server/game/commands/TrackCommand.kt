@@ -6,7 +6,8 @@ import com.neomud.shared.protocol.ServerMessage
 
 class TrackCommand {
     suspend fun execute(session: PlayerSession, targetId: String? = null) {
-        session.player ?: return
+        val player = session.player ?: return
+        if (player.currentHp <= 0) return
 
         val cooldown = session.skillCooldowns["TRACK"]
         if (cooldown != null && cooldown > 0) {

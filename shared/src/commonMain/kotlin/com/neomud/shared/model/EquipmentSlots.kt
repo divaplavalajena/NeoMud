@@ -8,8 +8,9 @@ object EquipmentSlots {
     const val FEET = "feet"
     const val HANDS = "hands"
     const val RING = "ring"
+    const val BACK = "back"
     const val WEAPON = "weapon"
     const val SHIELD = "shield"
 
-    val DEFAULT_SLOTS = listOf(HEAD, NECK, CHEST, LEGS, FEET, HANDS, RING, WEAPON, SHIELD)
+    val DEFAULT_SLOTS = listOf(HEAD, NECK, CHEST, LEGS, FEET, HANDS, RING, BACK, WEAPON, SHIELD)
 }

@@ -91,6 +91,7 @@ data class NpcData(
     val lootItems: List<LootEntry> = emptyList(),
     val coinDrop: CoinDrop? = null,
     val spawnPoints: List<RoomId> = emptyList(),
+    val crafterRecipes: List<String> = emptyList(),
     val imagePrompt: String = "",
     val imageStyle: String = "",
     val imageNegativePrompt: String = "",

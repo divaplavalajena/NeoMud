@@ -106,6 +106,16 @@ class PlayerSession(
         return p.stats.copy(strength = str, agility = agi, intellect = int, willpower = wil)
     }
 
+    /** Sum of BUFF_DAMAGE magnitudes from active effects. */
+    fun effectiveDamageBonus(): Int =
+        activeEffects.filter { it.type == EffectType.BUFF_DAMAGE }.sumOf { it.magnitude }
+
+    /** Base maxHp + sum of BUFF_MAX_HP magnitudes from active effects. */
+    fun effectiveMaxHp(): Int {
+        val p = player ?: return 0
+        return p.maxHp + activeEffects.filter { it.type == EffectType.BUFF_MAX_HP }.sumOf { it.magnitude }
+    }
+
     fun toPlayerInfo(): PlayerInfo? {
         val p = player ?: return null
         return PlayerInfo(

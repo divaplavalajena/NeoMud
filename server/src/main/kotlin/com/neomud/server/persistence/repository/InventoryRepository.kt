@@ -38,25 +38,33 @@ open class InventoryRepository(private val itemCatalog: ItemCatalog) {
 
             if (existing != null) {
                 val currentQty = existing[InventoryTable.quantity]
-                val newQty = (currentQty + quantity).coerceAtMost(item.maxStack)
+                if (currentQty >= item.maxStack) {
+                    // Already at max stack — cannot add any more
+                    return@transaction false
+                }
+                val canAdd = (item.maxStack - currentQty).coerceAtMost(quantity)
+                if (canAdd <= 0) return@transaction false
                 InventoryTable.update({
                     (InventoryTable.id eq existing[InventoryTable.id])
                 }) {
-                    it[InventoryTable.quantity] = newQty
+                    it[InventoryTable.quantity] = currentQty + canAdd
                 }
-                return@transaction true
+                // Return false if not all items could be added (overflow)
+                return@transaction canAdd >= quantity
             }
         }
 
-        // Insert new entry
+        // Insert new entry (clamp to maxStack for stackable items)
+        val insertQty = if (item.stackable) quantity.coerceAtMost(item.maxStack) else quantity
         InventoryTable.insert {
             it[InventoryTable.playerName] = playerName
             it[InventoryTable.itemId] = itemId
-            it[InventoryTable.quantity] = quantity
+            it[InventoryTable.quantity] = insertQty
             it[equipped] = false
             it[slot] = ""
         }
-        true
+        // Return false if we had to clamp (overflow)
+        insertQty >= quantity
     }
 
     open fun removeItem(playerName: String, itemId: String, quantity: Int = 1): Boolean = transaction {

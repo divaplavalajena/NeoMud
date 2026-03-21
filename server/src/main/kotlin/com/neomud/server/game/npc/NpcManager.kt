@@ -34,6 +34,7 @@ data class NpcState(
     val startRoomId: RoomId = "",
     val templateId: String = "",
     val vendorItems: List<String> = emptyList(),
+    val crafterRecipes: List<String> = emptyList(),
     val accuracy: Int = 0,
     val defense: Int = 0,
     val evasion: Int = 0,
@@ -129,6 +130,7 @@ class NpcManager(
             startRoomId = data.startRoomId,
             templateId = data.id,
             vendorItems = data.vendorItems,
+            crafterRecipes = data.crafterRecipes,
             accuracy = data.accuracy,
             defense = data.defense,
             evasion = data.evasion,
@@ -166,7 +168,9 @@ class NpcManager(
             if (!npc.isAlive) continue
 
             // Hostile NPCs that detect a player (or are stunned) stay put — skip all movement behaviors
-            if (npc.hostile && (npc.currentRoomId in roomsWithVisiblePlayers || npc.stunTicks > 0)) {
+            // Exception: sanctuary rooms suppress combat, so NPCs should not stay to fight there
+            val inSanctuary = npc.hostile && worldGraph.getRoom(npc.currentRoomId)?.effects?.any { it.type == "SANCTUARY" } == true
+            if (npc.hostile && !inSanctuary && (npc.currentRoomId in roomsWithVisiblePlayers || npc.stunTicks > 0)) {
                 continue
             }
 
@@ -216,7 +220,12 @@ class NpcManager(
             }
         }
 
-        // 2. Clean up dead NPCs (remove from list)
+        // 2. Clean up dead NPCs (remove from list) — reset zone spawn timers to
+        //    prevent instant respawns when the spawn timer was about to fire
+        val deadNpcs = npcs.filter { !it.isAlive }
+        for (dead in deadNpcs) {
+            zoneSpawnTimers[dead.zoneId] = 0
+        }
         npcs.removeAll { !it.isAlive }
 
         // 3. Zone spawn timers — spawn new NPC copies up to maxEntities
@@ -333,6 +342,9 @@ class NpcManager(
 
     fun getVendorInRoom(roomId: RoomId): NpcState? =
         npcs.find { it.currentRoomId == roomId && it.behaviorType == "vendor" && it.isAlive }
+
+    fun getCrafterInRoom(roomId: RoomId): NpcState? =
+        npcs.find { it.currentRoomId == roomId && it.behaviorType == "crafter" && it.isAlive }
 
     fun spawnAdminNpc(templateId: String, roomId: RoomId): NpcState? {
         val (data, zoneId) = allTemplates[templateId] ?: return null

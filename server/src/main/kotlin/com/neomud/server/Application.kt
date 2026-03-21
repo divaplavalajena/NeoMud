@@ -6,9 +6,11 @@ import com.neomud.server.game.MovementTrailManager
 import com.neomud.server.game.combat.CombatManager
 import com.neomud.server.game.commands.InventoryCommand
 import com.neomud.server.game.commands.PickupCommand
+import com.neomud.server.game.commands.CraftCommand
 import com.neomud.server.game.commands.SpellCommand
 import com.neomud.server.game.commands.TrainerCommand
 import com.neomud.server.game.commands.VendorCommand
+import com.neomud.server.game.crafting.CraftingService
 import com.neomud.server.game.inventory.EquipmentService
 import com.neomud.server.game.inventory.LootService
 import com.neomud.server.game.inventory.RoomItemManager
@@ -255,6 +257,7 @@ fun Application.module(jdbcUrl: String = "jdbc:sqlite:neomud.db", worldFile: Str
     val raceCatalog = loadResult.raceCatalog
     val spellCatalog = loadResult.spellCatalog
     val pcSpriteCatalog = loadResult.pcSpriteCatalog
+    val recipeCatalog = loadResult.recipeCatalog
     val npcManager = NpcManager(worldGraph, loadResult.zoneSpawnConfigs, loadResult.roomMaxHostileNpcs)
     npcManager.loadNpcs(loadResult.npcDataList)
 
@@ -274,6 +277,8 @@ fun Application.module(jdbcUrl: String = "jdbc:sqlite:neomud.db", worldFile: Str
     val combatManager = CombatManager(npcManager, sessionManager, worldGraph, equipmentService, skillCatalog, spellCommand, spellCatalog, movementTrailManager)
     val trainerCommand = TrainerCommand(classCatalog, raceCatalog, playerRepository, sessionManager, npcManager)
     val vendorCommand = VendorCommand(npcManager, itemCatalog, inventoryRepository, coinRepository, inventoryCommand, sessionManager, skillCatalog)
+    val craftingService = CraftingService(recipeCatalog, itemCatalog, inventoryRepository, coinRepository)
+    val craftCommand = CraftCommand(npcManager, craftingService, recipeCatalog, inventoryCommand, sessionManager, inventoryRepository, coinRepository)
     val adminUsernames = adminUsernamesOverride ?: (System.getenv("NEOMUD_ADMINS")
         ?.split(",")
         ?.map { it.trim().lowercase() }
@@ -288,7 +293,7 @@ fun Application.module(jdbcUrl: String = "jdbc:sqlite:neomud.db", worldFile: Str
         worldGraph, sessionManager, npcManager, playerRepository,
         classCatalog, itemCatalog, skillCatalog, raceCatalog, inventoryCommand, pickupCommand, roomItemManager,
         trainerCommand, spellCommand, spellCatalog, vendorCommand, lootService, lootTableCatalog,
-        inventoryRepository, coinRepository, discoveryRepository, adminUsernames, movementTrailManager,
+        inventoryRepository, coinRepository, discoveryRepository, craftCommand, adminUsernames, movementTrailManager,
         pcSpriteCatalog
     )
     val gameLoop = GameLoop(sessionManager, npcManager, combatManager, worldGraph, lootService, lootTableCatalog, roomItemManager, playerRepository, skillCatalog, classCatalog, itemCatalog, inventoryRepository, coinRepository, movementTrailManager, spellCommand, spellCatalog)
@@ -298,10 +303,24 @@ fun Application.module(jdbcUrl: String = "jdbc:sqlite:neomud.db", worldFile: Str
     monitor.subscribe(ApplicationStopped) {
         logger.info("Saving player states...")
         for (session in sessionManager.getAllAuthenticatedSessions()) {
+            val playerName = session.playerName ?: continue
             try {
                 session.player?.let { playerRepository.savePlayerState(it) }
             } catch (e: Exception) {
-                logger.error("Failed to save player ${session.playerName}: ${e.message}")
+                logger.error("Failed to save player $playerName: ${e.message}")
+            }
+            try {
+                discoveryRepository.savePlayerDiscovery(
+                    playerName,
+                    com.neomud.server.persistence.repository.PlayerDiscoveryData(
+                        visitedRooms = session.visitedRooms.toSet(),
+                        discoveredHiddenExits = session.discoveredHiddenExits.toSet(),
+                        discoveredLockedExits = session.discoveredLockedExits.toSet(),
+                        discoveredInteractables = session.discoveredInteractables.toSet()
+                    )
+                )
+            } catch (e: Exception) {
+                logger.error("Failed to save discovery data for $playerName: ${e.message}")
             }
         }
         logger.info("Closing world bundle...")

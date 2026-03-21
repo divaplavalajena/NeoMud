@@ -70,6 +70,10 @@ class VendorCommand(
 
     suspend fun handleBuy(session: PlayerSession, itemId: String, quantity: Int) {
         if (quantity < 1) return
+        if (quantity > GameConfig.Vendor.MAX_BUY_QUANTITY) {
+            session.send(ServerMessage.Error("You can only buy up to ${GameConfig.Vendor.MAX_BUY_QUANTITY} items at a time."))
+            return
+        }
         val roomId = session.currentRoomId ?: return
         val playerName = session.playerName ?: return
         val player = session.player ?: return
@@ -108,7 +112,13 @@ class VendorCommand(
             return
         }
 
-        inventoryRepository.addItem(playerName, itemId, quantity)
+        val added = inventoryRepository.addItem(playerName, itemId, quantity)
+        if (!added) {
+            // Refund coins if item couldn't be added to inventory
+            coinRepository.addCoins(playerName, totalCost)
+            session.send(ServerMessage.Error("Failed to add ${item.name} to your inventory."))
+            return
+        }
         logger.info("$playerName bought ${item.name} x$quantity for ${totalCost.displayString()}")
 
         val updatedCoins = coinRepository.getCoins(playerName)
@@ -151,7 +161,16 @@ class VendorCommand(
             return
         }
 
-        val removed = inventoryRepository.removeItem(playerName, itemId, quantity)
+        // Clamp quantity to actual unequipped amount to prevent sell exploit
+        val inventory = inventoryRepository.getInventory(playerName)
+        val availableQty = inventory.filter { it.itemId == itemId && !it.equipped }.sumOf { it.quantity }
+        if (availableQty <= 0) {
+            session.send(ServerMessage.Error("You don't have that item."))
+            return
+        }
+        val actualQuantity = quantity.coerceAtMost(availableQty)
+
+        val removed = inventoryRepository.removeItem(playerName, itemId, actualQuantity)
         if (!removed) {
             session.send(ServerMessage.Error("You don't have that item."))
             return
@@ -169,7 +188,7 @@ class VendorCommand(
         )
         val unitSellPrice = Coins.fromCopper(unitSellCopper)
         val sellPriceCopper = Coins.sellPriceCopper(
-            item.value, quantity, player.stats.charm, hasHaggle,
+            item.value, actualQuantity, player.stats.charm, hasHaggle,
             basePercent = GameConfig.Vendor.SELL_BASE_PERCENT,
             charmScale = GameConfig.Vendor.SELL_CHARM_SCALE,
             haggleBonusScale = GameConfig.Vendor.SELL_HAGGLE_BONUS_SCALE,
@@ -177,7 +196,7 @@ class VendorCommand(
         )
         val sellPrice = Coins.fromCopper(sellPriceCopper)
         coinRepository.addCoins(playerName, sellPrice)
-        logger.info("$playerName sold ${item.name} x$quantity for ${sellPrice.displayString()}")
+        logger.info("$playerName sold ${item.name} x$actualQuantity for ${sellPrice.displayString()}")
 
         val updatedCoins = coinRepository.getCoins(playerName)
         val updatedInventory = inventoryRepository.getInventory(playerName)
@@ -185,7 +204,7 @@ class VendorCommand(
 
         session.send(ServerMessage.SellResult(
             success = true,
-            message = if (quantity > 1) "You sold ${item.name} x$quantity for ${sellPrice.displayString()} (${unitSellPrice.displayString()} each)."
+            message = if (actualQuantity > 1) "You sold ${item.name} x$actualQuantity for ${sellPrice.displayString()} (${unitSellPrice.displayString()} each)."
                       else "You sold ${item.name} for ${sellPrice.displayString()}.",
             updatedCoins = updatedCoins,
             updatedInventory = updatedInventory,

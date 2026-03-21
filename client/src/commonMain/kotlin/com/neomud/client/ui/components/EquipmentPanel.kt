@@ -74,6 +74,7 @@ private val SLOT_ICONS = mapOf(
     EquipmentSlots.SHIELD to "\u25D7",   // ◗ half-circle shield
     EquipmentSlots.HANDS to "\u270B",    // ✋ hand
     EquipmentSlots.RING to "\u25CB",     // ○ ring circle
+    EquipmentSlots.BACK to "\u2736",     // ✶ cloak
     EquipmentSlots.LEGS to "\u2503",     // ┃ legs
     EquipmentSlots.FEET to "\u25AD",     // ▭ boot
 )
@@ -404,6 +405,17 @@ fun EquipmentPanel(
                                     )
                                 }
                             }
+                            Spacer(modifier = Modifier.height(2.dp))
+
+                            // Back (cloak) — between torso and arms
+                            PaperdollSlot(
+                                EquipmentSlots.BACK, equipment[EquipmentSlots.BACK], itemCatalog,
+                                comparisonHighlight = selectedBagSlot == EquipmentSlots.BACK,
+                                inspectionHighlight = selectedEquippedSlot == EquipmentSlots.BACK,
+                                pulseAlpha = pulseAlpha,
+                                onSlotTapped = onSlotTapped,
+                                slotSize = 48
+                            )
                             Spacer(modifier = Modifier.height(2.dp))
 
                             // Hands / Ring — arms row

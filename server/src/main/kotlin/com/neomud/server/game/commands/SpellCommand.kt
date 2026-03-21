@@ -86,6 +86,7 @@ class SpellCommand(
      */
     suspend fun execute(session: PlayerSession, spellId: String, targetId: String?) {
         val player = session.player ?: return
+        if (player.currentHp <= 0) return
 
         // Casting a spell breaks meditation, rest, and stealth
         MeditationUtils.breakMeditation(session, "You stop meditating.")
@@ -154,6 +155,22 @@ class SpellCommand(
         val cooldown = session.skillCooldowns[spellId]
         if (cooldown != null && cooldown > 0) {
             session.send(ServerMessage.SpellCastResult(false, spell.name, "${spell.name} is on cooldown ($cooldown ticks remaining).", player.currentMp))
+            return null
+        }
+
+        // For offensive spells, validate target BEFORE spending MP
+        val isOffensive = spell.spellType == SpellType.DAMAGE || spell.spellType == SpellType.DOT
+        if (isOffensive) {
+            val target = resolveTarget(session, targetId, roomId)
+            if (target == null) {
+                session.send(ServerMessage.SpellCastResult(false, spell.name, "No valid target.", player.currentMp))
+                return null
+            }
+        }
+
+        // For heal spells, refuse if already at full HP (including buffs)
+        if (spell.spellType == SpellType.HEAL && player.currentHp >= session.effectiveMaxHp()) {
+            session.send(ServerMessage.SpellCastResult(false, spell.name, "You are already at full health.", player.currentMp))
             return null
         }
 
@@ -282,7 +299,8 @@ class SpellCommand(
 
     private suspend fun handleHeal(session: PlayerSession, spell: SpellDef, power: Int, playerName: String) {
         val player = session.player!!
-        val newHp = (player.currentHp + power).coerceAtMost(player.maxHp)
+        val effectiveMax = session.effectiveMaxHp()
+        val newHp = (player.currentHp + power).coerceAtMost(effectiveMax)
         val healed = newHp - player.currentHp
         session.player = player.copy(currentHp = newHp)
 
@@ -350,7 +368,7 @@ class SpellCommand(
         val resolvedId = targetId ?: session.selectedTargetId
         return if (resolvedId != null) {
             val npc = npcManager.getNpcState(resolvedId)
-            if (npc != null && npc.currentRoomId == roomId && npc.isAlive) npc else null
+            if (npc != null && npc.currentRoomId == roomId && npc.isAlive && npc.hostile) npc else null
         } else {
             npcManager.getLivingHostileNpcsInRoom(roomId).firstOrNull()
         }

@@ -318,6 +318,65 @@ class SpellCastTickTest {
         assertTrue(session.player!!.currentHp > 30, "Player should be healed")
     }
 
+    // --- No valid target does not consume MP ---
+
+    @Test
+    fun testResolveDoesNotDeductMpWhenNoValidTarget() = runBlocking {
+        // No NPCs in the room — resolveTarget returns null
+        val spellCommand = createSpellCommand()
+        val session = createTestSession()
+        session.player = createTestPlayer(currentMp = 50)
+        session.playerName = "TestPlayer"
+        session.currentRoomId = "test:room"
+
+        val target = spellCommand.resolve(session, "FIREBALL", "npc:nonexistent")
+
+        assertNull(target, "Should return null when no valid target")
+        assertEquals(50, session.player!!.currentMp, "MP should not be deducted when target is invalid")
+    }
+
+    @Test
+    fun testResolveDoesNotSetCooldownWhenNoValidTarget() = runBlocking {
+        val spellCommand = createSpellCommand()
+        val session = createTestSession()
+        session.player = createTestPlayer(currentMp = 50)
+        session.playerName = "TestPlayer"
+        session.currentRoomId = "test:room"
+
+        spellCommand.resolve(session, "FIREBALL", "npc:nonexistent")
+
+        assertNull(session.skillCooldowns["FIREBALL"], "Cooldown should not be set when target is invalid")
+    }
+
+    // --- Heal at full HP ---
+
+    @Test
+    fun testResolveHealAtFullHpDoesNotDeductMp() = runBlocking {
+        val spellCommand = createSpellCommand()
+        val session = createTestSession()
+        session.player = createTestPlayer(currentHp = 50, maxHp = 50, currentMp = 50)
+        session.playerName = "TestPlayer"
+        session.currentRoomId = "test:room"
+
+        val target = spellCommand.resolve(session, "HEAL", null)
+
+        assertNull(target)
+        assertEquals(50, session.player!!.currentMp, "MP should not be deducted when at full HP")
+    }
+
+    @Test
+    fun testResolveHealBelowMaxHpDeductsMp() = runBlocking {
+        val spellCommand = createSpellCommand()
+        val session = createTestSession()
+        session.player = createTestPlayer(currentHp = 30, maxHp = 50, currentMp = 50)
+        session.playerName = "TestPlayer"
+        session.currentRoomId = "test:room"
+
+        spellCommand.resolve(session, "HEAL", null)
+
+        assertEquals(50 - healSpell.manaCost, session.player!!.currentMp, "MP should be deducted when below max HP")
+    }
+
     // --- Death clears pending CastSpell ---
 
     @Test

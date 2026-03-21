@@ -326,6 +326,27 @@ sealed class ServerMessage {
     ) : ServerMessage()
 
     @Serializable
+    @SerialName("crafting_menu")
+    data class CraftingMenu(
+        val crafterName: String,
+        val recipes: List<RecipeInfo>,
+        val playerCoins: Coins,
+        val interactSound: String = "",
+        val exitSound: String = ""
+    ) : ServerMessage()
+
+    @Serializable
+    @SerialName("craft_result")
+    data class CraftResult(
+        val success: Boolean,
+        val itemName: String,
+        val message: String,
+        val updatedCoins: Coins,
+        val updatedInventory: List<InventoryItem>,
+        val equipment: Map<String, String>
+    ) : ServerMessage()
+
+    @Serializable
     @SerialName("spell_effect")
     data class SpellEffect(
         val casterName: String,

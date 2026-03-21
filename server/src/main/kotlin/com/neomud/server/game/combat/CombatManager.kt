@@ -255,10 +255,11 @@ class CombatManager(
                         continue
                     }
 
+                    val dmgBuff = session.effectiveDamageBonus()
                     var damage = if (bonuses.weaponDamageRange > 0) {
-                        effStats.strength / GameConfig.Combat.MELEE_STR_DIVISOR + bonuses.totalDamageBonus + thresholds.meleeDamageBonus + (1..bonuses.weaponDamageRange).random()
+                        effStats.strength / GameConfig.Combat.MELEE_STR_DIVISOR + bonuses.totalDamageBonus + thresholds.meleeDamageBonus + dmgBuff + (1..bonuses.weaponDamageRange).random()
                     } else {
-                        effStats.strength / GameConfig.Combat.MELEE_STR_DIVISOR + thresholds.meleeDamageBonus + (1..GameConfig.Combat.UNARMED_DAMAGE_RANGE).random()
+                        effStats.strength / GameConfig.Combat.MELEE_STR_DIVISOR + thresholds.meleeDamageBonus + dmgBuff + (1..GameConfig.Combat.UNARMED_DAMAGE_RANGE).random()
                     }
 
                     if (thresholds.critChance > 0 && Math.random() < thresholds.critChance) {
@@ -313,6 +314,10 @@ class CombatManager(
                     }
 
                     val roomId = combatant.roomId
+
+                    // Sanctuary rooms suppress all NPC combat
+                    val room = worldGraph.getRoom(roomId)
+                    if (room != null && room.effects.any { it.type == "SANCTUARY" }) continue
                     val playersInRoom = playersByRoom[roomId] ?: continue
                     val visiblePlayers = playersInRoom.filter { !it.isHidden && !it.godMode && (it.player?.currentHp ?: 0) > 0 && it.combatGraceTicks <= 0 }
                     val targetSession = visiblePlayers.randomOrNull() ?: continue
@@ -434,7 +439,9 @@ class CombatManager(
 
         val effStats = session.effectiveStats()
         val bonuses = equipmentService.getCombatBonuses(playerName)
-        val damage = effStats.strength / GameConfig.Combat.MELEE_STR_DIVISOR + bonuses.totalDamageBonus + (1..GameConfig.Skills.BASH_DAMAGE_RANGE).random()
+        val thresholds = ThresholdBonuses.compute(effStats)
+        val weaponRange = if (bonuses.weaponDamageRange > 0) bonuses.weaponDamageRange else GameConfig.Skills.BASH_DAMAGE_RANGE
+        val damage = effStats.strength / GameConfig.Combat.MELEE_STR_DIVISOR + bonuses.totalDamageBonus + thresholds.meleeDamageBonus + session.effectiveDamageBonus() + (1..weaponRange).random()
         target.currentHp -= damage
 
         val stunned = (1..100).random() <= GameConfig.Skills.BASH_STUN_CHANCE
@@ -500,7 +507,10 @@ class CombatManager(
         }
 
         val effStats = session.effectiveStats()
-        val damage = effStats.strength / GameConfig.Skills.KICK_STR_DIVISOR + effStats.agility / GameConfig.Skills.KICK_AGI_DIVISOR + (1..GameConfig.Skills.KICK_DAMAGE_RANGE).random()
+        val bonuses = equipmentService.getCombatBonuses(playerName)
+        val thresholds = ThresholdBonuses.compute(effStats)
+        val kickRange = if (bonuses.weaponDamageRange > 0) bonuses.weaponDamageRange else GameConfig.Skills.KICK_DAMAGE_RANGE
+        val damage = effStats.strength / GameConfig.Skills.KICK_STR_DIVISOR + effStats.agility / GameConfig.Skills.KICK_AGI_DIVISOR + bonuses.totalDamageBonus + thresholds.meleeDamageBonus + session.effectiveDamageBonus() + (1..kickRange).random()
         target.currentHp -= damage
 
         session.skillCooldowns["KICK"] = GameConfig.Skills.KICK_COOLDOWN_TICKS
@@ -633,13 +643,30 @@ class CombatManager(
                 .filter { it.currentHp > 0 }
             if (hostiles.isEmpty()) continue
 
-            // Guards attack hostile NPCs (simplified: damage + variance, no hit/miss)
+            // Guards attack hostile NPCs with configurable hit chance
             for (guard in guards) {
                 if (guard.currentHp <= 0) continue
                 // Prioritize hostiles that are attacking players, then any hostile
                 val target = hostiles.filter { it.currentHp > 0 }
                     .sortedByDescending { it.engagedPlayerIds.size }
                     .firstOrNull() ?: continue
+
+                // Hit/miss check — guards are strong but not infallible
+                val roll = (1..100).random()
+                if (roll > GameConfig.Combat.GUARD_HIT_CHANCE) {
+                    events.add(CombatEvent.Hit(
+                        attackerName = guard.name,
+                        defenderName = target.name,
+                        damage = 0,
+                        defenderHp = target.currentHp,
+                        defenderMaxHp = target.maxHp,
+                        isPlayerDefender = false,
+                        roomId = roomId,
+                        isMiss = true,
+                        defenderId = target.id
+                    ))
+                    continue
+                }
 
                 val variance = maxOf(guard.damage / GameConfig.Combat.NPC_VARIANCE_DIVISOR, 1)
                 val damage = guard.damage + (1..variance).random()
