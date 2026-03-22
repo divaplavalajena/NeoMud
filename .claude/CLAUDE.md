@@ -95,12 +95,20 @@ Everything is JSON-defined, loaded into catalogs at startup:
 - Tables: `PlayersTable`, `InventoryTable`, `PlayerCoinsTable`, `PlayerDiscoveryTable`
 - Repositories: `PlayerRepository`, `InventoryRepository`, `CoinRepository`, `DiscoveryRepository`
 - SHA-256 password hashing (MVP, not production-grade)
+- Discovery system tracks visited rooms, hidden/locked exits, interactables, and tutorials per player
+
+### Tutorial System
+- One-time tutorials tracked via `PlayerDiscoveryTable` with type `"tutorial"` and a key (e.g., `"welcome"`)
+- Server sends `ServerMessage.Tutorial(key, title, content)` — client renders as a modal dialog
+- Tutorial state loaded from DB on login (`session.seenTutorials`), persisted via `DiscoveryRepository.markTutorialSeen()`
+- Welcome tutorial fires immediately after `LoginOk` on first login for new characters
+- **Auth transition**: `Tutorial` messages arrive before `GameViewModel` is mounted. `AuthViewModel` captures them in `initialTutorial` and passes them through via `NeoMudApp.kt` → `GameViewModel.setInitialTutorial()`. Any new message types sent during the post-login sequence must follow this same pattern.
 
 ### Client
 - Jetpack Compose + Material 3
 - Ktor OkHttp WebSocket client
 - Room rendering: background art, NPC/item sprites, floating minimap with fog-of-war
-- On connect: server sends `ClassCatalogSync` + `ItemCatalogSync`; on login: `InventoryUpdate`
+- On connect: server sends `ClassCatalogSync` + `ItemCatalogSync`; on login: `LoginOk` → `Tutorial` (first login only) → `RoomInfo` → `MapData` → `InventoryUpdate` → `RoomItemsUpdate`
 
 ### Maker (World Editor)
 - React 18 frontend + Express API backend
