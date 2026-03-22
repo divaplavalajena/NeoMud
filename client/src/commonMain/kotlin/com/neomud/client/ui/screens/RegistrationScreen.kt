@@ -701,7 +701,7 @@ private fun GenderSelectionStep(
     val genders = listOf(
         Triple("male", "Male", "Your character presents as male."),
         Triple("female", "Female", "Your character presents as female."),
-        Triple("neutral", "Neutral", "Your character presents as gender-neutral.")
+        Triple("neutral", "Neutral/Other", "Your character presents as gender-neutral.")
     )
 
     Column(modifier = Modifier.fillMaxWidth()) {
