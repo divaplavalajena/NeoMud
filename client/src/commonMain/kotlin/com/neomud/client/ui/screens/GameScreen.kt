@@ -45,6 +45,7 @@ import com.neomud.client.ui.components.RoomItemsSidebar
 import com.neomud.client.platform.LocalIsLandscape
 import com.neomud.client.platform.LocalSetLayoutPreference
 import com.neomud.client.platform.PlatformAudioManager
+import com.neomud.client.ui.components.HelpPanel
 import com.neomud.client.ui.components.SettingsPanel
 import com.neomud.client.ui.components.SpellBar
 import com.neomud.client.ui.components.SpellPicker
@@ -86,6 +87,7 @@ fun GameScreen(
     val activeEffects by gameViewModel.activeEffects.collectAsState()
     val showCharacterSheet by gameViewModel.showCharacterSheet.collectAsState()
     val showSettings by gameViewModel.showSettings.collectAsState()
+    val showHelp by gameViewModel.showHelp.collectAsState()
     val classCatalog by gameViewModel.classCatalog.collectAsState()
     val deathMessage by gameViewModel.deathMessage.collectAsState()
     val showTrainer by gameViewModel.showTrainer.collectAsState()
@@ -203,6 +205,13 @@ fun GameScreen(
                 onEquipItem = { itemId, slot -> gameViewModel.equipItem(itemId, slot) },
                 onUnequipItem = { slot -> gameViewModel.unequipItem(slot) },
                 onClose = { gameViewModel.toggleEquipment() }
+            )
+        }
+
+        // Help overlay
+        if (showHelp) {
+            HelpPanel(
+                onClose = { gameViewModel.toggleHelp() }
             )
         }
 
@@ -635,6 +644,7 @@ private fun GameScreenPortrait(
                         active = showEquipmentState,
                         onClick = { gameViewModel.toggleEquipment() }
                     )
+                    HelpIconButton(onClick = { gameViewModel.toggleHelp() })
                     SettingsGearButton(onClick = { gameViewModel.toggleSettings() })
                 }
             }
@@ -869,6 +879,7 @@ private fun GameScreenLandscape(
                                 active = showEquipmentState,
                                 onClick = { gameViewModel.toggleEquipment() }
                             )
+                            HelpIconButton(onClick = { gameViewModel.toggleHelp() })
                             SettingsGearButton(onClick = { gameViewModel.toggleSettings() })
                         }
                     }
@@ -1209,6 +1220,25 @@ private fun MapIconButton(active: Boolean, onClick: () -> Unit) {
         Image(
             painter = painterResource(MudIcons.Map),
             contentDescription = "Map",
+            modifier = Modifier.size(22.dp)
+        )
+    }
+}
+
+@Composable
+private fun HelpIconButton(onClick: () -> Unit) {
+    val stoneBg = Brush.verticalGradient(listOf(StoneTheme.frameLight, StoneTheme.frameDark))
+    Box(
+        modifier = Modifier
+            .size(28.dp)
+            .background(stoneBg, RoundedCornerShape(4.dp))
+            .border(1.dp, StoneTheme.frameMid, RoundedCornerShape(4.dp))
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center
+    ) {
+        Image(
+            painter = painterResource(MudIcons.Help),
+            contentDescription = "Help",
             modifier = Modifier.size(22.dp)
         )
     }

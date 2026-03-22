@@ -165,6 +165,10 @@ class GameViewModel(
     private val _showSettings = MutableStateFlow(false)
     val showSettings: StateFlow<Boolean> = _showSettings
 
+    // Help
+    private val _showHelp = MutableStateFlow(false)
+    val showHelp: StateFlow<Boolean> = _showHelp
+
     private val _classCatalog = MutableStateFlow<Map<String, CharacterClassDef>>(emptyMap())
     val classCatalog: StateFlow<Map<String, CharacterClassDef>> = _classCatalog
 
@@ -824,6 +828,10 @@ class GameViewModel(
 
     fun toggleSettings() {
         _showSettings.value = !_showSettings.value
+    }
+
+    fun toggleHelp() {
+        _showHelp.value = !_showHelp.value
     }
 
     fun interactTrainer() {

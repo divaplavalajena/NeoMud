@@ -49,6 +49,9 @@ object MudIcons {
     val Trainer: DrawableResource = Res.drawable.icon_trainer
     val Crafter: DrawableResource = Res.drawable.icon_crafter
 
+    // ── Toolbar (cont.) ──
+    val Help: DrawableResource = Res.drawable.icon_help
+
     // ── Room Overlay / Interactables ──
     val ExitOpen: DrawableResource = Res.drawable.icon_exit_open
     val TreasureDrop: DrawableResource = Res.drawable.icon_treasure_drop
