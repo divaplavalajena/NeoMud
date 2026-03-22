@@ -30,6 +30,7 @@ class DiscoveryRepositoryTest {
         assertTrue(data.discoveredHiddenExits.isEmpty())
         assertTrue(data.discoveredLockedExits.isEmpty())
         assertTrue(data.discoveredInteractables.isEmpty())
+        assertTrue(data.tutorials.isEmpty())
     }
 
     @Test
@@ -53,7 +54,8 @@ class DiscoveryRepositoryTest {
             visitedRooms = setOf("town:square", "town:gate"),
             discoveredHiddenExits = setOf("town:square:EAST", "forest:path:NORTH"),
             discoveredLockedExits = setOf("town:gate:NORTH"),
-            discoveredInteractables = setOf("town:square::lever_1", "dungeon:entry::chest_2")
+            discoveredInteractables = setOf("town:square::lever_1", "dungeon:entry::chest_2"),
+            tutorials = setOf("welcome", "combat_intro")
         )
         repo.savePlayerDiscovery("alice", data)
         val loaded = repo.loadPlayerDiscovery("alice")
@@ -61,6 +63,7 @@ class DiscoveryRepositoryTest {
         assertEquals(data.discoveredHiddenExits, loaded.discoveredHiddenExits)
         assertEquals(data.discoveredLockedExits, loaded.discoveredLockedExits)
         assertEquals(data.discoveredInteractables, loaded.discoveredInteractables)
+        assertEquals(data.tutorials, loaded.tutorials)
     }
 
     @Test
@@ -70,14 +73,19 @@ class DiscoveryRepositoryTest {
             visitedRooms = setOf("town:square"),
             discoveredHiddenExits = emptySet(),
             discoveredLockedExits = emptySet(),
-            discoveredInteractables = emptySet()
+            discoveredInteractables = emptySet(),
+            tutorials = setOf("welcome")
         )
         repo.savePlayerDiscovery("bob", data)
-        // Save again with same + new rooms — should not fail or duplicate
-        val updated = data.copy(visitedRooms = setOf("town:square", "town:gate"))
+        // Save again with same + new data — should not fail or duplicate
+        val updated = data.copy(
+            visitedRooms = setOf("town:square", "town:gate"),
+            tutorials = setOf("welcome", "combat_intro")
+        )
         repo.savePlayerDiscovery("bob", updated)
         val loaded = repo.loadPlayerDiscovery("bob")
         assertEquals(setOf("town:square", "town:gate"), loaded.visitedRooms)
+        assertEquals(setOf("welcome", "combat_intro"), loaded.tutorials)
     }
 
     @Test
@@ -87,23 +95,75 @@ class DiscoveryRepositoryTest {
             visitedRooms = setOf("town:square", "town:gate"),
             discoveredHiddenExits = setOf("town:square:EAST"),
             discoveredLockedExits = emptySet(),
-            discoveredInteractables = emptySet()
+            discoveredInteractables = emptySet(),
+            tutorials = setOf("welcome")
         ))
         repo.savePlayerDiscovery("bob", PlayerDiscoveryData(
             visitedRooms = setOf("forest:path"),
             discoveredHiddenExits = emptySet(),
             discoveredLockedExits = setOf("dungeon:door:NORTH"),
-            discoveredInteractables = emptySet()
+            discoveredInteractables = emptySet(),
+            tutorials = setOf("welcome", "combat_intro")
         ))
 
         val aliceData = repo.loadPlayerDiscovery("alice")
         assertEquals(setOf("town:square", "town:gate"), aliceData.visitedRooms)
         assertEquals(setOf("town:square:EAST"), aliceData.discoveredHiddenExits)
         assertTrue(aliceData.discoveredLockedExits.isEmpty())
+        assertEquals(setOf("welcome"), aliceData.tutorials)
 
         val bobData = repo.loadPlayerDiscovery("bob")
         assertEquals(setOf("forest:path"), bobData.visitedRooms)
         assertTrue(bobData.discoveredHiddenExits.isEmpty())
         assertEquals(setOf("dungeon:door:NORTH"), bobData.discoveredLockedExits)
+        assertEquals(setOf("welcome", "combat_intro"), bobData.tutorials)
+    }
+
+    @Test
+    fun testMarkTutorialSeen() = withTestDb {
+        val repo = DiscoveryRepository()
+
+        // Mark a tutorial as seen
+        repo.markTutorialSeen("charlie", "welcome")
+        val loaded = repo.loadPlayerDiscovery("charlie")
+        assertEquals(setOf("welcome"), loaded.tutorials)
+        // Other discovery types should be empty
+        assertTrue(loaded.visitedRooms.isEmpty())
+        assertTrue(loaded.discoveredHiddenExits.isEmpty())
+    }
+
+    @Test
+    fun testMarkTutorialSeenIsIdempotent() = withTestDb {
+        val repo = DiscoveryRepository()
+
+        // Mark same tutorial twice — should not fail or duplicate
+        repo.markTutorialSeen("charlie", "welcome")
+        repo.markTutorialSeen("charlie", "welcome")
+        val loaded = repo.loadPlayerDiscovery("charlie")
+        assertEquals(setOf("welcome"), loaded.tutorials)
+    }
+
+    @Test
+    fun testMarkTutorialSeenMultipleTutorials() = withTestDb {
+        val repo = DiscoveryRepository()
+
+        repo.markTutorialSeen("charlie", "welcome")
+        repo.markTutorialSeen("charlie", "combat_intro")
+        repo.markTutorialSeen("charlie", "crafting_intro")
+        val loaded = repo.loadPlayerDiscovery("charlie")
+        assertEquals(setOf("welcome", "combat_intro", "crafting_intro"), loaded.tutorials)
+    }
+
+    @Test
+    fun testMarkTutorialSeenIsolatedPerPlayer() = withTestDb {
+        val repo = DiscoveryRepository()
+
+        repo.markTutorialSeen("alice", "welcome")
+        repo.markTutorialSeen("bob", "welcome")
+        repo.markTutorialSeen("bob", "combat_intro")
+
+        assertEquals(setOf("welcome"), repo.loadPlayerDiscovery("alice").tutorials)
+        assertEquals(setOf("welcome", "combat_intro"), repo.loadPlayerDiscovery("bob").tutorials)
+        assertTrue(repo.loadPlayerDiscovery("charlie").tutorials.isEmpty())
     }
 }

@@ -87,6 +87,11 @@ class IntegrationTest {
             assertEquals("WARRIOR", loginResponse.player.characterClass)
             assertEquals("town:temple", loginResponse.player.currentRoomId)
 
+            // Should receive first-login welcome message
+            val welcome = receiveServerMessage()
+            assertIs<ServerMessage.SystemMessage>(welcome)
+            assertTrue(welcome.message.contains("Welcome to NeoMud"))
+
             // Should receive RoomInfo
             val roomInfo = receiveServerMessage()
             assertIs<ServerMessage.RoomInfo>(roomInfo)
@@ -132,6 +137,7 @@ class IntegrationTest {
                 ClientMessage.Login("starter_mage", "pass1234")
             )))
             receiveServerMessage() // LoginOk
+            receiveServerMessage() // Welcome SystemMessage
             receiveServerMessage() // RoomInfo
             receiveServerMessage() // MapData
 
@@ -178,6 +184,7 @@ class IntegrationTest {
                 ClientMessage.Login("starter_warrior", "pass1234")
             )))
             receiveServerMessage() // LoginOk
+            receiveServerMessage() // Welcome SystemMessage
             receiveServerMessage() // RoomInfo
             receiveServerMessage() // MapData
 
@@ -214,6 +221,7 @@ class IntegrationTest {
                 ClientMessage.Login("mover", "pass1234")
             )))
             receiveServerMessage() // LoginOk
+            receiveServerMessage() // Welcome SystemMessage
             receiveServerMessage() // RoomInfo
             receiveServerMessage() // MapData
             receiveServerMessage() // InventoryUpdate
@@ -263,6 +271,7 @@ class IntegrationTest {
                 ClientMessage.Login("stuck", "pass1234")
             )))
             receiveServerMessage() // LoginOk
+            receiveServerMessage() // Welcome SystemMessage
             receiveServerMessage() // RoomInfo
             receiveServerMessage() // MapData
             receiveServerMessage() // InventoryUpdate
@@ -326,6 +335,7 @@ class IntegrationTest {
             assertIs<ServerMessage.LoginOk>(loginOk)
             assertEquals("female", loginOk.player.gender)
             assertEquals("ELF", loginOk.player.race)
+            // Welcome SystemMessage follows but test doesn't need it
         }
     }
 
@@ -362,6 +372,7 @@ class IntegrationTest {
                         ClientMessage.Login("player_a", "pass1234")
                     )))
                     receiveServerMessage() // LoginOk
+                    receiveServerMessage() // Welcome SystemMessage
                     receiveServerMessage() // RoomInfo
                     receiveServerMessage() // MapData
                     receiveServerMessage() // InventoryUpdate
@@ -381,6 +392,7 @@ class IntegrationTest {
                         ClientMessage.Login("player_b", "pass1234")
                     )))
                     receiveServerMessage() // LoginOk
+                    receiveServerMessage() // Welcome SystemMessage
                     val roomInfo = receiveServerMessage()
                     assertIs<ServerMessage.RoomInfo>(roomInfo)
                     val aliceInfo = roomInfo.players.find { it.name == "Alice" }
@@ -432,6 +444,7 @@ class IntegrationTest {
                         ClientMessage.Login("spriteuser", "pass1234")
                     )))
                     receiveServerMessage() // LoginOk
+                    receiveServerMessage() // Welcome SystemMessage
                     receiveServerMessage() // RoomInfo
                     receiveServerMessage() // MapData
                     receiveServerMessage() // InventoryUpdate
@@ -450,6 +463,7 @@ class IntegrationTest {
                         ClientMessage.Login("spriteuser2", "pass1234")
                     )))
                     receiveServerMessage() // LoginOk
+                    receiveServerMessage() // Welcome SystemMessage
                     val roomInfo = receiveServerMessage()
                     assertIs<ServerMessage.RoomInfo>(roomInfo)
                     val spriteHero = roomInfo.players.find { it.name == "SpriteHero" }
@@ -492,6 +506,7 @@ class IntegrationTest {
             assertEquals(player.currentMp, player.maxMp, "New character should start at full MP")
             assertTrue(player.maxMp > 0, "Mystic should have MP")
 
+            receiveServerMessage() // Welcome SystemMessage
             receiveServerMessage() // RoomInfo
             receiveServerMessage() // MapData
             receiveServerMessage() // InventoryUpdate
@@ -531,6 +546,7 @@ class IntegrationTest {
                 ClientMessage.Login("explorer", "pass1234")
             )))
             receiveServerMessage() // LoginOk
+            receiveServerMessage() // Welcome SystemMessage (first login)
             receiveServerMessage() // RoomInfo
             val initialMap = receiveServerMessage()
             assertIs<ServerMessage.MapData>(initialMap)
@@ -588,6 +604,7 @@ class IntegrationTest {
                 ClientMessage.Login("coin_test", "pass1234")
             )))
             receiveServerMessage() // LoginOk
+            receiveServerMessage() // Welcome SystemMessage
             receiveServerMessage() // RoomInfo
             receiveServerMessage() // MapData
             receiveServerMessage() // InventoryUpdate
@@ -627,6 +644,7 @@ class IntegrationTest {
             )))
             val loginOk = receiveServerMessage()
             assertIs<ServerMessage.LoginOk>(loginOk)
+            receiveServerMessage() // Welcome SystemMessage
             receiveServerMessage() // RoomInfo
             receiveServerMessage() // MapData
             receiveServerMessage() // InventoryUpdate
@@ -673,6 +691,7 @@ class IntegrationTest {
             assertEquals(player.currentHp, player.maxHp, "New character should start at full HP")
             assertTrue(player.maxHp > 0, "Warrior should have HP")
 
+            receiveServerMessage() // Welcome SystemMessage
             receiveServerMessage() // RoomInfo
             receiveServerMessage() // MapData
             receiveServerMessage() // InventoryUpdate
@@ -686,6 +705,60 @@ class IntegrationTest {
             val response = receiveServerMessage()
             assertIs<ServerMessage.SystemMessage>(response, "Should get SystemMessage when resting at full HP, got: $response")
             assertTrue(response.message.contains("full"), "Should say health is full: ${response.message}")
+        }
+    }
+
+    @Test
+    fun testWelcomeMessageOnlyOnFirstLogin() = testApplication {
+        application { module(jdbcUrl = testDbUrl()) }
+
+        val wsClient = createClient { install(WebSockets) }
+
+        // Register
+        wsClient.webSocket("/game") {
+            consumeCatalogSync()
+            send(Frame.Text(MessageSerializer.encodeClientMessage(
+                ClientMessage.Register("welcome_test", "pass1234", "WelcomeHero", "WARRIOR",
+                    allocatedStats = Stats(strength = 30, agility = 22, intellect = 18, willpower = 18, health = 30, charm = 18))
+            )))
+            assertIs<ServerMessage.RegisterOk>(receiveServerMessage())
+        }
+
+        // First login — should receive welcome message
+        wsClient.webSocket("/game") {
+            consumeCatalogSync()
+            send(Frame.Text(MessageSerializer.encodeClientMessage(
+                ClientMessage.Login("welcome_test", "pass1234")
+            )))
+            val loginOk = receiveServerMessage()
+            assertIs<ServerMessage.LoginOk>(loginOk)
+
+            val welcome = receiveServerMessage()
+            assertIs<ServerMessage.SystemMessage>(welcome)
+            assertTrue(welcome.message.contains("Welcome to NeoMud"), "First login should get welcome: ${welcome.message}")
+            assertTrue(welcome.message.contains("WelcomeHero"), "Welcome should include character name: ${welcome.message}")
+
+            receiveServerMessage() // RoomInfo
+            receiveServerMessage() // MapData
+            receiveServerMessage() // InventoryUpdate
+            receiveServerMessage() // RoomItemsUpdate
+        }
+
+        // Allow disconnect save to complete
+        delay(500)
+
+        // Second login — should NOT receive welcome message
+        wsClient.webSocket("/game") {
+            consumeCatalogSync()
+            send(Frame.Text(MessageSerializer.encodeClientMessage(
+                ClientMessage.Login("welcome_test", "pass1234")
+            )))
+            val loginOk = receiveServerMessage()
+            assertIs<ServerMessage.LoginOk>(loginOk)
+
+            // Next message should be RoomInfo, NOT a welcome SystemMessage
+            val roomInfo = receiveServerMessage()
+            assertIs<ServerMessage.RoomInfo>(roomInfo, "Second login should NOT get welcome, expected RoomInfo but got: $roomInfo")
         }
     }
 

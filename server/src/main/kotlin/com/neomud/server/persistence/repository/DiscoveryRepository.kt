@@ -11,7 +11,8 @@ data class PlayerDiscoveryData(
     val visitedRooms: Set<RoomId>,
     val discoveredHiddenExits: Set<String>,
     val discoveredLockedExits: Set<String>,
-    val discoveredInteractables: Set<String>
+    val discoveredInteractables: Set<String>,
+    val tutorials: Set<String> = emptySet()
 )
 
 class DiscoveryRepository {
@@ -25,6 +26,7 @@ class DiscoveryRepository {
         val hiddenExits = mutableSetOf<String>()
         val lockedExits = mutableSetOf<String>()
         val interactables = mutableSetOf<String>()
+        val tutorials = mutableSetOf<String>()
 
         for (row in rows) {
             val key = row[PlayerDiscoveryTable.discoveryKey]
@@ -33,10 +35,11 @@ class DiscoveryRepository {
                 "hidden_exit" -> hiddenExits.add(key)
                 "locked_exit" -> lockedExits.add(key)
                 "interactable" -> interactables.add(key)
+                "tutorial" -> tutorials.add(key)
             }
         }
 
-        PlayerDiscoveryData(visitedRooms, hiddenExits, lockedExits, interactables)
+        PlayerDiscoveryData(visitedRooms, hiddenExits, lockedExits, interactables, tutorials)
     }
 
     fun savePlayerDiscovery(playerName: String, data: PlayerDiscoveryData): Unit = transaction {
@@ -45,6 +48,7 @@ class DiscoveryRepository {
         for (exit in data.discoveredHiddenExits) entries.add("hidden_exit" to exit)
         for (exit in data.discoveredLockedExits) entries.add("locked_exit" to exit)
         for (inter in data.discoveredInteractables) entries.add("interactable" to inter)
+        for (tut in data.tutorials) entries.add("tutorial" to tut)
 
         for ((type, key) in entries) {
             PlayerDiscoveryTable.insertIgnore {
@@ -52,6 +56,14 @@ class DiscoveryRepository {
                 it[discoveryType] = type
                 it[discoveryKey] = key
             }
+        }
+    }
+
+    fun markTutorialSeen(playerName: String, tutorialKey: String): Unit = transaction {
+        PlayerDiscoveryTable.insertIgnore {
+            it[PlayerDiscoveryTable.playerName] = playerName
+            it[discoveryType] = "tutorial"
+            it[discoveryKey] = tutorialKey
         }
     }
 }

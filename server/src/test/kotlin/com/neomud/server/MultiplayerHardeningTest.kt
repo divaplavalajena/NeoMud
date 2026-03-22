@@ -56,10 +56,11 @@ class MultiplayerHardeningTest {
     private fun sendMsg(msg: ClientMessage): Frame.Text =
         Frame.Text(MessageSerializer.encodeClientMessage(msg))
 
-    /** Consume the login response sequence: LoginOk, RoomInfo, MapData, InventoryUpdate, RoomItemsUpdate */
+    /** Consume the login response sequence: LoginOk, Welcome, RoomInfo, MapData, InventoryUpdate, RoomItemsUpdate */
     private suspend fun DefaultClientWebSocketSession.consumeLoginSequence(): ServerMessage.LoginOk {
         val loginOk = receiveServerMessage()
         assertIs<ServerMessage.LoginOk>(loginOk)
+        receiveServerMessage() // Welcome SystemMessage (first login on fresh DB)
         receiveServerMessage() // RoomInfo
         receiveServerMessage() // MapData
         receiveServerMessage() // InventoryUpdate

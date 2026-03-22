@@ -348,6 +348,7 @@ class CommandProcessor(
                 session.discoveredHiddenExits.addAll(discovery.discoveredHiddenExits)
                 session.discoveredLockedExits.addAll(discovery.discoveredLockedExits)
                 session.discoveredInteractables.addAll(discovery.discoveredInteractables)
+                session.seenTutorials.addAll(discovery.tutorials)
                 session.visitedRooms.add(effectivePlayer.currentRoomId)
 
                 val added = sessionManager.addSession(effectivePlayer.name, session, username = msg.username)
@@ -358,6 +359,19 @@ class CommandProcessor(
                 session.combatGraceTicks = GameConfig.Combat.GRACE_TICKS
 
                 session.send(ServerMessage.LoginOk(effectivePlayer))
+
+                // First-time welcome message for new characters (sent right after LoginOk for predictable ordering)
+                if ("welcome" !in session.seenTutorials) {
+                    session.seenTutorials.add("welcome")
+                    discoveryRepository.markTutorialSeen(effectivePlayer.name, "welcome")
+                    session.send(ServerMessage.SystemMessage(
+                        "Welcome to NeoMud, ${effectivePlayer.name}! " +
+                        "Use the directional pad to move between rooms. " +
+                        "Tap hostile NPCs to select a target, then toggle attack mode (crossed swords) to fight. " +
+                        "Open the tome (\u2753) in the toolbar for a full guide to all game systems. " +
+                        "May your blade stay sharp and your mana never run dry!"
+                    ))
+                }
 
                 // Send initial room info
                 val room = worldGraph.getRoom(effectivePlayer.currentRoomId)

@@ -43,6 +43,7 @@ class AdminCommandTest {
     private suspend fun DefaultClientWebSocketSession.consumeLoginSequence(): ServerMessage.LoginOk {
         val loginOk = receiveServerMessage()
         assertIs<ServerMessage.LoginOk>(loginOk)
+        receiveServerMessage() // Welcome SystemMessage (first login on fresh DB)
         receiveServerMessage() // RoomInfo
         receiveServerMessage() // MapData
         receiveServerMessage() // InventoryUpdate

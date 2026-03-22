@@ -40,6 +40,9 @@ class PlayerSession(
     val discoveredHiddenExits: MutableSet<String> = mutableSetOf()
     val discoveredLockedExits: MutableSet<String> = mutableSetOf()
 
+    // Tutorial tracking
+    val seenTutorials: MutableSet<String> = mutableSetOf()
+
     // Interactable state
     val discoveredInteractables: MutableSet<String> = mutableSetOf()  // "roomId::featureId"
     val interactableCooldowns: MutableMap<String, Int> = mutableMapOf() // "roomId::featureId" -> ticks

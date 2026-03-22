@@ -143,7 +143,8 @@ fun Application.configureRouting(
                                     visitedRooms = session.visitedRooms.toSet(),
                                     discoveredHiddenExits = session.discoveredHiddenExits.toSet(),
                                     discoveredLockedExits = session.discoveredLockedExits.toSet(),
-                                    discoveredInteractables = session.discoveredInteractables.toSet()
+                                    discoveredInteractables = session.discoveredInteractables.toSet(),
+                                    tutorials = session.seenTutorials.toSet()
                                 )
                             )
                         } catch (e: Exception) {
