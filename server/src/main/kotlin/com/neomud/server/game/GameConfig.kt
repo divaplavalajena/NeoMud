@@ -20,6 +20,8 @@ object GameConfig {
     }
     object Combat {
         const val GRACE_TICKS = 2
+        /** Newly spawned hostile NPCs wait this many ticks before attacking. */
+        const val NPC_SPAWN_GRACE_TICKS = 2
         const val MIN_HIT_CHANCE = 5
         const val MAX_HIT_CHANCE = 95
         const val BASE_HIT_CHANCE = 50

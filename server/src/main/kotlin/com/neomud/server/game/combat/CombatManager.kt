@@ -310,6 +310,12 @@ class CombatManager(
                     val npc = combatant.npc
                     if (npc.currentHp <= 0) continue
 
+                    // Newly spawned NPCs wait before attacking
+                    if (npc.spawnGraceTicks > 0) {
+                        npc.spawnGraceTicks--
+                        continue
+                    }
+
                     // Stunned NPCs skip their attack
                     if (npc.stunTicks > 0) {
                         npc.stunTicks--

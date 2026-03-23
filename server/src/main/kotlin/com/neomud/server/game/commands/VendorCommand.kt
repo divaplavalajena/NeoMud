@@ -121,14 +121,29 @@ class VendorCommand(
         }
         logger.info("$playerName bought ${item.name} x$quantity for ${totalCost.displayString()}")
 
+        // Auto-equip into empty slot if applicable (single item purchase with an equipment slot)
+        var autoEquipMessage: String? = null
+        if (quantity == 1 && item.slot.isNotEmpty()) {
+            val currentEquipment = inventoryRepository.getEquippedItems(playerName)
+            if (item.slot !in currentEquipment) {
+                val equipped = inventoryRepository.equipItem(playerName, itemId, item.slot)
+                if (equipped) {
+                    autoEquipMessage = "You equip ${item.name} (${item.slot})."
+                }
+            }
+        }
+
         val updatedCoins = coinRepository.getCoins(playerName)
         val updatedInventory = inventoryRepository.getInventory(playerName)
         val equipment = inventoryRepository.getEquippedItems(playerName)
 
+        val buyMsg = if (quantity > 1) "You bought ${item.name} x$quantity for ${totalCost.displayString()} (${unitPrice.displayString()} each)."
+                     else "You bought ${item.name} for ${totalCost.displayString()}."
+        val fullMsg = if (autoEquipMessage != null) "$buyMsg $autoEquipMessage" else buyMsg
+
         session.send(ServerMessage.BuyResult(
             success = true,
-            message = if (quantity > 1) "You bought ${item.name} x$quantity for ${totalCost.displayString()} (${unitPrice.displayString()} each)."
-                      else "You bought ${item.name} for ${totalCost.displayString()}.",
+            message = fullMsg,
             updatedCoins = updatedCoins,
             updatedInventory = updatedInventory,
             equipment = equipment

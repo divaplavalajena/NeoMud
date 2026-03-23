@@ -43,11 +43,14 @@ class AdminCommandTest {
     private suspend fun DefaultClientWebSocketSession.consumeLoginSequence(): ServerMessage.LoginOk {
         val loginOk = receiveServerMessage()
         assertIs<ServerMessage.LoginOk>(loginOk)
-        receiveServerMessage() // Welcome SystemMessage (first login on fresh DB)
-        receiveServerMessage() // RoomInfo
-        receiveServerMessage() // MapData
-        receiveServerMessage() // InventoryUpdate
-        receiveServerMessage() // RoomItemsUpdate
+        // After LoginOk, drain all non-interactive setup messages (Tutorial, RoomInfo, MapData, etc.)
+        // until we've seen RoomItemsUpdate (the last in the login sequence)
+        withTimeout(5000) {
+            while (true) {
+                val msg = receiveServerMessage()
+                if (msg is ServerMessage.RoomItemsUpdate) break
+            }
+        }
         return loginOk
     }
 

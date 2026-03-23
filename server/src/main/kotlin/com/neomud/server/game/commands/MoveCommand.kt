@@ -228,6 +228,18 @@ class MoveCommand(
             session.send(ServerMessage.SystemMessage("A trainer is here. You can interact to train your skills."))
         }
 
+        // Auto-detect vendor in room
+        val vendor = npcManager.getVendorInRoom(targetRoomId)
+        if (vendor != null) {
+            session.send(ServerMessage.SystemMessage("${vendor.name} is here. You can interact to buy and sell items."))
+        }
+
+        // Auto-detect crafter in room
+        val crafter = npcManager.getCrafterInRoom(targetRoomId)
+        if (crafter != null) {
+            session.send(ServerMessage.SystemMessage("${crafter.name} is here. You can interact to craft items."))
+        }
+
         // Tutorial triggers on room enter
         if (tutorialService != null && player != null) {
             val hostileNpcs = npcManager.getLivingHostileNpcsInRoom(targetRoomId)

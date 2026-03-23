@@ -1,5 +1,6 @@
 package com.neomud.server.game.npc
 
+import com.neomud.server.game.GameConfig
 import com.neomud.server.game.MovementTrailManager
 import com.neomud.server.game.npc.behavior.BehaviorNode
 import com.neomud.server.game.npc.behavior.IdleBehavior
@@ -51,6 +52,8 @@ data class NpcState(
     var deathProcessed: Boolean = false
     /** When > 0, NPC skips attack ticks (decremented each combat tick). */
     var stunTicks: Int = 0
+    /** When > 0, newly spawned NPC waits before attacking (decremented each combat tick). */
+    var spawnGraceTicks: Int = 0
     val isAlive: Boolean get() = !deathProcessed && (maxHp == 0 || currentHp > 0)
     /** Stores pre-pursuit behavior for restoration when pursuit ends. */
     var originalBehavior: BehaviorNode? = null
@@ -254,6 +257,9 @@ class NpcManager(
             val instanceId = "${template.id}#${nextSpawnIndex++}"
             val spawned = createNpcState(template, zoneId, instanceId)
             spawned.currentRoomId = spawnRoom
+            if (spawned.hostile) {
+                spawned.spawnGraceTicks = GameConfig.Combat.NPC_SPAWN_GRACE_TICKS
+            }
             npcs.add(spawned)
             logger.info("Spawned ${spawned.name} ($instanceId) at $spawnRoom")
 
